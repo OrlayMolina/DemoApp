@@ -1,4 +1,4 @@
-package com.example.demoapp
+package com.example.demoapp.features.login
 
 import android.util.Log
 import androidx.compose.foundation.layout.*
@@ -10,9 +10,10 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.demoapp.features.login.LoginViewModel
+import com.example.demoapp.ui.theme.DemoAppTheme
 
 @Composable
 fun LoginScreen(
@@ -26,7 +27,7 @@ fun LoginScreen(
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
             value = viewModel.email.value, // Estado del campo de email desde el ViewModel
-            onValueChange = { viewModel.email.onChange(it) }, // Actualiza el estado en el ViewModel
+            onValueChange = { viewModel.email.onEmailChange(it) }, // Actualiza el estado en el ViewModel
             label = {
                 Text(text = "Email")
             },
@@ -56,10 +57,21 @@ fun LoginScreen(
                 Log.d("Login", "Email: ${viewModel.email.value}, Password: ${viewModel.password.value}")
             },
             enabled = viewModel.isFormValid,
+            modifier = Modifier
+                .fillMaxWidth()                           // ← fillMaxWidth()
+                .height(50.dp),
             content = {
                 Text(text = "Iniciar Sesión")
             }
         )
 
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, name = "Login Screen")
+@Composable
+fun LoginScreenPreview() {
+    DemoAppTheme {
+        LoginScreen()
     }
 }
