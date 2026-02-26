@@ -2,55 +2,40 @@ package com.example.demoapp.features.login
 
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
+import com.example.demoapp.core.utils.ValidatedField
 
 class LoginViewModel : ViewModel() {
-    // Estado para los campos de texto
-    var email by mutableStateOf("")
-        private set // Solo se puede modificar desde el ViewModel
 
-    var password by mutableStateOf("")
-        private set // Solo se puede modificar desde el ViewModel
+    val email = ValidatedField<String>(
+        initialValue = "",
+        validate = { value ->
+            when {
+                value.isEmpty() -> "El email es obligatorio"
+                !Patterns.EMAIL_ADDRESS.matcher(value).matches() -> "Ingresa un email válido"
+                else -> null
+            }
+        }
+    )
 
-    // Permite controlar cuándo mostrar los errores
-    var showEmailError by mutableStateOf(false)
-        private set // Solo se puede modificar desde el ViewModel
-
-    var showPasswordError by mutableStateOf(false)
-        private set // Solo se puede modificar desde el ViewModel
-
-    // Mensajes de error. get() para que sean de solo lectura desde el exterior
-    val emailError: String?
-        get() = if (showEmailError) validateEmail(email) else null
-
-    val passwordError: String?
-        get() = if (showPasswordError) validatePassword(password) else null
+    val password = ValidatedField<String>(
+        initialValue = "",
+        validate = { value ->
+            when {
+                value.isEmpty() -> "La contraseña es obligatoria"
+                value.length < 6 -> "Debe tener al menos 6 caracteres"
+                else -> null
+            }
+        }
+    )
 
     val isFormValid: Boolean
-        get() = validateEmail(email) == null && validatePassword(password) == null
+        get() = email.isValid && password.isValid
 
     fun onEmailChange(newEmail: String) {
-        email = newEmail
-        showEmailError = true
+        email.onChange(newEmail)
     }
 
     fun onPasswordChange(newPassword: String) {
-        password = newPassword
-        showPasswordError = true
-    }
-
-    private fun validateEmail(email: String): String? {
-        return when {
-            email.isEmpty() -> "El email es obligatorio"
-            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> "Ingresa un email válido"
-            else -> null
-        }
-    }
-
-    private fun validatePassword(password: String): String? {
-        return when {
-            password.isEmpty() -> "La contraseña es obligatoria"
-            password.length < 6 -> "La contraseña debe tener al menos 6 caracteres"
-            else -> null
-        }
+        password.onChange(newPassword)
     }
 }
