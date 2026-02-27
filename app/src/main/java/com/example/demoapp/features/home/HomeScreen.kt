@@ -24,7 +24,7 @@ fun HomeScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(R.drawable.welcome),
+            painter = painterResource(R.drawable.logo_red_explora),
             contentDescription = "Welcome Image"
         )
         Text(text = "Home Screen")
