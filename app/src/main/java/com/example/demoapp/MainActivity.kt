@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.example.demoapp.features.create.CreatePointStep1Screen
+import com.example.demoapp.features.create.CreatePointStep2Screen
 import com.example.demoapp.features.home.HomeScreen
 import com.example.demoapp.features.login.LoginScreen
 import com.example.demoapp.features.recovery.PasswordRecoveryScreen
@@ -17,7 +19,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DemoAppTheme {
-                PasswordResetScreen()
+                CreatePointStep1Screen()
             }
         }
     }
