@@ -11,17 +11,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.demoapp.R
 import com.example.demoapp.ui.theme.DemoAppTheme
-import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onNavigateToLogin: () -> Unit,     // Función para navegar a la pantalla de Login
+    onNavigateToRegister: () -> Unit   // Función para navegar a la pantalla de Registro
+) {
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
 
         Column(
             modifier = Modifier
@@ -44,25 +41,13 @@ fun HomeScreen() {
             ) {
 
                 Button(
-                    onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                message = "Iniciando sesión."
-                            )
-                        }
-                    }
+                    onClick = onNavigateToLogin
                 ) {
                     Text(text = "Iniciar sesión")
                 }
 
                 Button(
-                    onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                message = "Creando cuenta"
-                            )
-                        }
-                    }
+                    onClick = onNavigateToRegister
                 ) {
                     Text(text = "Crear una cuenta")
                 }
