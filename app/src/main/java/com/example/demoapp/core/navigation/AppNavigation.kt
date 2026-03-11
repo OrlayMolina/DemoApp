@@ -7,9 +7,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.demoapp.features.home.HomeScreen
 import com.example.demoapp.features.login.LoginScreen
 import com.example.demoapp.features.register.RegisterScreen
+import com.example.demoapp.features.users.detail.UserDetailScreen
+import com.example.demoapp.features.users.list.UserListScreen
 
 @Composable
 fun AppNavigation() {
@@ -44,6 +47,24 @@ fun AppNavigation() {
 
             composable<MainRoutes.Register> {
                 RegisterScreen()
+            }
+
+            composable<MainRoutes.UserDetail> {
+                // Se obtienen los argumentos de la ruta
+                val args = it.toRoute<MainRoutes.UserDetail>()
+                // Se pasa el ID del usuario a la pantalla de detalles del usuario
+                UserDetailScreen(
+                    userId = args.userId
+                )
+            }
+
+            composable<MainRoutes.UserList> {
+                // Se pasa la función de navegación a la pantalla de la lista de usuarios
+                UserListScreen(
+                    onNavigateToUserDetail = { userId ->
+                        navController.navigate(MainRoutes.UserDetail(userId))
+                    }
+                )
             }
 
         }
