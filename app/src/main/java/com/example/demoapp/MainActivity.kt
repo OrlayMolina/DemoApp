@@ -4,13 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.example.demoapp.features.create.CreatePointStep1Screen
-import com.example.demoapp.features.create.CreatePointStep2Screen
-import com.example.demoapp.features.home.HomeScreen
-import com.example.demoapp.features.login.LoginScreen
-import com.example.demoapp.features.recovery.PasswordRecoveryScreen
-import com.example.demoapp.features.register.RegisterScreen
-import com.example.demoapp.features.reset.PasswordResetScreen
+import com.example.demoapp.core.navigation.AppNavigation
 import com.example.demoapp.ui.theme.DemoAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DemoAppTheme {
-                CreatePointStep1Screen()
+                AppNavigation()
             }
         }
     }

@@ -16,7 +16,7 @@ class UserListViewModel : ViewModel() {
 
     private fun loadUsers() {
         _users.value = listOf(
-            User("1", "Juan", "juan@email.com", "", "", "", "")
+            User("1", "Juan", "juan@email.com", "", "", "123456", "")
         )
     }
 }
