@@ -13,4 +13,10 @@ sealed class MainRoutes {
     @Serializable
     data object Register : MainRoutes()
 
+    @Serializable
+    data object UserList : MainRoutes()
+
+    @Serializable
+    data class UserDetail(val userId: String) : MainRoutes()
+
 }

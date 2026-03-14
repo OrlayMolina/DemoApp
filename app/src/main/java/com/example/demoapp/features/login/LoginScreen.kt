@@ -2,10 +2,23 @@ package com.example.demoapp.features.login
 
 import android.util.Log
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -20,9 +33,9 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = viewModel()
+    viewModel: LoginViewModel = viewModel(),
+    onNavigateToUsers: () -> Unit
 ) {
-
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -39,14 +52,12 @@ fun LoginScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
         ) {
 
-            // 🔹 Logo
             Image(
                 painter = painterResource(id = R.drawable.logo_red_explora),
                 contentDescription = "App Logo",
                 modifier = Modifier.size(120.dp)
             )
 
-            // 🔹 Email
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = viewModel.email.value,
@@ -61,7 +72,6 @@ fun LoginScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
-            // 🔹 Password
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = viewModel.password.value,
@@ -77,7 +87,6 @@ fun LoginScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
 
-            // 🔹 Button
             Button(
                 onClick = {
                     scope.launch {
@@ -91,6 +100,8 @@ fun LoginScreen(
                         "Login",
                         "Email: ${viewModel.email.value}, Password: ${viewModel.password.value}"
                     )
+
+                    onNavigateToUsers()
                 },
                 enabled = viewModel.isFormValid
             ) {
@@ -104,6 +115,8 @@ fun LoginScreen(
 @Composable
 fun LoginScreenPreview() {
     DemoAppTheme {
-        LoginScreen()
+        LoginScreen(
+            onNavigateToUsers = {}
+        )
     }
 }
