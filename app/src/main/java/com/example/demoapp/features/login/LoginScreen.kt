@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -61,7 +62,8 @@ private val TealModerator = Color(0xFF4A7B7B)
 fun LoginScreen(
     viewModel: LoginViewModel = viewModel(),
     onNavigateToUsers: () -> Unit,
-    onNavigateToRegister: (() -> Unit)? = null   // opcional, para el link "Regístrate"
+    onNavigateToRegister: (() -> Unit)? = null,   // opcional, para el link "Regístrate"
+    onNavigateToPasswordRecovery: (() -> Unit)? = null
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope             = rememberCoroutineScope()
@@ -158,13 +160,22 @@ fun LoginScreen(
                     // ── ¿Olvidaste tu contraseña? ──────────────────────────
                     if (selectedRole == 0) {
                         Text(
-                            text = "¿Olvidaste tu contraseña?",
-                            fontSize = 13.sp,
-                            color = TextGray,
+                            text = buildAnnotatedString {
+                                withStyle(
+                                    SpanStyle(
+                                        color                = GreenPrimary,
+                                        fontSize             = 13.sp,
+                                        textDecoration       = TextDecoration.Underline,
+                                        fontWeight           = FontWeight.SemiBold
+                                    )
+                                ) {
+                                    append("¿Olvidaste tu contraseña?")
+                                }
+                            },
                             modifier = Modifier
                                 .align(Alignment.Start)
                                 .offset(y = (-8).dp)
-                                .clickable { /* TODO */ }
+                                .clickable { onNavigateToPasswordRecovery?.invoke() }
                         )
                     }
 
