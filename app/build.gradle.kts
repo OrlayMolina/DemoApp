@@ -52,6 +52,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.navigation.compose)
+    implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.foundation.layout)
     testImplementation(libs.junit)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
@@ -63,4 +67,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.material.icons.extended)
 }
