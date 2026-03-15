@@ -19,4 +19,8 @@ sealed class MainRoutes {
     @Serializable
     data class UserDetail(val userId: String) : MainRoutes()
 
+    @Serializable object Explore : MainRoutes()
+
+    @Serializable
+    object PasswordRecovery : MainRoutes()
 }

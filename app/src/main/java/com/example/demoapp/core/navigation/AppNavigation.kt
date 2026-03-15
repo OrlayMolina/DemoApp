@@ -12,6 +12,8 @@ import com.example.demoapp.features.login.LoginScreen
 import com.example.demoapp.features.register.RegisterScreen
 import com.example.demoapp.features.users.list.UserListScreen
 import androidx.navigation.toRoute
+import com.example.demoapp.features.explore.ExploreScreen
+import com.example.demoapp.features.recovery.PasswordRecoveryScreen
 import com.example.demoapp.features.users.detail.UserDetailScreen
 
 @Composable
@@ -45,12 +47,30 @@ fun AppNavigation() {
             composable<MainRoutes.Login> {
                 LoginScreen(
                     onNavigateToUsers = {
-                        navController.navigate(MainRoutes.UserList)
+                        navController.navigate(MainRoutes.Explore) {
+                            popUpTo(MainRoutes.Home) { inclusive = false }
+                        }
+                    },
+                    onNavigateToRegister = {
+                        navController.navigate(MainRoutes.Register)
+                    },
+                    onNavigateToPasswordRecovery = {          // ← agrega esto
+                        navController.navigate(MainRoutes.PasswordRecovery)
                     }
                 )
             }
+
             composable<MainRoutes.Register> {
-                RegisterScreen()
+                RegisterScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToLogin = {
+                        navController.navigate(MainRoutes.Login) {
+                            popUpTo(MainRoutes.Register) { inclusive = true }
+                        }
+                    }
+                )
             }
 
             composable<MainRoutes.UserList> {
@@ -68,6 +88,28 @@ fun AppNavigation() {
                     userId = args.userId,
                     onNavigateBack = {
                         navController.popBackStack()
+                    }
+                )
+            }
+
+            composable<MainRoutes.Explore> {                           // ← nuevo
+                ExploreScreen(
+                    onNavigateToHome    = { navController.navigate(MainRoutes.Home) },
+                    onNavigateToPublish = { /* TODO */ },
+                    onNavigateToNotifs  = { /* TODO */ },
+                    onNavigateToProfile = { /* TODO */ }
+                )
+            }
+
+            composable<MainRoutes.PasswordRecovery> {
+                PasswordRecoveryScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToLogin = {
+                        navController.navigate(MainRoutes.Login) {
+                            popUpTo(MainRoutes.PasswordRecovery) { inclusive = true }
+                        }
                     }
                 )
             }
