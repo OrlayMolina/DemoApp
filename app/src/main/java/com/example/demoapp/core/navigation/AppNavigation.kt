@@ -12,59 +12,44 @@ import com.example.demoapp.features.login.LoginScreen
 import com.example.demoapp.features.register.RegisterScreen
 import com.example.demoapp.features.users.list.UserListScreen
 import androidx.navigation.toRoute
+import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.features.explore.ExploreScreen
+import com.example.demoapp.features.profile.ProfileScreen
 import com.example.demoapp.features.recovery.PasswordRecoveryScreen
 import com.example.demoapp.features.users.detail.UserDetailScreen
 
 @Composable
 fun AppNavigation() {
-    // Estado de la navegación, permite controlar la navegación entre pantallas
     val navController = rememberNavController()
 
-    // Un Surface que ocupa toda la pantalla y se adapta al tema de la aplicación
-    Surface(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Surface(modifier = Modifier.fillMaxSize()) {
         NavHost(
-            navController = navController, // Controlador de navegación
-            startDestination = MainRoutes.Home // Pantalla de inicio, esta es la primer pantalla que se muestra al iniciar la aplicación
-
+            navController    = navController,
+            startDestination = MainRoutes.Home
         ) {
-
-            // Definición de las rutas y sus composables asociados (se puede agregar más rutas según sea necesario)
 
             composable<MainRoutes.Home> {
                 HomeScreen(
-                    onNavigateToLogin = {
-                        navController.navigate(MainRoutes.Login)
-                    },
-                    onNavigateToRegister = {
-                        navController.navigate(MainRoutes.Register)
-                    }
+                    onNavigateToLogin    = { navController.navigate(MainRoutes.Login) },
+                    onNavigateToRegister = { navController.navigate(MainRoutes.Register) }
                 )
             }
 
             composable<MainRoutes.Login> {
                 LoginScreen(
                     onNavigateToUsers = {
-                        navController.navigate(MainRoutes.Explore) {
+                        navController.navigate(MainRoutes.Main) {
                             popUpTo(MainRoutes.Home) { inclusive = false }
                         }
                     },
-                    onNavigateToRegister = {
-                        navController.navigate(MainRoutes.Register)
-                    },
-                    onNavigateToPasswordRecovery = {          // ← agrega esto
-                        navController.navigate(MainRoutes.PasswordRecovery)
-                    }
+                    onNavigateToRegister         = { navController.navigate(MainRoutes.Register) },
+                    onNavigateToPasswordRecovery = { navController.navigate(MainRoutes.PasswordRecovery) }
                 )
             }
 
             composable<MainRoutes.Register> {
                 RegisterScreen(
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    },
+                    onNavigateBack    = { navController.popBackStack() },
                     onNavigateToLogin = {
                         navController.navigate(MainRoutes.Login) {
                             popUpTo(MainRoutes.Register) { inclusive = true }
@@ -73,39 +58,9 @@ fun AppNavigation() {
                 )
             }
 
-            composable<MainRoutes.UserList> {
-                UserListScreen(
-                    onNavigateToUserDetail = { userId ->
-                        navController.navigate(MainRoutes.UserDetail(userId))
-                    }
-                )
-            }
-
-            composable<MainRoutes.UserDetail> { backStackEntry ->
-                val args = backStackEntry.toRoute<MainRoutes.UserDetail>()
-
-                UserDetailScreen(
-                    userId = args.userId,
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    }
-                )
-            }
-
-            composable<MainRoutes.Explore> {                           // ← nuevo
-                ExploreScreen(
-                    onNavigateToHome    = { navController.navigate(MainRoutes.Home) },
-                    onNavigateToPublish = { /* TODO */ },
-                    onNavigateToNotifs  = { /* TODO */ },
-                    onNavigateToProfile = { /* TODO */ }
-                )
-            }
-
             composable<MainRoutes.PasswordRecovery> {
                 PasswordRecoveryScreen(
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    },
+                    onNavigateBack    = { navController.popBackStack() },
                     onNavigateToLogin = {
                         navController.navigate(MainRoutes.Login) {
                             popUpTo(MainRoutes.PasswordRecovery) { inclusive = true }
@@ -114,6 +69,17 @@ fun AppNavigation() {
                 )
             }
 
+            composable<MainRoutes.Main> {
+                MainScreen()
+            }
+
+            composable<MainRoutes.UserDetail> { backStackEntry ->
+                val args = backStackEntry.toRoute<MainRoutes.UserDetail>()
+                UserDetailScreen(
+                    userId         = args.userId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

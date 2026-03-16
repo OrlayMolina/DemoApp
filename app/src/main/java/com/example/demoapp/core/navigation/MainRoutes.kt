@@ -23,4 +23,9 @@ sealed class MainRoutes {
 
     @Serializable
     object PasswordRecovery : MainRoutes()
+
+    @Serializable
+    object Profile : MainRoutes()
+
+    @Serializable object Main : MainRoutes()
 }

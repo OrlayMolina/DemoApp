@@ -1,327 +1,266 @@
-package com.example.demoapp.features.create
+package com.example.demoapp.features.publish
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.demoapp.core.utils.RequestResult
+import androidx.compose.ui.unit.sp
+import com.example.demoapp.core.component.MapBox
+import com.mapbox.geojson.Point
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.geometry.Offset
 
-/**
- * U-08 · Crear Publicación — Paso 2 (Mapa)
- *
- * Permite al usuario seleccionar la ubicación del punto de interés.
- *
- * La sección del mapa es un PLACEHOLDER — para integrar Google Maps o Mapbox:
- *   1. Agrega la dependencia en build.gradle
- *   2. Reemplaza el bloque `MapPlaceholder` por el composable del SDK elegido
- *   3. En el callback `onMapClick` llama a `viewModel.onLocationSelected(lat, lng, address)`
- *
- * Mientras tanto, el usuario puede ingresar lat/lng manualmente para pruebas.
- *
- * @param onNavigateBack   Volver a la galería.
- * @param onPublishSuccess Callback cuando la publicación se crea con éxito.
- * @param viewModel        ViewModel compartido.
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreatePointStep2Screen(
-    onNavigateBack: () -> Unit = {},
-    onPublishSuccess: () -> Unit = {},
-    viewModel: CreatePointViewModel = viewModel()
+    latitude    : String,
+    longitude   : String,
+    address     : String,
+    onLatitude  : (String) -> Unit,
+    onLongitude : (String) -> Unit,
+    onAddress   : (String) -> Unit,
+    onBack      : () -> Unit,
+    onPublish   : () -> Unit,
+    onSaveDraft : () -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val lat     = latitude.toDoubleOrNull()  ?: 4.4687891
+    val lng     = longitude.toDoubleOrNull() ?: -75.6491181
 
-    // Campos auxiliares para ingresar lat/lng manualmente (modo prueba)
-    var latInput by remember { mutableStateOf(viewModel.latitude?.toString() ?: "") }
-    var lngInput by remember { mutableStateOf(viewModel.longitude?.toString() ?: "") }
-    var addressInput by remember { mutableStateOf(viewModel.address) }
+    // Punto seleccionado para pasarlo al mapa
+    var selectedPoint by remember {
+        mutableStateOf<Point?>(Point.fromLngLat(lng, lat))
+    }
 
-    // Reaccionamos al resultado del envío
-    LaunchedEffect(viewModel.createResult) {
-        when (val result = viewModel.createResult) {
-            is RequestResult.Success -> {
-                snackbarHostState.showSnackbar("¡Punto publicado con éxito!")
-                onPublishSuccess()
-                viewModel.reset()
-            }
-            is RequestResult.Error -> {
-                snackbarHostState.showSnackbar(result.message)
-            }
-            else -> {}
+    val mapNestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource) = Offset.Zero
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text("Ubicación — Paso 3 / 3") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-
+    Scaffold(containerColor = BackgroundGray) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(padding)
         ) {
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "Selecciona la ubicación",
-                style = MaterialTheme.typography.titleLarge
-            )
-            Text(
-                text = "Toca el mapa para marcar el punto exacto del lugar.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            // ── Mapa (PLACEHOLDER) ────────────────────────────────────────────
-            // TODO: reemplazar por GoogleMap o MapboxMap composable
-            MapPlaceholder(
-                selectedLat = viewModel.latitude,
-                selectedLng = viewModel.longitude,
-                onMockLocationSelected = { lat, lng ->
-                    viewModel.onLocationSelected(lat, lng, "Dirección obtenida del mapa")
-                    latInput = lat.toString()
-                    lngInput = lng.toString()
-                    addressInput = "Dirección obtenida del mapa"
-                }
-            )
-
-            // ── Entrada manual de coordenadas (solo para pruebas) ─────────────
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                shape = RoundedCornerShape(12.dp)
+            // ── Header ─────────────────────────────────────────────────────
+            Row(
+                modifier          = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Coordenadas (para pruebas)",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Default.ArrowBack, "Atrás", tint = TextDark)
+                }
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text       = "Nueva Publicación",
+                    fontSize   = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color      = TextDark
+                )
+                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.width(48.dp))
+            }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedTextField(
-                            modifier = Modifier.weight(1f),
-                            value = latInput,
-                            onValueChange = { latInput = it },
-                            label = { Text("Latitud") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            // ── Progreso ───────────────────────────────────────────────────
+            LinearProgressIndicator(
+                progress   = { 1f },
+                modifier   = Modifier.fillMaxWidth(),
+                color      = BluePrimary,
+                trackColor = DividerColor
+            )
+            Text(
+                text     = "Paso 2 de 2: Ubicación",
+                fontSize = 12.sp,
+                color    = TextGray,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+            )
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+
+                // ── Mapa ───────────────────────────────────────────────────
+                Card(
+                    shape    = RoundedCornerShape(14.dp),
+                    colors   = CardDefaults.cardColors(containerColor = CardWhite),
+                    modifier = Modifier.nestedScroll(mapNestedScrollConnection) // ← esto falta
+                ) {
+                    MapBox(
+                        modifier             = Modifier
+                            .fillMaxWidth()
+                            .height(240.dp),
+                        activateClick        = true,
+                        clickedPoint         = selectedPoint,
+                        showMyLocationButton = true,
+                        onMapClickListener   = { point ->
+                            selectedPoint = point
+                            onLatitude("%.4f".format(point.latitude()))
+                            onLongitude("%.4f".format(point.longitude()))
+                        }
+                    )
+                }
+
+                // ── Coordenadas y dirección ────────────────────────────────
+                Card(
+                    shape  = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = CardWhite)
+                ) {
+                    Column(
+                        modifier            = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            "Coordenadas",
+                            fontSize   = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color      = TextDark
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            OutlinedTextField(
+                                value         = latitude,
+                                onValueChange = { value ->
+                                    onLatitude(value)
+                                    val newLat = value.toDoubleOrNull()
+                                    val newLng = longitude.toDoubleOrNull()
+                                    if (newLat != null && newLng != null) {
+                                        selectedPoint = Point.fromLngLat(newLng, newLat)
+                                    }
+                                },
+                                modifier      = Modifier.weight(1f),
+                                placeholder   = { Text("Latitud", color = TextGray) },
+                                shape         = RoundedCornerShape(10.dp),
+                                colors        = publishFieldColors(),
+                                singleLine    = true
+                            )
+                            OutlinedTextField(
+                                value         = longitude,
+                                onValueChange = { value ->
+                                    onLongitude(value)
+                                    val newLat = latitude.toDoubleOrNull()
+                                    val newLng = value.toDoubleOrNull()
+                                    if (newLat != null && newLng != null) {
+                                        selectedPoint = Point.fromLngLat(newLng, newLat)
+                                    }
+                                },
+                                modifier      = Modifier.weight(1f),
+                                placeholder   = { Text("Longitud", color = TextGray) },
+                                shape         = RoundedCornerShape(10.dp),
+                                colors        = publishFieldColors(),
+                                singleLine    = true
+                            )
+                        }
+
+                        Text(
+                            "Dirección (opcional)",
+                            fontSize   = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color      = TextDark
                         )
                         OutlinedTextField(
-                            modifier = Modifier.weight(1f),
-                            value = lngInput,
-                            onValueChange = { lngInput = it },
-                            label = { Text("Longitud") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                            value         = address,
+                            onValueChange = onAddress,
+                            modifier      = Modifier.fillMaxWidth(),
+                            placeholder   = { Text("Calle, colonia, ciudad ...", color = TextGray) },
+                            shape         = RoundedCornerShape(10.dp),
+                            colors        = publishFieldColors(),
+                            singleLine    = true
                         )
                     }
+                }
 
-                    OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = addressInput,
-                        onValueChange = { addressInput = it },
-                        label = { Text("Dirección") },
-                        singleLine = true
-                    )
-
-                    OutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            val lat = latInput.toDoubleOrNull()
-                            val lng = lngInput.toDoubleOrNull()
-                            if (lat != null && lng != null) {
-                                viewModel.onLocationSelected(lat, lng, addressInput)
-                            }
-                        }
+                // ── Consejo ────────────────────────────────────────────────
+                Card(
+                    shape  = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7))
+                ) {
+                    Row(
+                        modifier              = Modifier.padding(14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment     = Alignment.Top
                     ) {
                         Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = null,
+                            Icons.Default.Lightbulb,
+                            null,
+                            tint     = Color(0xFFF9A825),
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Confirmar ubicación")
+                        Text(
+                            text     = "Arrastra el mapa o ingresa las coordenadas manualmente para marcar la ubicación exacta del lugar",
+                            fontSize = 13.sp,
+                            color    = Color(0xFF795548)
+                        )
                     }
                 }
+
+                Spacer(Modifier.height(4.dp))
             }
 
-            // ── Error de ubicación ────────────────────────────────────────────
-            viewModel.locationError?.let {
-                Text(text = it, color = MaterialTheme.colorScheme.error)
-            }
-
-            // ── Ubicación confirmada ──────────────────────────────────────────
-            if (viewModel.latitude != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = buildString {
-                            if (viewModel.address.isNotBlank()) append(viewModel.address + " · ")
-                            append("%.5f, %.5f".format(viewModel.latitude, viewModel.longitude))
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // ── Feedback del resultado ────────────────────────────────────────
-            when (val result = viewModel.createResult) {
-                is RequestResult.Loading -> {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                        Text("Publicando punto de interés…")
-                    }
-                }
-                is RequestResult.Error ->
-                    Text(result.message, color = MaterialTheme.colorScheme.error)
-                else -> {}
-            }
-
-            // ── Botón publicar ────────────────────────────────────────────────
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                onClick = {
-                    if (viewModel.validateStep2()) {
-                        viewModel.submitPoint()
-                    }
-                },
-                enabled = viewModel.createResult !is RequestResult.Loading
+            // ── Botones ────────────────────────────────────────────────────
+            Column(
+                modifier            = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Publicar punto de interés")
-            }
+                Button(
+                    onClick  = {
+                        onPublish()
+                        Toast.makeText(
+                            context,
+                            "¡Publicación realizada con éxito! 🎉",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape  = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = TextDark)
+                ) {
+                    Text(
+                        "Publicar",
+                        fontSize   = 15.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-// ── MapPlaceholder ─────────────────────────────────────────────────────────────
-// Reemplazar este bloque completo por el mapa real (Google Maps / Mapbox)
-
-@Composable
-private fun MapPlaceholder(
-    selectedLat: Double?,
-    selectedLng: Double?,
-    onMockLocationSelected: (Double, Double) -> Unit
-) {
-    // Mock locations para pruebas (Armenia, Quindío y alrededores)
-    val mockLocations = listOf(
-        Triple("Centro Armenia", 4.5339, -75.6811),
-        Triple("Parque Centenario", 4.5360, -75.6780),
-        Triple("Zona Cafetera", 4.5200, -75.7000),
-        Triple("Aeropuerto", 4.4528, -75.7661)
-    )
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(280.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.LocationOn,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Mapa",
-            style = MaterialTheme.typography.titleMedium
-        )
-        Text(
-            text = "Integra Google Maps o Mapbox aquí",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Botones rápidos para simular selección de ubicación
-        Text(
-            text = "Toca para simular ubicación:",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            modifier = Modifier.padding(horizontal = 12.dp)
-        ) {
-            mockLocations.take(2).forEach { (name, lat, lng) ->
-                val isSelected = selectedLat == lat && selectedLng == lng
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onMockLocationSelected(lat, lng) },
-                    label = { Text(name, style = MaterialTheme.typography.labelSmall) }
-                )
-            }
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            modifier = Modifier.padding(horizontal = 12.dp)
-        ) {
-            mockLocations.drop(2).forEach { (name, lat, lng) ->
-                val isSelected = selectedLat == lat && selectedLng == lng
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onMockLocationSelected(lat, lng) },
-                    label = { Text(name, style = MaterialTheme.typography.labelSmall) }
-                )
+                OutlinedButton(
+                    onClick  = {
+                        onSaveDraft()
+                        Toast.makeText(
+                            context,
+                            "Guardado como borrador",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape  = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextDark)
+                ) {
+                    Text("Guardar como borrador", fontSize = 15.sp)
+                }
             }
         }
     }

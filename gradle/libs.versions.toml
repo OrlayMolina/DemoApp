@@ -18,6 +18,8 @@ animation = "1.10.5"
 foundation = "1.10.5"
 material3 = "1.4.0"
 foundationLayout = "1.10.5"
+mapsCompose = "11.11.0"
+ui = "1.10.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,6 +48,9 @@ androidx-compose-foundation = { group = "androidx.compose.foundation", name = "f
 material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+maps-android = { module = "com.mapbox.maps:android", version.ref = "mapsCompose" }
+maps-compose = { module = "com.mapbox.extension:maps-compose", version.ref = "mapsCompose" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

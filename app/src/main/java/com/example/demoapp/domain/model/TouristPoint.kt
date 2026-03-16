@@ -41,7 +41,8 @@ data class TouristPoint(
                 ),
                 isVerified = true,
                 importantVotes = 42,
-                commentCount = 8
+                commentCount = 8,
+                createdAt = 1708725000000L   // 24 feb 2024, 03:30
             ),
             TouristPoint(
                 id = "2",
@@ -57,7 +58,8 @@ data class TouristPoint(
                 photoUrls = listOf("https://picsum.photos/seed/fonda/800/600"),
                 isVerified = true,
                 importantVotes = 18,
-                commentCount = 5
+                commentCount = 5,
+                createdAt = 1708810200000L   // 25 feb 2024, 10:42 (aprox)
             ),
             TouristPoint(
                 id = "3",
@@ -73,7 +75,8 @@ data class TouristPoint(
                 photoUrls = listOf("https://picsum.photos/seed/museo/800/600"),
                 isVerified = true,
                 importantVotes = 35,
-                commentCount = 12
+                commentCount = 12,
+                createdAt = 1708552800000L   // 22 feb 2024, 07:20
             ),
             TouristPoint(
                 id = "4",
@@ -89,7 +92,8 @@ data class TouristPoint(
                 photoUrls = listOf("https://picsum.photos/seed/bosque/800/600"),
                 isVerified = false,
                 importantVotes = 7,
-                commentCount = 2
+                commentCount = 2,
+                createdAt = 1708725600000L   // 24 feb 2024
             ),
             TouristPoint(
                 id = "5",
@@ -105,7 +109,8 @@ data class TouristPoint(
                 photoUrls = listOf("https://picsum.photos/seed/bareto/800/600"),
                 isVerified = true,
                 importantVotes = 22,
-                commentCount = 6
+                commentCount = 6,
+                createdAt = 1709022000000L   // 27 feb 2024, 07:20
             )
         )
     }
