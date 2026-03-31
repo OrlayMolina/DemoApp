@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import com.example.demoapp.domain.model.Notification
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.features.explore.ExploreScreen
+import com.example.demoapp.features.map.MapPointsScreen
 import com.example.demoapp.features.notifications.NotificationsScreen   // crea esta pantalla
 import com.example.demoapp.features.profile.AchievementScreen
 import com.example.demoapp.features.profile.EditProfileScreen
@@ -22,6 +23,7 @@ fun MainScreen(
 ) {
     var selectedTab by remember { mutableStateOf(BottomNavTab.HOME) }
     var showStatistics   by remember { mutableStateOf(false) }
+    var showMap          by remember { mutableStateOf(false) }
     var showAchievements by remember { mutableStateOf(false) }
     var showEditProfile  by remember { mutableStateOf(false) }
 
@@ -31,6 +33,7 @@ fun MainScreen(
                 selectedTab   = selectedTab,
                 onTabSelected = {
                     selectedTab = it
+                    showMap          = false
                     showAchievements = false
                     showStatistics   = false
                     showEditProfile  = false
@@ -45,7 +48,17 @@ fun MainScreen(
                 .padding(paddingValues)
         ) {
             when (selectedTab) {
-                BottomNavTab.HOME          -> ExploreScreen()
+                BottomNavTab.HOME -> {
+                    if (showMap) {
+                        MapPointsScreen(
+                            onNavigateBack = { showMap = false }
+                        )
+                    } else {
+                        ExploreScreen(
+                            onOpenMap = { showMap = true }
+                        )
+                    }
+                }
                 BottomNavTab.PUBLISH       -> PublishScreen(onCancel = { selectedTab = BottomNavTab.HOME })
                 BottomNavTab.NOTIFICATIONS -> NotificationsScreen(initialNotifications = Notification.SAMPLE_LIST)
                 BottomNavTab.PROFILE -> {
