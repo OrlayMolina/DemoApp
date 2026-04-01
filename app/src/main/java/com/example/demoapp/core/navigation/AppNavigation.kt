@@ -13,6 +13,7 @@ import com.example.demoapp.features.register.RegisterScreen
 import com.example.demoapp.features.users.list.UserListScreen
 import androidx.navigation.toRoute
 import com.example.demoapp.domain.model.TouristPoint
+import com.example.demoapp.features.dashboard.ModeratorScreen
 import com.example.demoapp.features.explore.ExploreScreen
 import com.example.demoapp.features.profile.ProfileScreen
 import com.example.demoapp.features.recovery.PasswordRecoveryScreen
@@ -39,6 +40,11 @@ fun AppNavigation() {
                 LoginScreen(
                     onNavigateToUsers = {
                         navController.navigate(MainRoutes.Main) {
+                            popUpTo(MainRoutes.Home) { inclusive = false }
+                        }
+                    },
+                    onNavigateToModerator = {
+                        navController.navigate(MainRoutes.Moderator) {
                             popUpTo(MainRoutes.Home) { inclusive = false }
                         }
                     },
@@ -78,6 +84,16 @@ fun AppNavigation() {
                 UserDetailScreen(
                     userId         = args.userId,
                     onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable<MainRoutes.Moderator> {
+                ModeratorScreen(
+                    onLogout = {
+                        navController.navigate(MainRoutes.Login) {
+                            popUpTo(MainRoutes.Moderator) { inclusive = true }
+                        }
+                    }
                 )
             }
         }
