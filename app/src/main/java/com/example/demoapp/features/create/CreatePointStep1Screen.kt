@@ -51,6 +51,7 @@ fun CreatePointStep1Screen(
     title         : String,
     category      : TouristPointCategory?,
     description   : String,
+    isEditing     : Boolean = false,
     onPhotoUrl    : (String) -> Unit,
     onTitle       : (String) -> Unit,
     onCategory    : (TouristPointCategory) -> Unit,
@@ -89,7 +90,7 @@ fun CreatePointStep1Screen(
                 verticalAlignment     = Alignment.CenterVertically
             ) {
                 Text(
-                    text       = "Nueva Publicación",
+                    text       = if (isEditing) "Editar Publicación" else "Nueva Publicación",
                     fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color      = TextDark
@@ -110,7 +111,8 @@ fun CreatePointStep1Screen(
                 trackColor = DividerColor
             )
             Text(
-                text     = "Paso 1 de 2: Información básica",
+                text     = if (isEditing) "Paso 1 de 2: Editar información"
+                else "Paso 1 de 2: Información básica",
                 fontSize = 12.sp,
                 color    = TextGray,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
@@ -280,7 +282,7 @@ fun CreatePointStep1Screen(
                 )
             ) {
                 Text(
-                    "Siguiente: Ubicación",
+                    if (isEditing) "Siguiente: Ubicación" else "Siguiente: Ubicación",
                     fontSize   = 15.sp,
                     fontWeight = FontWeight.SemiBold
                 )

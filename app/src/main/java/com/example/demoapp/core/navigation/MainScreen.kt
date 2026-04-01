@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.demoapp.domain.model.Notification
 import com.example.demoapp.domain.model.TouristPoint
+import com.example.demoapp.features.detail.TouristPointDetailScreen
 import com.example.demoapp.features.explore.ExploreScreen
 import com.example.demoapp.features.map.MapPointsScreen
 import com.example.demoapp.features.notifications.NotificationsScreen   // crea esta pantalla
@@ -26,6 +27,17 @@ fun MainScreen(
     var showMap          by remember { mutableStateOf(false) }
     var showAchievements by remember { mutableStateOf(false) }
     var showEditProfile  by remember { mutableStateOf(false) }
+    var selectedPoint by remember { mutableStateOf<TouristPoint?>(null) }
+    var pointToEdit  by remember { mutableStateOf<TouristPoint?>(null) }
+
+    if (selectedPoint != null) {
+        TouristPointDetailScreen(
+            point          = selectedPoint!!,
+            isModerator    = false,
+            onNavigateBack = { selectedPoint = null }
+        )
+        return
+    }
 
     Scaffold(
         bottomBar = {
@@ -33,6 +45,7 @@ fun MainScreen(
                 selectedTab   = selectedTab,
                 onTabSelected = {
                     selectedTab = it
+                    pointToEdit      = null
                     showMap          = false
                     showAchievements = false
                     showStatistics   = false
@@ -59,7 +72,10 @@ fun MainScreen(
                         )
                     }
                 }
-                BottomNavTab.PUBLISH       -> PublishScreen(onCancel = { selectedTab = BottomNavTab.HOME })
+                BottomNavTab.PUBLISH -> PublishScreen(
+                    onCancel    = { selectedTab = BottomNavTab.HOME; pointToEdit = null },
+                    pointToEdit = pointToEdit
+                )
                 BottomNavTab.NOTIFICATIONS -> NotificationsScreen(initialNotifications = Notification.SAMPLE_LIST)
                 BottomNavTab.PROFILE -> {
                     when {
@@ -81,7 +97,13 @@ fun MainScreen(
                             myPublications           = TouristPoint.SAMPLE_LIST,
                             onNavigateToAchievements = { showAchievements = true },
                             onNavigateToStatistics   = { showStatistics   = true },
-                            onNavigateToSettings     = { showEditProfile  = true }
+                            onNavigateToSettings     = { showEditProfile  = true },
+                            onEditPublication        = {
+//                                selectedPoint    = it
+                                    point ->
+                                pointToEdit  = point
+                                selectedTab  = BottomNavTab.PUBLISH
+                            }
                         )
                     }
                 }

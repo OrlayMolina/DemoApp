@@ -29,6 +29,7 @@ fun CreatePointStep2Screen(
     latitude    : String,
     longitude   : String,
     address     : String,
+    isEditing   : Boolean = false,
     onLatitude  : (String) -> Unit,
     onLongitude : (String) -> Unit,
     onAddress   : (String) -> Unit,
@@ -51,6 +52,20 @@ fun CreatePointStep2Screen(
         }
     }
 
+    if (!isEditing) {
+        OutlinedButton(
+            onClick = {
+                onSaveDraft()
+                Toast.makeText(context, "Guardado como borrador", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape    = RoundedCornerShape(12.dp),
+            colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextDark)
+        ) {
+            Text("Guardar como borrador", fontSize = 15.sp)
+        }
+    }
+
     Scaffold(containerColor = BackgroundGray) { padding ->
         Column(
             modifier = Modifier
@@ -70,7 +85,7 @@ fun CreatePointStep2Screen(
                 }
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text       = "Nueva Publicación",
+                    text       = if (isEditing) "Editar Publicación" else "Nueva Publicación",
                     fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color      = TextDark
@@ -87,7 +102,8 @@ fun CreatePointStep2Screen(
                 trackColor = DividerColor
             )
             Text(
-                text     = "Paso 2 de 2: Ubicación",
+                text     = if (isEditing) "Paso 2 de 2: Editar ubicación"
+                else "Paso 2 de 2: Ubicación",
                 fontSize = 12.sp,
                 color    = TextGray,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
@@ -105,7 +121,7 @@ fun CreatePointStep2Screen(
                 Card(
                     shape    = RoundedCornerShape(14.dp),
                     colors   = CardDefaults.cardColors(containerColor = CardWhite),
-                    modifier = Modifier.nestedScroll(mapNestedScrollConnection) // ← esto falta
+                    modifier = Modifier.nestedScroll(mapNestedScrollConnection)
                 ) {
                     MapBox(
                         modifier             = Modifier
@@ -227,7 +243,8 @@ fun CreatePointStep2Screen(
                         onPublish()
                         Toast.makeText(
                             context,
-                            "¡Publicación realizada con éxito! 🎉",
+                            if (isEditing) "¡Publicación actualizada con éxito! ️"
+                            else "¡Publicación realizada con éxito!",
                             Toast.LENGTH_LONG
                         ).show()
                     },
@@ -238,7 +255,7 @@ fun CreatePointStep2Screen(
                     colors = ButtonDefaults.buttonColors(containerColor = TextDark)
                 ) {
                     Text(
-                        "Publicar",
+                        if (isEditing) "Guardar cambios" else "Publicar",
                         fontSize   = 15.sp,
                         fontWeight = FontWeight.SemiBold
                     )

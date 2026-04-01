@@ -28,4 +28,7 @@ sealed class MainRoutes {
     object Profile : MainRoutes()
 
     @Serializable object Main : MainRoutes()
+
+    @Serializable
+    data object Moderator : MainRoutes()
 }
