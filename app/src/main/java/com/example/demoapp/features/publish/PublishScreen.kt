@@ -1,12 +1,16 @@
 package com.example.demoapp.features.publish
 
 import androidx.compose.runtime.*
+import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
 
 @Composable
 fun PublishScreen(
-    onCancel: () -> Unit = {}
+    onCancel: () -> Unit = {},
+    pointToEdit   : TouristPoint? = null
 ) {
+    val isEditing = pointToEdit != null
+
     var step        by remember { mutableIntStateOf(1) }
     var photoUrl    by remember { mutableStateOf<String?>(null) }
     var title       by remember { mutableStateOf("") }
@@ -33,6 +37,7 @@ fun PublishScreen(
             title         = title,
             category      = category,
             description   = description,
+            isEditing     = isEditing,
             onPhotoUrl    = { photoUrl    = it },
             onTitle       = { title       = it },
             onCategory    = { category    = it },
@@ -47,6 +52,7 @@ fun PublishScreen(
             latitude    = latitude,
             longitude   = longitude,
             address     = address,
+            isEditing   = isEditing,
             onLatitude  = { latitude  = it },
             onLongitude = { longitude = it },
             onAddress   = { address   = it },

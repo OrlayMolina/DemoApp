@@ -50,6 +50,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.demoapp.ui.theme.DemoAppTheme
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import com.example.demoapp.core.utils.RequestResult
+import com.example.demoapp.domain.model.UserRole
 
 private val GreenPrimary   = Color(0xFF2E7D5E)
 private val BackgroundGray = Color(0xFFF0F4F2)
@@ -63,13 +69,32 @@ fun LoginScreen(
     viewModel: LoginViewModel = viewModel(),
     onNavigateToUsers: () -> Unit,
     onNavigateToRegister: (() -> Unit)? = null,   // opcional, para el link "Regístrate"
-    onNavigateToPasswordRecovery: (() -> Unit)? = null
+    onNavigateToPasswordRecovery: (() -> Unit)? = null,
+    onNavigateToModerator: (() -> Unit)? = null
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope             = rememberCoroutineScope()
+    var selectedRole      by remember { mutableStateOf(UserRole.USER) }
+    val loginResult by viewModel.loginResult.collectAsState()
 
-    // Tab selector: 0 = Usuario, 1 = Moderador
-    var selectedRole by remember { mutableStateOf(0) }
+    LaunchedEffect(loginResult) {
+        when (val result = loginResult) {
+            is RequestResult.Success -> {
+                if (result.data == UserRole.ADMIN) {
+                    onNavigateToModerator?.invoke()
+                } else {
+                    onNavigateToUsers()
+                }
+            }
+            is RequestResult.Error -> {
+                snackbarHostState.showSnackbar(
+                    message  = result.message,
+                    duration = SnackbarDuration.Short
+                )
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -158,7 +183,7 @@ fun LoginScreen(
                     )
 
                     // ── ¿Olvidaste tu contraseña? ──────────────────────────
-                    if (selectedRole == 0) {
+                    if (selectedRole == UserRole.USER) {
                         Text(
                             text = buildAnnotatedString {
                                 withStyle(
@@ -191,9 +216,9 @@ fun LoginScreen(
                                 "Login",
                                 "Email: ${viewModel.email.value}, " +
                                         "Password: ${viewModel.password.value}, " +
-                                        "Rol: ${if (selectedRole == 0) "Usuario" else "Moderador"}"
+                                        "Rol selector: ${if (selectedRole == UserRole.USER) "Usuario" else "Moderador"}"
                             )
-                            onNavigateToUsers()
+                            viewModel.login()   // ← solo llama login, la navegación la maneja LaunchedEffect
                         },
                         enabled  = viewModel.isFormValid,
                         modifier = Modifier
@@ -206,14 +231,14 @@ fun LoginScreen(
                         )
                     ) {
                         Text(
-                            text       = if (selectedRole == 0) "Iniciar sesión" else "Acceso Moderador",
+                            text       = if (selectedRole == UserRole.USER) "Iniciar sesión" else "Acceso Moderador",
                             fontSize   = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
 
                     // ── ¿No tienes cuenta? ─────────────────────────────────
-                    if (selectedRole == 0) {
+                    if (selectedRole == UserRole.USER) {
                         Text(
                             text = buildAnnotatedString {
                                 withStyle(SpanStyle(color = TextGray, fontSize = 13.sp)) {
@@ -242,10 +267,10 @@ fun LoginScreen(
 
 @Composable
 private fun RoleSelector(
-    selectedIndex: Int,
-    onRoleSelected: (Int) -> Unit
+    selectedIndex  : UserRole,
+    onRoleSelected : (UserRole) -> Unit
 ) {
-    val roles = listOf("Usuario", "Moderador")
+    val roles = listOf(UserRole.USER to "Usuario", UserRole.ADMIN to "Moderador")
 
     Box(
         modifier = Modifier
@@ -256,15 +281,15 @@ private fun RoleSelector(
             .padding(4.dp)
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
-            roles.forEachIndexed { index, label ->
-                val isSelected = selectedIndex == index
+            roles.forEach { (role, label) ->
+                val isSelected = selectedIndex == role
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(50))
                         .background(if (isSelected) GreenPrimary else Color.Transparent)
-                        .clickable { onRoleSelected(index) },
+                        .clickable { onRoleSelected(role) },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(

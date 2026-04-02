@@ -4,11 +4,11 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import com.mapbox.maps.extension.compose.annotation.generated.CircleAnnotation
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.FloatingActionButton
@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import com.mapbox.maps.extension.compose.annotation.generated.PointAnnotation
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -29,7 +29,6 @@ import com.mapbox.geojson.Point
 import com.mapbox.maps.extension.compose.MapEffect
 import com.mapbox.maps.extension.compose.MapboxMap
 import com.mapbox.maps.extension.compose.animation.viewport.rememberMapViewportState
-import com.mapbox.maps.extension.compose.annotation.generated.PointAnnotation
 import com.mapbox.maps.plugin.PuckBearing
 import com.mapbox.maps.plugin.gestures.gestures
 import com.mapbox.maps.plugin.locationcomponent.createDefault2DPuck
@@ -146,10 +145,39 @@ fun MapBox(
 
             // ── Marcadores de publicaciones existentes ─────────────────────
             points.forEach { touristPoint ->
-                PointAnnotation(
-                    point = Point.fromLngLat(touristPoint.longitude, touristPoint.latitude)
-                )
+                val point = Point.fromLngLat(touristPoint.longitude, touristPoint.latitude)
+
+                // Círculo del marcador
+                CircleAnnotation(point = point) {
+                    circleRadius      = 8.0
+                    circleColor       = Color(0xFF1A73E8)
+                    circleStrokeWidth = 2.0
+                    circleStrokeColor = Color.White
+                }
+
+                // Etiqueta con el título
+                PointAnnotation(point = point) {
+                    textField          = touristPoint.title
+                    textSize           = 11.0
+                    textColor          = Color(0xFF1A73E8)
+                    textHaloColor      = Color.White
+                    textHaloWidth      = 1.5
+                    textOffset         = listOf(0.0, 1.8)
+                    textMaxWidth       = 8.0
+                    iconOpacity        = 0.0   // oculta el ícono por defecto
+                }
             }
+
+            // ── Marcador del punto clickeado ───────────────────────────────
+            activePoint?.let { p ->
+                CircleAnnotation(point = p) {
+                    circleRadius      = 10.0
+                    circleColor       = Color(0xFFE53935)
+                    circleStrokeWidth = 2.5
+                    circleStrokeColor = Color.White
+                }
+            }
+
 
             // ── Calcular posición en pantalla del pin seleccionado ─────────
             if (activePoint != null) {
