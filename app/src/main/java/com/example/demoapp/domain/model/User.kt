@@ -9,5 +9,11 @@ data class User (
     val password: String,
     val phoneNumber: String = "",
     val profilePictureUrl: String = "",
-    val role: UserRole = UserRole.USER
+    val role: UserRole = UserRole.USER,
+
+    val points: Int = 0,
+    val badges: List<Badge> = emptyList(),
+    var level: UserLevel = UserLevel.NOVATO
+
+
 )

@@ -3,10 +3,25 @@ package com.example.demoapp.features.users.list
 import androidx.lifecycle.ViewModel
 import com.example.demoapp.domain.model.User
 import com.example.demoapp.domain.model.UserRole
+import com.example.demoapp.domain.repository.UserRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 
-class UserListViewModel : ViewModel() {
+
+@HiltViewModel // Anotamos el ViewModel con @HiltViewModel para que Hilt pueda inyectarlo
+class UserListViewModel @Inject constructor(
+    private val repository: UserRepository
+) : ViewModel() {
+
+    // Exponemos la lista de usuarios desde el repositorio como un StateFlow para que la UI pueda observar los cambios
+    val users: StateFlow<List<User>> = repository.users
+
+}
+
+
+/*class UserListViewModel : ViewModel() {
 
     private val _users = MutableStateFlow<List<User>>(emptyList())
     val users: StateFlow<List<User>> = _users
@@ -37,4 +52,4 @@ class UserListViewModel : ViewModel() {
             )
         )
     }
-}
+}*/

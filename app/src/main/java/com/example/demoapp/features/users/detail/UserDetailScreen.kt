@@ -2,6 +2,7 @@ package com.example.demoapp.features.users.detail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +28,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -33,9 +36,10 @@ import coil3.request.crossfade
 
 @Composable
 fun UserDetailScreen(
+    padding: PaddingValues,
     userId: String,
     onNavigateBack: () -> Unit,
-    viewModel: UserDetailViewModel = viewModel()
+    viewModel: UserDetailViewModel = hiltViewModel()
 ) {
     val user by viewModel.user.collectAsState()
 
@@ -47,6 +51,7 @@ fun UserDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .padding(24.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -121,3 +126,5 @@ fun UserDetailScreen(
         }
     }
 }
+
+

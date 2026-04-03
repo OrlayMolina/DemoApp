@@ -18,9 +18,10 @@ import com.example.demoapp.features.explore.ExploreScreen
 import com.example.demoapp.features.profile.ProfileScreen
 import com.example.demoapp.features.recovery.PasswordRecoveryScreen
 import com.example.demoapp.features.users.detail.UserDetailScreen
+import androidx.compose.foundation.layout.PaddingValues
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(paddingValues: PaddingValues) {
     val navController = rememberNavController()
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -82,8 +83,9 @@ fun AppNavigation() {
             composable<MainRoutes.UserDetail> { backStackEntry ->
                 val args = backStackEntry.toRoute<MainRoutes.UserDetail>()
                 UserDetailScreen(
-                    userId         = args.userId,
-                    onNavigateBack = { navController.popBackStack() }
+                    userId = args.userId,
+                    onNavigateBack = { navController.popBackStack() },
+                    padding = paddingValues
                 )
             }
 
