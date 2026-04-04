@@ -54,6 +54,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.demoapp.core.utils.RequestResult
 import com.example.demoapp.domain.model.UserRole
 
@@ -66,7 +67,7 @@ private val TealModerator = Color(0xFF4A7B7B)
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = viewModel(),
+    viewModel: LoginViewModel = hiltViewModel(),
     onNavigateToUsers: () -> Unit,
     onNavigateToRegister: (() -> Unit)? = null,   // opcional, para el link "Regístrate"
     onNavigateToPasswordRecovery: (() -> Unit)? = null,
