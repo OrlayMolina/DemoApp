@@ -45,4 +45,8 @@ class MapPointsViewModel : ViewModel() {
         showingMap       = false
         selectedCategory = null
     }
+
+    fun setPoints(points: List<TouristPoint>) {
+        allPoints = points
+    }
 }

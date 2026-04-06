@@ -77,7 +77,18 @@ fun AppNavigation(paddingValues: PaddingValues) {
             }
 
             composable<MainRoutes.Main> {
-                MainScreen()
+                MainScreen(
+                    onLogout = {
+                        // Lógica para limpiar sesión y volver al Login
+                        navController.navigate(MainRoutes.Login) {
+                            popUpTo(0) // Borra el historial para que no pueda volver atrás
+                        }
+                    },
+                    onNavigateToCreate = {
+                        // AQUÍ VA LA LÍNEA:
+                       // navController.navigate(MainRoutes.Create)
+                    }
+                )
             }
 
             composable<MainRoutes.UserDetail> { backStackEntry ->

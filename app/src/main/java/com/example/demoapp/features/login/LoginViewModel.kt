@@ -4,7 +4,6 @@ import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import com.example.demoapp.core.utils.RequestResult
 import com.example.demoapp.core.utils.ValidatedField
-import com.example.demoapp.domain.model.User
 import com.example.demoapp.domain.model.UserRole
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -7,6 +7,8 @@ sealed class MainRoutes {
     @Serializable
     data object Home : MainRoutes()
 
+    @Serializable object CreateStep1
+    @Serializable object CreateStep2
     @Serializable
     data object Login : MainRoutes()
 
