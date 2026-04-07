@@ -60,15 +60,13 @@ fun CreatePointStep1Screen(
     onCancel      : () -> Unit
 ) {
     var showCategoryMenu by remember { mutableStateOf(false) }
-    var photoCounter     by remember { mutableIntStateOf(1) }
 
-    // Abre galería real pero simula imagen con picsum
+    // Guarda la URI real seleccionada por el usuario
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            onPhotoUrl("https://picsum.photos/seed/publish_$photoCounter/800/600")
-            photoCounter++
+            onPhotoUrl(uri.toString())
         }
     }
 

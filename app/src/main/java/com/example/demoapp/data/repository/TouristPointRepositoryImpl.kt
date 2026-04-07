@@ -46,6 +46,19 @@ class TouristPointRepositoryImpl @Inject constructor() : TouristPointRepository 
         return _touristPoints.value.find { it.id == id }
     }
 
+    override fun update(point: TouristPoint): Result<Unit> {
+        val index = _touristPoints.value.indexOfFirst { it.id == point.id }
+        if (index == -1) {
+            return Result.failure(NoSuchElementException("Punto no encontrado: ${point.id}"))
+        }
+
+        val updated = _touristPoints.value.toMutableList()
+        updated[index] = point
+        _touristPoints.value = updated
+        Log.d("Repository", "Punto '${point.title}' actualizado con exito.")
+        return Result.success(Unit)
+    }
+
     /**
      * Elimina un punto de la lista (opcional, para completar el CRUD)
      */

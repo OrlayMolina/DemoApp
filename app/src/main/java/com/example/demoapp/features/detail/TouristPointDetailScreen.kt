@@ -27,8 +27,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.example.demoapp.domain.model.Comment
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
+import com.example.demoapp.features.comments.CommentsScreen
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -84,6 +86,16 @@ fun TouristPointDetailScreen(
 
     var showRejectDialog   by remember { mutableStateOf(false) }
     var showAllComments    by remember { mutableStateOf(false) }
+    var showCommentsScreen by remember { mutableStateOf(false) }
+
+    if (showCommentsScreen) {
+        CommentsScreen(
+            pointId = point.id,
+            pointTitle = point.title,
+            onNavigateBack = { showCommentsScreen = false }
+        )
+        return
+    }
 
     // ── Modal rechazo ──────────────────────────────────────────────────────
     if (showRejectDialog) {
@@ -320,7 +332,8 @@ fun TouristPointDetailScreen(
                     }
                     Row(
                         verticalAlignment     = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.clickable { showCommentsScreen = true }
                     ) {
                         Icon(Icons.Outlined.ModeComment, null, tint = TextGray, modifier = Modifier.size(20.dp))
                         Text("${point.commentCount}", fontSize = 14.sp, color = TextGray)
@@ -534,7 +547,7 @@ private fun CommentItem(comment: Comment) {
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(comment.authorName, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A1A))
-                Text(comment.date, fontSize = 11.sp, color = Color(0xFF6B6B6B))
+                Text(formatShortDate(comment.createdAt), fontSize = 11.sp, color = Color(0xFF6B6B6B))
             }
             Text(comment.text, fontSize = 13.sp, color = Color(0xFF1A1A1A))
         }

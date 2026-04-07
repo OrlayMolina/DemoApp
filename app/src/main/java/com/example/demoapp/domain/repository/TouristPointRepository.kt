@@ -13,6 +13,9 @@ interface TouristPointRepository {
     // Para cuando quieras implementar la edición (findById)
     fun findById(id: String): TouristPoint?
 
+    // Actualiza un punto existente
+    fun update(point: TouristPoint): Result<Unit>
+
     // Borra un punto de la lista
     fun delete(id: String)
 

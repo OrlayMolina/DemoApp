@@ -4,16 +4,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.demoapp.domain.model.Comment
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
-
-data class Comment(
-    val id        : String,
-    val authorName: String,
-    val avatarUrl : String? = null,
-    val text      : String,
-    val date      : String
-)
 
 class TouristPointDetailViewModel : ViewModel() {
 
@@ -34,10 +27,10 @@ class TouristPointDetailViewModel : ViewModel() {
 
     // Comentarios quemados
     val comments = listOf(
-        Comment("1", "María García",  null, "¡Increíble lugar! Definitivamente tengo que visitarlo.", "21/2/2026"),
-        Comment("2", "Carlos Admin",  null, "Excelente fotografía. Gracias por compartir.",           "21/2/2026"),
-        Comment("3", "Ana Pérez",     null, "Lo visité el fin de semana pasado, muy recomendado.",    "22/2/2026"),
-        Comment("4", "Luis Martínez", null, "¿Saben si está abierto los domingos?",                  "22/2/2026"),
+        Comment("1", "1", "u1", "Maria Garcia", null, "Increible lugar! Definitivamente tengo que visitarlo."),
+        Comment("2", "1", "u2", "Carlos Admin", null, "Excelente fotografia. Gracias por compartir."),
+        Comment("3", "1", "u3", "Ana Perez", null, "Lo visite el fin de semana pasado, muy recomendado."),
+        Comment("4", "1", "u4", "Luis Martinez", null, "Saben si esta abierto los domingos?"),
     )
 
     fun loadPoint(touristPoint: TouristPoint) {

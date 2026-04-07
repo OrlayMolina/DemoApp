@@ -13,6 +13,7 @@ import com.example.demoapp.domain.model.PriceRange
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
 import com.example.demoapp.domain.repository.TouristPointRepository
+import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
@@ -23,8 +24,11 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class CreatePointViewModel @Inject constructor(
-    private val repository: TouristPointRepository // <── INYECCIÓN DEL REPO
+    private val repository: TouristPointRepository, // <── INYECCIÓN DEL REPO
+    private val userRepository: UserRepository
 ) : ViewModel() {
+
+    private var editingPoint: TouristPoint? = null
 
     // Fuente única para que Home/Mapa/Perfil reflejen nuevas publicaciones.
     val touristPoints: StateFlow<List<TouristPoint>> = repository.touristPoints
@@ -163,7 +167,7 @@ class CreatePointViewModel @Inject constructor(
     var createResult by mutableStateOf<RequestResult<TouristPoint>?>(null)
         private set
 
-    fun submitPoint(authorId: String = "current_user_id"): Boolean {
+    fun submitPoint(): Boolean {
         if (!isStep1Valid || !isGalleryValid || !isStep2Valid) {
             createResult = RequestResult.Error("Completa los datos requeridos antes de publicar")
             return false
@@ -171,29 +175,79 @@ class CreatePointViewModel @Inject constructor(
 
         createResult = RequestResult.Loading
 
-        val newPoint = TouristPoint(
-            id = System.currentTimeMillis().toString(),
-            authorId = authorId,
-            title = title.value,
-            category = selectedCategory!!,
-            description = description.value.ifBlank { "Sin descripción" },
-            latitude = latitude!!,
-            longitude = longitude!!,
-            address = address,
-            schedule = schedule.value.ifBlank { "No especificado" },
-            priceRange = selectedPriceRange ?: PriceRange.FREE,
-            photoUrls = selectedPhotoUrls.toList(),
-            isVerified = false
+        val basePoint = editingPoint
+        val pointToPersist = if (basePoint != null) {
+            basePoint.copy(
+                title = title.value,
+                category = selectedCategory!!,
+                description = description.value.ifBlank { "Sin descripción" },
+                latitude = latitude!!,
+                longitude = longitude!!,
+                address = address,
+                schedule = schedule.value.ifBlank { "No especificado" },
+                priceRange = selectedPriceRange ?: PriceRange.FREE,
+                photoUrls = selectedPhotoUrls.toList()
+            )
+        } else {
+            val authorId = userRepository.currentUser.value?.id ?: "1"
+            TouristPoint(
+                id = System.currentTimeMillis().toString(),
+                authorId = authorId,
+                title = title.value,
+                category = selectedCategory!!,
+                description = description.value.ifBlank { "Sin descripción" },
+                latitude = latitude!!,
+                longitude = longitude!!,
+                address = address,
+                schedule = schedule.value.ifBlank { "No especificado" },
+                priceRange = selectedPriceRange ?: PriceRange.FREE,
+                photoUrls = selectedPhotoUrls.toList(),
+                isVerified = false
+            )
+        }
+
+        val persistResult = if (basePoint != null) {
+            repository.update(pointToPersist)
+        } else {
+            repository.save(pointToPersist)
+            Result.success(Unit)
+        }
+
+        return persistResult.fold(
+            onSuccess = {
+                Log.d("CreatePoint", "Punto persistido en el repo: ${pointToPersist.title}")
+                createResult = RequestResult.Success(pointToPersist)
+                true
+            },
+            onFailure = { error ->
+                createResult = RequestResult.Error(error.message ?: "No se pudo guardar la publicacion")
+                false
+            }
         )
+    }
 
-        repository.save(newPoint)
-
-        Log.d("CreatePoint", "Punto guardado en el repo: ${newPoint.title}")
-        createResult = RequestResult.Success(newPoint)
-        return true
+    fun startEditing(point: TouristPoint) {
+        editingPoint = point
+        title.onChange(point.title)
+        description.onChange(point.description)
+        schedule.onChange(point.schedule)
+        selectedCategory = point.category
+        categoryError = null
+        selectedPriceRange = point.priceRange
+        selectedPhotoUrls.clear()
+        selectedPhotoUrls.addAll(point.photoUrls)
+        photoError = null
+        latitude = point.latitude
+        longitude = point.longitude
+        latitudeInput = point.latitude.toString()
+        longitudeInput = point.longitude.toString()
+        address = point.address
+        locationError = null
+        createResult = null
     }
 
     fun reset() {
+        editingPoint = null
         title.reset()
         description.reset()
         schedule.reset()

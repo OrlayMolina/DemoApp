@@ -1,7 +1,13 @@
 package com.example.demoapp.di
 
+import com.example.demoapp.data.repository.CommentRepositoryImpl
+import com.example.demoapp.data.repository.NotificationRepositoryImpl
+import com.example.demoapp.data.repository.ProfileRepositoryImpl
 import com.example.demoapp.data.repository.TouristPointRepositoryImpl
 import com.example.demoapp.data.repository.UserRepositoryImpl
+import com.example.demoapp.domain.repository.CommentRepository
+import com.example.demoapp.domain.repository.NotificationRepository
+import com.example.demoapp.domain.repository.ProfileRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.Binds
@@ -26,4 +32,21 @@ abstract class RepositoryModule {
         repositoryImpl: TouristPointRepositoryImpl
     ): TouristPointRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindNotificationRepository(
+        impl: NotificationRepositoryImpl
+    ): NotificationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCommentRepository(
+        impl: CommentRepositoryImpl
+    ): CommentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProfileRepository(
+        impl: ProfileRepositoryImpl
+    ): ProfileRepository
 }

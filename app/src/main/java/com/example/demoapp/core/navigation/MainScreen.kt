@@ -7,7 +7,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.demoapp.domain.model.Notification
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.features.create.CreatePointViewModel
 import com.example.demoapp.features.detail.TouristPointDetailScreen
@@ -20,7 +19,6 @@ import com.example.demoapp.features.profile.ProfileScreen
 import com.example.demoapp.features.profile.StatisticsScreen
 import com.example.demoapp.features.publish.CreatePointStep1Screen
 import com.example.demoapp.features.publish.CreatePointStep2Screen
-import com.example.demoapp.features.publish.PublishScreen
 
 @Composable
 fun MainScreen(
@@ -41,6 +39,13 @@ fun MainScreen(
     val createViewModel: CreatePointViewModel = hiltViewModel()
     val publishedPoints by createViewModel.touristPoints.collectAsState()
     // -----------------------------------------------
+
+    LaunchedEffect(pointToEdit?.id) {
+        pointToEdit?.let { point ->
+            createViewModel.startEditing(point)
+            currentPublishStep = 1
+        }
+    }
 
     if (selectedPoint != null) {
         TouristPointDetailScreen(
@@ -88,73 +93,73 @@ fun MainScreen(
                     } else {
                         ExploreScreen(
                             points = publishedPoints,
-                            onOpenMap = { showMap = true }
+                            onOpenMap = { showMap = true },
+                            onOpenDetail = { point -> selectedPoint = point }
                         )
                     }
                 }
 
                 BottomNavTab.PUBLISH -> {
-                    if (pointToEdit == null) {
-                        // FLUJO DE CREACIÓN DE 2 PASOS
-                        if (currentPublishStep == 1) {
-                            CreatePointStep1Screen(
-                                photoUrl = createViewModel.selectedPhotoUrls.firstOrNull(),
-                                title = createViewModel.title.value,
-                                category = createViewModel.selectedCategory,
-                                description = createViewModel.description.value,
-                                onPhotoUrl = { url ->
-                                    createViewModel.selectedPhotoUrls.clear()
-                                    createViewModel.selectedPhotoUrls.add(url)
-                                },
-                                onTitle = { createViewModel.title.onChange(it) },
-                                onCategory = { categoryEnum ->
-                                    createViewModel.onCategoryChange(categoryEnum)
-                                },
-                                onDescription = { createViewModel.description.onChange(it) },
-                                onNext = {
-                                    if (createViewModel.validateStep1()) {
-                                        currentPublishStep = 2
-                                    }
-                                },
-                                onCancel = {
+                    // FLUJO DE CREACIÓN/EDICIÓN DE 2 PASOS
+                    if (currentPublishStep == 1) {
+                        CreatePointStep1Screen(
+                            photoUrl = createViewModel.selectedPhotoUrls.firstOrNull(),
+                            title = createViewModel.title.value,
+                            category = createViewModel.selectedCategory,
+                            description = createViewModel.description.value,
+                            isEditing = pointToEdit != null,
+                            onPhotoUrl = { url ->
+                                createViewModel.selectedPhotoUrls.clear()
+                                createViewModel.addPhoto(url)
+                            },
+                            onTitle = { createViewModel.title.onChange(it) },
+                            onCategory = { categoryEnum ->
+                                createViewModel.onCategoryChange(categoryEnum)
+                            },
+                            onDescription = { createViewModel.description.onChange(it) },
+                            onNext = {
+                                if (createViewModel.validateStep1()) {
+                                    currentPublishStep = 2
+                                }
+                            },
+                            onCancel = {
+                                selectedTab = BottomNavTab.HOME
+                                pointToEdit = null
+                                createViewModel.reset()
+                            }
+                        )
+                    } else {
+                        // Paso 2: Mapa y Publicación
+                        CreatePointStep2Screen(
+                            latitude    = createViewModel.latitudeInput,
+                            longitude   = createViewModel.longitudeInput,
+                            address     = createViewModel.address,
+                            isEditing   = pointToEdit != null,
+                            onLatitude  = { createViewModel.onLatitudeChange(it) },
+                            onLongitude = { createViewModel.onLongitudeChange(it) },
+                            onAddress   = { createViewModel.onAddressChange(it) },
+                            onBack      = { currentPublishStep = 1 },
+                            onPublish   = {
+                                val success = createViewModel.submitPoint()
+                                if (success) {
                                     selectedTab = BottomNavTab.HOME
+                                    pointToEdit = null
+                                    currentPublishStep = 1
                                     createViewModel.reset()
                                 }
-                            )
-                        } else {
-                            // Paso 2: Mapa y Publicación
-                            CreatePointStep2Screen(
-                                latitude    = createViewModel.latitudeInput,
-                                longitude   = createViewModel.longitudeInput,
-                                address     = createViewModel.address,
-                                // isEditing se deja en false por defecto según tu declaración
-                                onLatitude  = { createViewModel.onLatitudeChange(it) },
-                                onLongitude = { createViewModel.onLongitudeChange(it) },
-                                onAddress   = { createViewModel.onAddressChange(it) },
-                                onBack      = { currentPublishStep = 1 },
-                                onPublish   = {
-                                    val success = createViewModel.submitPoint()
-                                    if (success) {
-                                        selectedTab = BottomNavTab.HOME
-                                        currentPublishStep = 1
-                                        createViewModel.reset()
-                                    }
-                                    success
-                                },
-                                onSaveDraft = {
-                                    // Llama aquí a tu función de guardado en el ViewModel si existe
-                                }
-                            )
-                        }
-                    } else {
-                        PublishScreen(
-                            onCancel    = { selectedTab = BottomNavTab.HOME; pointToEdit = null },
-                            pointToEdit = pointToEdit
+                                success
+                            },
+                            onSaveDraft = {
+                                selectedTab = BottomNavTab.HOME
+                                pointToEdit = null
+                                currentPublishStep = 1
+                                createViewModel.reset()
+                            }
                         )
                     }
                 }
 
-                BottomNavTab.NOTIFICATIONS -> NotificationsScreen(initialNotifications = Notification.SAMPLE_LIST)
+                BottomNavTab.NOTIFICATIONS -> NotificationsScreen()
                 BottomNavTab.PROFILE -> {
                     when {
                         showAchievements -> AchievementScreen(
@@ -172,10 +177,10 @@ fun MainScreen(
                             }
                         )
                         else -> ProfileScreen(
-                            myPublications           = publishedPoints,
                             onNavigateToAchievements = { showAchievements = true },
                             onNavigateToStatistics   = { showStatistics   = true },
                             onNavigateToSettings     = { showEditProfile  = true },
+                            onOpenPublication        = { point -> selectedPoint = point },
                             onEditPublication        = {
                                     point ->
                                 pointToEdit  = point

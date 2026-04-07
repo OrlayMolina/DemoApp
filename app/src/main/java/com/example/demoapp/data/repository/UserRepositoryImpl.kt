@@ -16,6 +16,8 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
 
     private val _users = MutableStateFlow<List<User>>(emptyList())
     override val users: StateFlow<List<User>> = _users.asStateFlow()
+    private val _currentUser = MutableStateFlow<User?>(null)
+    override val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
     init {
         _users.value = fetchUsers()
@@ -23,7 +25,13 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
 
     // --- Auth ---
     override fun login(email: String, password: String): User? {
-        return _users.value.firstOrNull { it.email == email && it.password == password }
+        val user = _users.value.firstOrNull { it.email == email && it.password == password }
+        _currentUser.value = user
+        return user
+    }
+
+    override fun logout() {
+        _currentUser.value = null
     }
 
     override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
@@ -52,6 +60,9 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
             val updated = _users.value.toMutableList()
             updated[index] = user
             _users.value = updated
+            if (_currentUser.value?.id == user.id) {
+                _currentUser.value = user
+            }
             Result.success(Unit)
         } else {
             Result.failure(Exception("Usuario no encontrado"))
@@ -62,6 +73,9 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         val exists = _users.value.any { it.id == id }
         return if (exists) {
             _users.value = _users.value.filter { it.id != id }
+            if (_currentUser.value?.id == id) {
+                _currentUser.value = null
+            }
             Result.success(Unit)
         } else {
             Result.failure(Exception("Usuario no encontrado"))
@@ -108,7 +122,8 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
                 address = "Calle 123",
                 email = "juan@email.com",
                 password = "111111",
-                profilePictureUrl = "https://picsum.photos/200?random=1"
+                profilePictureUrl = "https://picsum.photos/200?random=1",
+                bio = "Amante de la naturaleza y caminatas de fin de semana"
             ),
             User(
                 id = "2",
@@ -117,7 +132,8 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
                 address = "Calle 456",
                 email = "maria@email.com",
                 password = "222222",
-                profilePictureUrl = "https://picsum.photos/200?random=2"
+                profilePictureUrl = "https://picsum.photos/200?random=2",
+                bio = "Exploradora urbana apasionada por descubrir lugares unicos"
             ),
             User(
                 id = "3",
@@ -127,6 +143,7 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
                 email = "carlos@email.com",
                 password = "333333",
                 profilePictureUrl = "https://picsum.photos/200?random=3",
+                bio = "Fan de la fotografia y los espacios culturales",
                 role = UserRole.USER
             )
         )

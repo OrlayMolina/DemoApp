@@ -9,9 +9,11 @@ interface UserRepository {
 
     // --- State ---
     val users: StateFlow<List<User>>
+    val currentUser: StateFlow<User?>
 
     // --- Auth ---
     fun login(email: String, password: String): User?
+    fun logout()
     suspend fun sendPasswordResetEmail(email: String): Result<Unit>
 
     // --- Queries ---

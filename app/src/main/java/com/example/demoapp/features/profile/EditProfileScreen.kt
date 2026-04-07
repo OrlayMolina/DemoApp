@@ -1,7 +1,11 @@
 package com.example.demoapp.features.profile
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -20,6 +24,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import coil3.compose.AsyncImage
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.compose.ui.platform.LocalContext
 
 // ─── Paleta ───────────────────────────────────────────────────────────────────
 
@@ -38,12 +45,22 @@ private val GreenPrimary    = Color(0xFF2E7D5E)
 @Composable
 fun EditProfileScreen(
     onNavigateBack    : () -> Unit = {},
-    onAccountDeleted  : () -> Unit = {}   // navega a Login
+    onAccountDeleted  : () -> Unit = {},   // navega a Login
+    viewModel: EditProfileViewModel = hiltViewModel()
 ) {
-    var name              by remember { mutableStateOf("María García") }
-    var email             by remember { mutableStateOf("maria@example.com") }
-    var bio               by remember { mutableStateOf("Exploradora urbana apasionada por descubrir lugares únicos") }
     var showDeleteDialog  by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val name = viewModel.name
+    val email = viewModel.email
+    val bio = viewModel.bio
+    val profilePictureUrl = viewModel.profilePictureUrl
+
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) viewModel.onProfilePictureChange(uri.toString())
+    }
 
     val maxBio = 150
 
@@ -52,7 +69,9 @@ fun EditProfileScreen(
         DeleteAccountDialog(
             onConfirm = {
                 showDeleteDialog = false
-                onAccountDeleted()
+                if (viewModel.deleteCurrentAccount()) {
+                    onAccountDeleted()
+                }
             },
             onDismiss = { showDeleteDialog = false }
         )
@@ -83,7 +102,15 @@ fun EditProfileScreen(
                     color      = TextDark
                 )
                 Button(
-                    onClick        = { /* TODO: guardar */ },
+                    onClick        = {
+                        val ok = viewModel.saveProfile()
+                        Toast.makeText(
+                            context,
+                            if (ok) "Perfil guardado" else (viewModel.saveMessage ?: "No se pudo guardar"),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        if (ok) onNavigateBack()
+                    },
                     colors         = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
                     shape          = RoundedCornerShape(50),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
@@ -112,22 +139,33 @@ fun EditProfileScreen(
                     modifier         = Modifier.align(Alignment.CenterHorizontally),
                     contentAlignment = Alignment.BottomEnd
                 ) {
-                    Box(
-                        modifier         = Modifier
-                            .size(90.dp)
-                            .clip(CircleShape)
-                            .background(GreenPrimary)
-                            .border(3.dp, CardWhite, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text       = name.split(" ")
-                                .take(2)
-                                .joinToString("") { it.first().uppercase() },
-                            color      = Color.White,
-                            fontSize   = 28.sp,
-                            fontWeight = FontWeight.Bold
+                    if (profilePictureUrl.isNotBlank()) {
+                        AsyncImage(
+                            model              = profilePictureUrl,
+                            contentDescription = "Foto de perfil",
+                            modifier           = Modifier
+                                .size(90.dp)
+                                .clip(CircleShape)
+                                .border(3.dp, CardWhite, CircleShape)
                         )
+                    } else {
+                        Box(
+                            modifier         = Modifier
+                                .size(90.dp)
+                                .clip(CircleShape)
+                                .background(GreenPrimary)
+                                .border(3.dp, CardWhite, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text       = name.split(" ")
+                                    .take(2)
+                                    .joinToString("") { it.first().uppercase() },
+                                color      = Color.White,
+                                fontSize   = 28.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                     // Badge editar foto
                     Box(
@@ -135,20 +173,16 @@ fun EditProfileScreen(
                             .size(28.dp)
                             .clip(CircleShape)
                             .background(BluePrimary)
-                            .border(2.dp, CardWhite, CircleShape),
+                            .border(2.dp, CardWhite, CircleShape)
+                            .clickable { photoPicker.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Default.CameraAlt,
-                            null,
-                            tint     = Color.White,
-                            modifier = Modifier.size(14.dp)
-                        )
+                        Icon(Icons.Default.CameraAlt, null, tint = Color.White, modifier = Modifier.size(14.dp))
                     }
                 }
 
                 Text(
-                    text      = "Toca para cambiar foto",
+                    text      = "Toca el ícono para cambiar foto",
                     fontSize  = 12.sp,
                     color     = TextGray,
                     modifier  = Modifier.align(Alignment.CenterHorizontally),
@@ -166,7 +200,7 @@ fun EditProfileScreen(
                         EditField(
                             label = "Nombre",
                             value = name,
-                            onValueChange = { name = it },
+                            onValueChange = { viewModel.onNameChange(it) },
                             singleLine = true
                         )
 
@@ -179,7 +213,7 @@ fun EditProfileScreen(
                         EditField(
                             label = "Email",
                             value = email,
-                            onValueChange = { email = it },
+                            onValueChange = { viewModel.onEmailChange(it) },
                             singleLine = true
                         )
 
@@ -192,7 +226,7 @@ fun EditProfileScreen(
                         EditField(
                             label         = "Bio",
                             value         = bio,
-                            onValueChange = { if (it.length <= maxBio) bio = it },
+                            onValueChange = { if (it.length <= maxBio) viewModel.onBioChange(it) },
                             singleLine    = false,
                             minLines      = 3
                         )
@@ -203,6 +237,18 @@ fun EditProfileScreen(
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }
+                }
+
+                OutlinedButton(
+                    onClick = { photoPicker.launch("image/*") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.AddAPhoto, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Cargar foto de perfil")
                 }
 
                 // ── Privacidad y seguridad ─────────────────────────────────

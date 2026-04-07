@@ -9,6 +9,7 @@ data class User (
     val password: String,
     val phoneNumber: String = "",
     val profilePictureUrl: String = "",
+    val bio: String = "",
     val role: UserRole = UserRole.USER,
 
     val points: Int = 0,
