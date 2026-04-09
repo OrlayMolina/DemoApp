@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.demoapp.core.component.MapBox
@@ -34,7 +36,7 @@ fun CreatePointStep2Screen(
     onLongitude : (String) -> Unit,
     onAddress   : (String) -> Unit,
     onBack      : () -> Unit,
-    onPublish   : () -> Unit,
+    onPublish   : () -> Boolean,
     onSaveDraft : () -> Unit
 ) {
     val context = LocalContext.current
@@ -168,6 +170,7 @@ fun CreatePointStep2Screen(
                                 placeholder   = { Text("Latitud", color = TextGray) },
                                 shape         = RoundedCornerShape(10.dp),
                                 colors        = publishFieldColors(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 singleLine    = true
                             )
                             OutlinedTextField(
@@ -184,6 +187,7 @@ fun CreatePointStep2Screen(
                                 placeholder   = { Text("Longitud", color = TextGray) },
                                 shape         = RoundedCornerShape(10.dp),
                                 colors        = publishFieldColors(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 singleLine    = true
                             )
                         }
@@ -240,11 +244,15 @@ fun CreatePointStep2Screen(
             ) {
                 Button(
                     onClick  = {
-                        onPublish()
+                        val success = onPublish()
                         Toast.makeText(
                             context,
-                            if (isEditing) "¡Publicación actualizada con éxito! ️"
-                            else "¡Publicación realizada con éxito!",
+                            if (success) {
+                                if (isEditing) "¡Publicación actualizada con éxito!"
+                                else "¡Publicación realizada con éxito!"
+                            } else {
+                                "Completa coordenadas válidas para publicar"
+                            },
                             Toast.LENGTH_LONG
                         ).show()
                     },

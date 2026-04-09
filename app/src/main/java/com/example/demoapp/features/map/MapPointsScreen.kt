@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.demoapp.core.component.MapBox
 import com.example.demoapp.core.components.DropdownMenu
+import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
 
 // ─── Paleta ───────────────────────────────────────────────────────────────────
@@ -54,9 +55,14 @@ private fun categoryEmoji(cat: TouristPointCategory) = when (cat) {
 
 @Composable
 fun MapPointsScreen(
+    points        : List<TouristPoint> = TouristPoint.SAMPLE_LIST,
     viewModel     : MapPointsViewModel = viewModel(),
     onNavigateBack: () -> Unit         = {}
 ) {
+    LaunchedEffect(points) {
+        viewModel.setPoints(points)
+    }
+
     if (viewModel.showingMap) {
         MapWithPointsScreen(
             viewModel = viewModel,

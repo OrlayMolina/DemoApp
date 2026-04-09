@@ -106,7 +106,8 @@ private fun List<TouristPoint>.applyFilters(
 @Composable
 fun ExploreScreen(
     points              : List<TouristPoint> = TouristPoint.SAMPLE_LIST,
-    onOpenMap           : () -> Unit         = {}
+    onOpenMap           : () -> Unit         = {},
+    onOpenDetail        : (TouristPoint) -> Unit = {}
 ) {
     var searchQuery      by remember { mutableStateOf("") }
     var selectedTab      by remember { mutableStateOf(0) }
@@ -285,6 +286,7 @@ fun ExploreScreen(
                 items(filtered) { point ->
                     TouristPointCard(
                         point    = point,
+                        onOpenDetail = { onOpenDetail(point) },
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
@@ -508,12 +510,15 @@ private fun navBarColors() = NavigationBarItemDefaults.colors(
 @Composable
 fun TouristPointCard(
     point    : TouristPoint,
+    onOpenDetail : () -> Unit = {},
     modifier : Modifier = Modifier
 ) {
     var liked by remember { mutableStateOf(false) }
 
     Card(
-        modifier  = modifier.fillMaxWidth(),
+        modifier  = modifier
+            .fillMaxWidth()
+            .clickable { onOpenDetail() },
         shape     = RoundedCornerShape(20.dp),
         colors    = CardDefaults.cardColors(containerColor = CardWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -47,7 +48,7 @@ import com.example.demoapp.domain.model.User
 @Composable
 fun UserListScreen(
     onNavigateToUserDetail: (String) -> Unit,
-    usersViewModel: UserListViewModel = viewModel()
+    usersViewModel: UserListViewModel = hiltViewModel()
 ) {
     val users by usersViewModel.users.collectAsState(initial = emptyList())
 

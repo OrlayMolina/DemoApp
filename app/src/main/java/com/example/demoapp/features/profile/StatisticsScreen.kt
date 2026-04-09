@@ -10,12 +10,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
 import androidx.compose.ui.draw.clip
+import java.util.Calendar
 
 // ─── Paleta ───────────────────────────────────────────────────────────────────
 
@@ -46,9 +49,9 @@ private fun computeStats(points: List<TouristPoint>): StatsSummary {
     val uniquePlaces  = points.size
 
     // Simulamos visualizaciones como votos * factor
-    val totalViews = totalLikes * 6 + uniquePlaces * 100
+    val totalViews = points.sumOf { (it.importantVotes * 6) + (it.commentCount * 3) + 100 }
 
-    val bestPublication = points.maxByOrNull { it.importantVotes + it.commentCount }
+    val bestPublication = points.maxByOrNull { (it.importantVotes * 2) + (it.commentCount * 3) }
 
     return StatsSummary(
         totalLikes    = totalLikes,
@@ -67,17 +70,40 @@ data class StatsSummary(
     val bestPublication : TouristPoint?
 )
 
-// Publicaciones por mes (datos quemados de ejemplo)
-private val publicationsByMonth = listOf(
-    "Ene" to 1, "Feb" to 2, "Mar" to 3,
-    "Abr" to 1, "May" to 2, "Jun" to 5, "Jul" to 3
+private val monthLabels = listOf(
+    "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+    "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
 )
 
-// Crecimiento de likes por mes
-private val likesByMonth = listOf(
-    "Ene" to 20f, "Feb" to 45f, "Mar" to 80f,
-    "Abr" to 60f, "May" to 120f, "Jun" to 200f, "Jul" to 250f
-)
+private fun buildMonthlyPublicationSeries(points: List<TouristPoint>): List<Pair<String, Int>> {
+    if (points.isEmpty()) return monthLabels.take(7).map { it to 0 }
+
+    val counts = IntArray(12)
+    points.forEach { point ->
+        counts[point.createdAt.monthIndex()]++
+    }
+
+    return monthLabels.mapIndexed { index, label -> label to counts[index] }
+        .dropWhile { it.second == 0 }
+        .ifEmpty { monthLabels.take(7).map { it to 0 } }
+}
+
+private fun buildMonthlyLikesSeries(points: List<TouristPoint>): List<Pair<String, Float>> {
+    if (points.isEmpty()) return monthLabels.take(7).map { it to 0f }
+
+    val likes = FloatArray(12)
+    points.forEach { point ->
+        likes[point.createdAt.monthIndex()] += point.importantVotes * 5f + point.commentCount * 2f + 20f
+    }
+
+    return monthLabels.mapIndexed { index, label -> label to likes[index] }
+        .dropWhile { it.second == 0f }
+        .ifEmpty { monthLabels.take(7).map { it to 0f } }
+}
+
+private fun Long.monthIndex(): Int = Calendar.getInstance().apply {
+    timeInMillis = this@monthIndex
+}.get(Calendar.MONTH)
 
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 
@@ -86,12 +112,16 @@ fun StatisticsScreen(
     publications  : List<TouristPoint> = TouristPoint.SAMPLE_LIST,
     onNavigateBack: () -> Unit         = {}
 ) {
-    val stats = computeStats(publications)
+    val stats = remember(publications) { computeStats(publications) }
+    val publicationsByMonth = remember(publications) { buildMonthlyPublicationSeries(publications) }
+    val likesByMonth = remember(publications) { buildMonthlyLikesSeries(publications) }
 
-    val categoryCount = TouristPointCategory.entries.map { cat ->
-        cat to publications.count { it.category == cat }
-    }.filter { it.second > 0 }
-        .sortedByDescending { it.second }
+    val categoryCount = remember(publications) {
+        TouristPointCategory.entries.map { cat ->
+            cat to publications.count { it.category == cat }
+        }.filter { it.second > 0 }
+            .sortedByDescending { it.second }
+    }
 
     Scaffold(containerColor = BackgroundGray) { padding ->
         Column(
@@ -342,6 +372,16 @@ private fun BarChart(
     barColor : Color,
     modifier : Modifier = Modifier
 ) {
+    if (data.isEmpty()) {
+        Box(
+            modifier = modifier,
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Sin datos para mostrar", fontSize = 12.sp, color = TextGray)
+        }
+        return
+    }
+
     val maxVal = data.maxOfOrNull { it.second }?.toFloat() ?: 1f
 
     Column(modifier = modifier) {
@@ -382,17 +422,28 @@ private fun LineChart(
     lineColor : Color,
     modifier  : Modifier = Modifier
 ) {
+    if (data.isEmpty()) {
+        Box(
+            modifier = modifier,
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Sin datos para mostrar", fontSize = 12.sp, color = TextGray)
+        }
+        return
+    }
+
     val maxVal = data.maxOfOrNull { it.second } ?: 1f
     val minVal = data.minOfOrNull { it.second } ?: 0f
+    val range   = (maxVal - minVal).takeIf { it != 0f } ?: 1f
 
     Column(modifier = modifier) {
         Canvas(modifier = Modifier.weight(1f).fillMaxWidth()) {
             val chartH  = size.height - 8.dp.toPx()
-            val stepX   = size.width / (data.size - 1).toFloat()
+            val stepX   = if (data.size == 1) size.width / 2f else size.width / (data.size - 1).toFloat()
 
             val points = data.mapIndexed { i, (_, v) ->
                 val x = i * stepX
-                val y = chartH - ((v - minVal) / (maxVal - minVal)) * chartH
+                val y = chartH - ((v - minVal) / range) * chartH
                 Offset(x, y)
             }
 
@@ -443,6 +494,8 @@ private fun CategoryBar(
     maxCount : Int,
     color    : Color
 ) {
+    val safeMax = maxCount.coerceAtLeast(1)
+
     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Row(
             modifier              = Modifier.fillMaxWidth(),
@@ -452,7 +505,7 @@ private fun CategoryBar(
             Text("$count punto${if (count != 1) "s" else ""}", fontSize = 11.sp, color = TextGray)
         }
         LinearProgressIndicator(
-            progress   = { count.toFloat() / maxCount },
+            progress   = { count.toFloat() / safeMax },
             modifier   = Modifier
                 .fillMaxWidth()
                 .height(8.dp)
@@ -471,7 +524,7 @@ private fun formatNumber(n: Int): String = when {
 }
 
 private fun List<Pair<String, Int>>.indexOfMax(): Int =
-    indexOfFirst { it.second == maxOfOrNull { p -> p.second } }
+    if (isEmpty()) -1 else indexOfFirst { it.second == maxOfOrNull { p -> p.second } }
 
 private fun categoryLabel(cat: TouristPointCategory) = when (cat) {
     TouristPointCategory.NATURE        -> "Naturaleza"

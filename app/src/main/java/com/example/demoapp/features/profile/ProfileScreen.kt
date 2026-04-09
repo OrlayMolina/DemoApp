@@ -23,6 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.demoapp.domain.model.TouristPoint
 import coil3.compose.AsyncImage
 
@@ -32,18 +34,6 @@ private val BackgroundGray = Color(0xFFF0F4F2)
 private val CardWhite      = Color(0xFFFFFFFF)
 private val TextGray       = Color(0xFF6B6B6B)
 private val DividerColor   = Color(0xFFE0E0E0)
-
-// ─── Datos quemados ───────────────────────────────────────────────────────────
-
-private val dummyUser = ProfileUser(
-    name        = "Maria Garcia",
-    joinDate    = "31 feb",
-    bio         = "Exploradora urbana apasionada por descubrir lugares únicos",
-    memberSince = "Miembro desde enero de 2024",
-    publications = 47,
-    followers    = 324,
-    following    = 189
-)
 
 data class ProfileUser(
     val name        : String,
@@ -61,11 +51,25 @@ data class ProfileUser(
 fun ProfileScreen(
     myPublications: List<TouristPoint> = emptyList(),
     onEditPublication: ((TouristPoint) -> Unit)? = null,
+    onOpenPublication: ((TouristPoint) -> Unit)? = null,
     onNavigateToSettings: (() -> Unit)? = null,
     onNavigateToAchievements : (() -> Unit)? = null,
-    onNavigateToStatistics   : (() -> Unit)? = null
+    onNavigateToStatistics   : (() -> Unit)? = null,
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    val currentUser by viewModel.user.collectAsStateWithLifecycle()
+    val myPointsFromRepo by viewModel.myPublications.collectAsStateWithLifecycle()
+
+    val profileUser = ProfileUser(
+        name = currentUser?.name ?: "Usuario",
+        joinDate = "Activo",
+        bio = currentUser?.bio?.ifBlank { "Sin biografia" } ?: "Sin biografia",
+        memberSince = "Miembro de la comunidad",
+        publications = myPointsFromRepo.size,
+        followers = 0,
+        following = 0
+    )
 
     Scaffold(
         containerColor = BackgroundGray
@@ -124,25 +128,35 @@ fun ProfileScreen(
                             verticalAlignment   = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            // Elimina avatarRes de ProfileUser y reemplaza el Image del avatar por:
-
-                            Box(
-                                modifier         = Modifier
-                                    .size(64.dp)
-                                    .clip(CircleShape)
-                                    .background(GreenPrimary)
-                                    .border(2.dp, GreenPrimary, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text       = dummyUser.name
-                                        .split(" ")
-                                        .take(2)
-                                        .joinToString("") { it.first().uppercase() },
-                                    color      = Color.White,
-                                    fontSize   = 22.sp,
-                                    fontWeight = FontWeight.Bold
+                            if (!currentUser?.profilePictureUrl.isNullOrBlank()) {
+                                AsyncImage(
+                                    model              = currentUser?.profilePictureUrl,
+                                    contentDescription = "Foto de perfil",
+                                    contentScale       = ContentScale.Crop,
+                                    modifier           = Modifier
+                                        .size(64.dp)
+                                        .clip(CircleShape)
+                                        .border(2.dp, GreenPrimary, CircleShape)
                                 )
+                            } else {
+                                Box(
+                                    modifier         = Modifier
+                                        .size(64.dp)
+                                        .clip(CircleShape)
+                                        .background(GreenPrimary)
+                                        .border(2.dp, GreenPrimary, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text       = profileUser.name
+                                            .split(" ")
+                                            .take(2)
+                                            .joinToString("") { it.first().uppercase() },
+                                        color      = Color.White,
+                                        fontSize   = 22.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Row(
@@ -150,26 +164,26 @@ fun ProfileScreen(
                                     verticalAlignment     = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text       = dummyUser.name,
+                                        text       = profileUser.name,
                                         fontSize   = 16.sp,
                                         fontWeight = FontWeight.Bold,
                                         color      = Color(0xFF1A1A1A)
                                     )
                                     Text(
-                                        text     = dummyUser.joinDate,
+                                        text     = profileUser.joinDate,
                                         fontSize = 11.sp,
                                         color    = TextGray
                                     )
                                 }
                                 Text(
-                                    text     = dummyUser.bio,
+                                    text     = profileUser.bio,
                                     fontSize = 13.sp,
                                     color    = TextGray,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text     = dummyUser.memberSince,
+                                    text     = profileUser.memberSince,
                                     fontSize = 12.sp,
                                     color    = GreenPrimary,
                                     fontWeight = FontWeight.Medium
@@ -184,17 +198,17 @@ fun ProfileScreen(
                             modifier              = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            StatItem(value = dummyUser.publications.toString(), label = "Publicaciones")
+                            StatItem(value = profileUser.publications.toString(), label = "Publicaciones")
                             VerticalDivider(
                                 modifier = Modifier.height(36.dp),
                                 color    = DividerColor
                             )
-                            StatItem(value = dummyUser.followers.toString(), label = "Seguidores")
+                            StatItem(value = profileUser.followers.toString(), label = "Seguidores")
                             VerticalDivider(
                                 modifier = Modifier.height(36.dp),
                                 color    = DividerColor
                             )
-                            StatItem(value = dummyUser.following.toString(), label = "Siguiendo")
+                            StatItem(value = profileUser.following.toString(), label = "Siguiendo")
                         }
 
                         HorizontalDivider(color = DividerColor)
@@ -295,7 +309,8 @@ fun ProfileScreen(
             }
 
             // ── Lista de publicaciones ─────────────────────────────────────
-            val list = if (selectedTab == 0) myPublications else emptyList()
+            val sourceList = if (myPointsFromRepo.isNotEmpty()) myPointsFromRepo else myPublications
+            val list = if (selectedTab == 0) sourceList else emptyList()
 
             if (list.isEmpty()) {
                 item {
@@ -317,6 +332,7 @@ fun ProfileScreen(
                 items(list) { point ->
                     PublicationItem(
                         point    = point,
+                        onOpen   = { onOpenPublication?.invoke(point) },
                         onEdit   = { onEditPublication?.invoke(point) },
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                     )
@@ -348,11 +364,14 @@ private fun StatItem(value: String, label: String) {
 @Composable
 private fun PublicationItem(
     point    : TouristPoint,
+    onOpen   : () -> Unit,
     onEdit   : () -> Unit,
     modifier : Modifier = Modifier
 ) {
     Card(
-        modifier  = modifier.fillMaxWidth(),
+        modifier  = modifier
+            .fillMaxWidth()
+            .clickable { onOpen() },
         shape     = RoundedCornerShape(14.dp),
         colors    = CardDefaults.cardColors(containerColor = CardWhite),
         elevation = CardDefaults.cardElevation(1.dp)

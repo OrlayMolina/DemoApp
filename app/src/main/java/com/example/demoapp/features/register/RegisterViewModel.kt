@@ -9,22 +9,31 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.demoapp.core.utils.RequestResult
 import com.example.demoapp.core.utils.ValidatedField
+import com.example.demoapp.domain.model.User
+import com.example.demoapp.domain.model.UserLevel
+import com.example.demoapp.domain.model.UserRole
+import com.example.demoapp.domain.repository.UserRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.UUID
+import javax.inject.Inject
 
-class RegisterViewModel : ViewModel() {
+@HiltViewModel
+class RegisterViewModel @Inject constructor(private val userRepository: UserRepository)
+    : ViewModel() {
 
     val name = ValidatedField(initialValue = "", validate = {
         if (it.isEmpty()) "El nombre es obligatorio" else null
     })
 
-    val city = ValidatedField(initialValue = "", validate = {
+    /*val city = ValidatedField(initialValue = "", validate = {
         if (it.isEmpty()) "La ciudad es obligatoria" else null
     })
 
     val address = ValidatedField(initialValue = "", validate = {
         if (it.isEmpty()) "La dirección es obligatoria" else null
-    })
+    })*/
 
     val email = ValidatedField(initialValue = "", validate = {
         when {
@@ -51,7 +60,7 @@ class RegisterViewModel : ViewModel() {
     })
 
     val isFormValid: Boolean
-        get() = name.isValid && city.isValid && address.isValid &&
+        get() = name.isValid &&
                 email.isValid && password.isValid && confirmPassword.isValid
 
     var registerResult by mutableStateOf<RequestResult<String>?>(null)
@@ -60,12 +69,33 @@ class RegisterViewModel : ViewModel() {
     fun register() {
         viewModelScope.launch {
             registerResult = RequestResult.Loading
-            delay(1500) // Simula llamada a API
-            registerResult = if (email.value == "error@test.com") {
-                RequestResult.Error("Este email ya está registrado")
-            } else {
-                RequestResult.Success("Registro exitoso. Bienvenido ${name.value}")
+
+            // Simulación de delay para que se vea el cargando
+            delay(1000)
+
+            // Verifica si el email ya existe
+            val existingUser = userRepository.findById(
+                userRepository.users.value.find { it.email == email.value }?.id ?: ""
+            )
+
+            if (existingUser != null) {
+                registerResult = RequestResult.Error("Este email ya está registrado")
+                return@launch
             }
+
+            val newUser = User(
+                id = UUID.randomUUID().toString(),
+                name = name.value,
+                city = "No especificada",
+                address = "No especificada",
+                email = email.value,
+                password = password.value,
+                role = UserRole.USER,
+                level = UserLevel.NOVATO
+            )
+
+            userRepository.save(newUser)
+            registerResult = RequestResult.Success("Registro exitoso. Bienvenido ${name.value}")
         }
     }
 }

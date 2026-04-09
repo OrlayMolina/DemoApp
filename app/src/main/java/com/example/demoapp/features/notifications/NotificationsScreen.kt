@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.example.demoapp.domain.model.Notification
 import com.example.demoapp.domain.model.NotificationType
@@ -38,75 +40,22 @@ private val CardWhite      = Color(0xFFFFFFFF)
 private val TextGray       = Color(0xFF6B6B6B)
 private val UnreadBg       = Color(0xFFEDF4F0)
 
-// ─── Datos iniciales ──────────────────────────────────────────────────────────
-
-private val INITIAL_NOTIFICATIONS = listOf(
-    Notification(
-        id               = "1",
-        type             = NotificationType.LIKE,
-        userName         = "Juan",
-        userAvatarUrl    = "https://picsum.photos/seed/juan/100/100",
-        publicationTitle = "Mural Increíble en el Centro",
-        publicationImage = "https://picsum.photos/seed/mural/100/100",
-        date             = "24 feb, 03:30",
-        createdAt        = System.currentTimeMillis() - 86400000L * 2,
-        isRead           = false,
-        relatedEntityId  = "1"
-    ),
-    Notification(
-        id               = "2",
-        type             = NotificationType.COMMENT,
-        userName         = "Alma",
-        userAvatarUrl    = "https://picsum.photos/seed/alma/100/100",
-        publicationTitle = "Parque escondido",
-        publicationImage = "https://picsum.photos/seed/parque/100/100",
-        date             = "25 feb, 10:42",
-        createdAt        = System.currentTimeMillis() - 86400000L,
-        isRead           = false,
-        relatedEntityId  = "2"
-    ),
-    Notification(
-        id               = "3",
-        type             = NotificationType.FOLLOWER,
-        userName         = "Carlos",
-        userAvatarUrl    = "https://picsum.photos/seed/carlos/100/100",
-        publicationTitle = null,
-        publicationImage = null,
-        date             = "22 feb, 07:20",
-        createdAt        = System.currentTimeMillis() - 86400000L * 4,
-        isRead           = true,
-        relatedEntityId  = "user_carlos"
-    ),
-    Notification(
-        id               = "4",
-        type             = NotificationType.VERIFIED,
-        userName         = "",
-        userAvatarUrl    = null,
-        publicationTitle = "Vista Panorámica",
-        publicationImage = "https://picsum.photos/seed/panoramica/100/100",
-        date             = "27 feb, 07:20",
-        createdAt        = System.currentTimeMillis() - 3600000L,
-        isRead           = true,
-        relatedEntityId  = "3"
-    )
-)
-
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsScreen(
-    initialNotifications    : List<Notification>  = Notification.SAMPLE_LIST,
+    viewModel               : NotificationsViewModel    = hiltViewModel(),
     onNavigateToPublication : ((String) -> Unit)? = null,
     onNavigateToProfile     : ((String) -> Unit)? = null
 ) {
-    // Se reinicia al estado inicial cada vez que se monta el composable
-    var notifications by remember { mutableStateOf(initialNotifications) }
-    var selectedFilter by remember { mutableStateOf(0) }
+    val notifications by viewModel.notifications.collectAsStateWithLifecycle()
+    val unreadCount   by viewModel.unreadCount.collectAsStateWithLifecycle()
+
+    var selectedFilter      by remember { mutableStateOf(0) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
 
-    val unreadCount = notifications.count { !it.isRead }
-    val displayed   = when (selectedFilter) {
+    val displayed = when (selectedFilter) {
         1    -> notifications.filter { !it.isRead }
         else -> notifications
     }.sortedByDescending { it.createdAt }
@@ -117,9 +66,9 @@ fun NotificationsScreen(
             onDismissRequest = { showDeleteAllDialog = false },
             title   = { Text("Eliminar notificaciones") },
             text    = { Text("¿Eliminar todas las notificaciones?") },
-            confirmButton   = {
+            confirmButton = {
                 TextButton(onClick = {
-                    notifications     = emptyList()
+                    viewModel.deleteAll()
                     showDeleteAllDialog = false
                 }) {
                     Text("Eliminar", color = MaterialTheme.colorScheme.error)
@@ -155,7 +104,6 @@ fun NotificationsScreen(
                     fontWeight = FontWeight.Bold,
                     color      = Color(0xFF1A1A1A)
                 )
-                // Botón eliminar todo
                 if (notifications.isNotEmpty()) {
                     IconButton(onClick = { showDeleteAllDialog = true }) {
                         Icon(
@@ -186,12 +134,9 @@ fun NotificationsScreen(
                     onClick  = { selectedFilter = 1 }
                 )
                 Spacer(Modifier.weight(1f))
-                // Marcar todas como leídas
                 if (unreadCount > 0) {
                     TextButton(
-                        onClick        = {
-                            notifications = notifications.map { it.copy(isRead = true) }
-                        },
+                        onClick        = { viewModel.markAllAsRead() },
                         contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
                         Text(
@@ -228,15 +173,9 @@ fun NotificationsScreen(
                     ) { notif ->
                         SwipeToDismissNotification(
                             notification = notif,
-                            onDismiss    = {
-                                notifications = notifications.filter { it.id != notif.id }
-                            },
+                            onDismiss    = { viewModel.delete(notif.id) },
                             onClick      = {
-                                // Marcar como leída al tocar
-                                notifications = notifications.map {
-                                    if (it.id == notif.id) it.copy(isRead = true) else it
-                                }
-                                // Navegar según tipo
+                                viewModel.markAsRead(notif.id)
                                 notif.relatedEntityId?.let { entityId ->
                                     when (notif.type) {
                                         NotificationType.FOLLOWER ->
@@ -273,9 +212,9 @@ private fun SwipeToDismissNotification(
     )
 
     SwipeToDismissBox(
-        state            = dismissState,
+        state                       = dismissState,
         enableDismissFromStartToEnd = false,
-        backgroundContent = {
+        backgroundContent           = {
             val color by animateColorAsState(
                 targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart)
                     Color(0xFFE53935) else Color(0xFFFFCDD2),
@@ -323,11 +262,11 @@ private fun NotificationItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier            = Modifier
+            modifier              = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment   = Alignment.CenterVertically
+            verticalAlignment     = Alignment.CenterVertically
         ) {
 
             // ── Avatar / icono de tipo ─────────────────────────────────────
@@ -358,9 +297,8 @@ private fun NotificationItem(
                         )
                     }
                 }
-                // Badge del tipo
                 Box(
-                    modifier = Modifier
+                    modifier         = Modifier
                         .size(18.dp)
                         .clip(CircleShape)
                         .background(notifTypeColor(notification.type)),
@@ -449,7 +387,7 @@ private fun FilterPill(
     }
 }
 
-// ─── Helpers de tipo ─────────────────────────────────────────────────────────
+// ─── Helpers de tipo ──────────────────────────────────────────────────────────
 
 private fun notifTypeLabel(type: NotificationType) = when (type) {
     NotificationType.LIKE     -> "Nuevo like"

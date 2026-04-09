@@ -25,9 +25,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.demoapp.core.utils.RequestResult
 import com.example.demoapp.ui.theme.DemoAppTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // ─── Paleta (misma que Login) ─────────────────────────────────────────────────
@@ -42,7 +44,7 @@ private val DividerColor   = Color(0xFFE0E0E0)
 
 @Composable
 fun RegisterScreen(
-    viewModel: RegisterViewModel = viewModel(),
+    viewModel: RegisterViewModel = hiltViewModel(),
     onNavigateBack: (() -> Unit)? = null,
     onNavigateToLogin: (() -> Unit)? = null
 ) {
@@ -51,8 +53,13 @@ fun RegisterScreen(
     var termsAccepted by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel.registerResult) {
-        if (viewModel.registerResult is RequestResult.Success) {
-            // Aquí navegarías a otra pantalla
+        val result = viewModel.registerResult
+        if (result is RequestResult.Success) {
+            scope.launch {
+                snackbarHostState.showSnackbar(result.data)
+                delay(500) // Pequeña pausa para que el usuario vea el mensaje
+                onNavigateToLogin?.invoke()
+            }
         }
     }
 
