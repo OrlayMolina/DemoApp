@@ -66,4 +66,43 @@ class TouristPointRepositoryImpl @Inject constructor() : TouristPointRepository 
         _touristPoints.value = _touristPoints.value.filterNot { it.id == id }
         Log.d("Repository", "Punto con ID $id eliminado.")
     }
+
+    override fun approvePoint(id: String): Result<Unit> {
+        val index = _touristPoints.value.indexOfFirst { it.id == id }
+        if (index == -1) {
+            return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
+        }
+
+        val updated = _touristPoints.value.toMutableList()
+        val current = updated[index]
+        updated[index] = current.copy(
+            isVerified = true,
+            isRejected = false,
+            rejectionReason = null
+        )
+        _touristPoints.value = updated
+        Log.d("Repository", "Punto '$id' aprobado por moderacion.")
+        return Result.success(Unit)
+    }
+
+    override fun rejectPoint(id: String, reason: String): Result<Unit> {
+        val index = _touristPoints.value.indexOfFirst { it.id == id }
+        if (index == -1) {
+            return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
+        }
+        if (reason.isBlank()) {
+            return Result.failure(IllegalArgumentException("El motivo de rechazo es obligatorio"))
+        }
+
+        val updated = _touristPoints.value.toMutableList()
+        val current = updated[index]
+        updated[index] = current.copy(
+            isVerified = false,
+            isRejected = true,
+            rejectionReason = reason.trim()
+        )
+        _touristPoints.value = updated
+        Log.d("Repository", "Punto '$id' rechazado por moderacion.")
+        return Result.success(Unit)
+    }
 }

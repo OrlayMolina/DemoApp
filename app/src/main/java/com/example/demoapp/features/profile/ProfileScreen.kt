@@ -60,15 +60,17 @@ fun ProfileScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     val currentUser by viewModel.user.collectAsStateWithLifecycle()
     val myPointsFromRepo by viewModel.myPublications.collectAsStateWithLifecycle()
+    val followers by viewModel.followers.collectAsStateWithLifecycle(0)
+    val following by viewModel.following.collectAsStateWithLifecycle(0)
 
     val profileUser = ProfileUser(
         name = currentUser?.name ?: "Usuario",
         joinDate = "Activo",
         bio = currentUser?.bio?.ifBlank { "Sin biografia" } ?: "Sin biografia",
         memberSince = "Miembro de la comunidad",
-        publications = myPointsFromRepo.size,
-        followers = 0,
-        following = 0
+        publications = myPointsFromRepo.filter { it.isVerified }.size,
+        followers = followers,
+        following = following
     )
 
     Scaffold(
@@ -308,11 +310,12 @@ fun ProfileScreen(
                 Spacer(Modifier.height(8.dp))
             }
 
-            // ── Lista de publicaciones ─────────────────────────────────────
-            val sourceList = if (myPointsFromRepo.isNotEmpty()) myPointsFromRepo else myPublications
-            val list = if (selectedTab == 0) sourceList else emptyList()
+             // ── Lista de publicaciones ─────────────────────────────────────
+             val sourceList = if (myPointsFromRepo.isNotEmpty()) myPointsFromRepo else myPublications
+             val verifiedList = sourceList.filter { it.isVerified }
+             val list = if (selectedTab == 0) verifiedList else emptyList()
 
-            if (list.isEmpty()) {
+             if (list.isEmpty()) {
                 item {
                     Box(
                         modifier         = Modifier

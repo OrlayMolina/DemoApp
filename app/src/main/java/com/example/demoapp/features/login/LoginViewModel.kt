@@ -4,6 +4,7 @@ import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import com.example.demoapp.core.utils.RequestResult
 import com.example.demoapp.core.utils.ValidatedField
+import com.example.demoapp.domain.model.User
 import com.example.demoapp.domain.model.UserRole
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,8 +17,8 @@ class LoginViewModel @Inject constructor(
     private val repository: UserRepository
 ) : ViewModel(){
 
-    private val _loginResult = MutableStateFlow<RequestResult<UserRole>?>(null)
-    val loginResult: StateFlow<RequestResult<UserRole>?> = _loginResult
+    private val _loginResult = MutableStateFlow<RequestResult<User>?>(null)
+    val loginResult: StateFlow<RequestResult<User>?> = _loginResult
 
     // ── Campos validados ──────────────────────────────────────────────────────
     val email = ValidatedField<String>(
@@ -58,7 +59,7 @@ class LoginViewModel @Inject constructor(
 
         val user = repository.login(email.value,password.value)
         _loginResult.value = if (user != null){
-            RequestResult.Success(user.role)
+            RequestResult.Success(user)
         } else {
             RequestResult.Error("Credenciales incorrectas")
         }

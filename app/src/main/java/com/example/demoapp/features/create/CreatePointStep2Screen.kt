@@ -25,6 +25,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.geometry.Offset
+import java.util.Locale
 
 @Composable
 fun CreatePointStep2Screen(
@@ -40,8 +41,10 @@ fun CreatePointStep2Screen(
     onSaveDraft : () -> Unit
 ) {
     val context = LocalContext.current
-    val lat     = latitude.toDoubleOrNull()  ?: 4.4687891
-    val lng     = longitude.toDoubleOrNull() ?: -75.6491181
+    val latInputNormalized = latitude.replace(',', '.')
+    val lngInputNormalized = longitude.replace(',', '.')
+    val lat     = latInputNormalized.toDoubleOrNull()  ?: 4.4687891
+    val lng     = lngInputNormalized.toDoubleOrNull() ?: -75.6491181
 
     // Punto seleccionado para pasarlo al mapa
     var selectedPoint by remember {
@@ -134,8 +137,8 @@ fun CreatePointStep2Screen(
                         showMyLocationButton = true,
                         onMapClickListener   = { point ->
                             selectedPoint = point
-                            onLatitude("%.4f".format(point.latitude()))
-                            onLongitude("%.4f".format(point.longitude()))
+                            onLatitude(String.format(Locale.US, "%.6f", point.latitude()))
+                            onLongitude(String.format(Locale.US, "%.6f", point.longitude()))
                         }
                     )
                 }
@@ -160,8 +163,8 @@ fun CreatePointStep2Screen(
                                 value         = latitude,
                                 onValueChange = { value ->
                                     onLatitude(value)
-                                    val newLat = value.toDoubleOrNull()
-                                    val newLng = longitude.toDoubleOrNull()
+                                    val newLat = value.replace(',', '.').toDoubleOrNull()
+                                    val newLng = longitude.replace(',', '.').toDoubleOrNull()
                                     if (newLat != null && newLng != null) {
                                         selectedPoint = Point.fromLngLat(newLng, newLat)
                                     }
@@ -177,8 +180,8 @@ fun CreatePointStep2Screen(
                                 value         = longitude,
                                 onValueChange = { value ->
                                     onLongitude(value)
-                                    val newLat = latitude.toDoubleOrNull()
-                                    val newLng = value.toDoubleOrNull()
+                                    val newLat = latitude.replace(',', '.').toDoubleOrNull()
+                                    val newLng = value.replace(',', '.').toDoubleOrNull()
                                     if (newLat != null && newLng != null) {
                                         selectedPoint = Point.fromLngLat(newLng, newLat)
                                     }

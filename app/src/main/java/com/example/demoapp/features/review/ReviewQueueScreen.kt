@@ -19,7 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.example.demoapp.domain.model.TouristPoint
 import java.text.SimpleDateFormat
@@ -38,14 +39,18 @@ private val NewBadgeText   = Color(0xFF795548)
 
 @Composable
 fun ReviewQueueScreen(
-    viewModel: ReviewQueueViewModel = viewModel(),
+    viewModel: ReviewQueueViewModel = hiltViewModel(),
     onNavigateToDetail: (TouristPoint) -> Unit = {}
 ) {
     var selectedTab        by remember { mutableStateOf(0) }
     var showFilterDropdown by remember { mutableStateOf(false) }
 
+    val pendingPoints by viewModel.pendingPoints.collectAsStateWithLifecycle()
+    val reportedPoints by viewModel.reportedPoints.collectAsStateWithLifecycle()
+    val selectedDateFilter by viewModel.selectedDateFilter.collectAsStateWithLifecycle()
+
     val currentList = if (selectedTab == 0)
-        viewModel.pendingPoints else viewModel.reportedPoints
+        pendingPoints else reportedPoints
 
     Scaffold(containerColor = BackgroundGray) { padding ->
         Column(
@@ -76,7 +81,7 @@ fun ReviewQueueScreen(
                         Icon(
                             Icons.Default.FilterList,
                             "Filtrar",
-                            tint = if (viewModel.selectedDateFilter != DateFilter.ALL)
+                            tint = if (selectedDateFilter != DateFilter.ALL)
                                 GreenEmerald else TextDark
                         )
                     }
@@ -91,7 +96,7 @@ fun ReviewQueueScreen(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment     = Alignment.CenterVertically
                                     ) {
-                                        if (viewModel.selectedDateFilter == filter) {
+                                        if (selectedDateFilter == filter) {
                                             Icon(
                                                 Icons.Default.Check,
                                                 null,
@@ -121,8 +126,8 @@ fun ReviewQueueScreen(
                     .background(CardWhite)
             ) {
                 listOf(
-                    "Nuevas (${viewModel.pendingPoints.size})",
-                    "Reportadas (${viewModel.reportedPoints.size})"
+                    "Nuevas (${pendingPoints.size})",
+                    "Reportadas (${reportedPoints.size})"
                 ).forEachIndexed { index, title ->
                     Box(
                         modifier = Modifier

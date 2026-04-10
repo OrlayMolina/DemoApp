@@ -46,6 +46,7 @@ private val GreenPrimary    = Color(0xFF2E7D5E)
 fun EditProfileScreen(
     onNavigateBack    : () -> Unit = {},
     onAccountDeleted  : () -> Unit = {},   // navega a Login
+    onLogout          : () -> Unit = {},
     viewModel: EditProfileViewModel = hiltViewModel()
 ) {
     var showDeleteDialog  by remember { mutableStateOf(false) }
@@ -286,6 +287,14 @@ fun EditProfileScreen(
                         SettingsItem(
                             label   = "Notificaciones",
                             onClick = { /* TODO */ }
+                        )
+                        HorizontalDivider(
+                            color    = DividerColor,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        SettingsItem(
+                            label   = "Cerrar sesión",
+                            onClick = onLogout
                         )
                     }
                 }

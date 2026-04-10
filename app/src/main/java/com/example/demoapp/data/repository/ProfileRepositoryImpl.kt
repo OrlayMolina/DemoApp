@@ -8,6 +8,7 @@ import com.example.demoapp.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,6 +29,18 @@ class ProfileRepositoryImpl @Inject constructor(
                 point.authorId == currentUserId ||
                     point.authorId == "user_$currentUserId"
             }
+        }
+    }
+
+    override fun observeFollowers(): Flow<Int> {
+        return userRepository.currentUser.map { user ->
+            user?.followers ?: 0
+        }
+    }
+
+    override fun observeFollowing(): Flow<Int> {
+        return userRepository.currentUser.map { user ->
+            user?.following ?: 0
         }
     }
 

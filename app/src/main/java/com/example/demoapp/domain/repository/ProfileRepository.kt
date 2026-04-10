@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 interface ProfileRepository {
     fun observeCurrentUser(): Flow<User?>
     fun observeMyPublications(): Flow<List<TouristPoint>>
+    fun observeFollowers(): Flow<Int>
+    fun observeFollowing(): Flow<Int>
 
     fun updateProfile(
         name: String,

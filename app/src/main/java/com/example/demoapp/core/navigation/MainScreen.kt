@@ -174,6 +174,10 @@ fun MainScreen(
                             onAccountDeleted = {
                                 showEditProfile = false
                                 onLogout()
+                            },
+                            onLogout = {
+                                showEditProfile = false
+                                onLogout()
                             }
                         )
                         else -> ProfileScreen(

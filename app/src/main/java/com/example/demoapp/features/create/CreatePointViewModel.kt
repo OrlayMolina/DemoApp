@@ -16,6 +16,7 @@ import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
+import java.util.Locale
 import javax.inject.Inject
 
 /**
@@ -137,24 +138,30 @@ class CreatePointViewModel @Inject constructor(
     fun onLocationSelected(lat: Double, lng: Double, resolvedAddress: String = "") {
         latitude = lat
         longitude = lng
-        latitudeInput = "%.4f".format(lat)
-        longitudeInput = "%.4f".format(lng)
+        latitudeInput = String.format(Locale.US, "%.6f", lat)
+        longitudeInput = String.format(Locale.US, "%.6f", lng)
         address = resolvedAddress
         locationError = null
     }
 
     // Funciones setters para edición manual de coordenadas en la UI
     fun onLatitudeChange(value: String) {
-        latitudeInput = value
-        latitude = value.toDoubleOrNull()
+        val normalizedValue = normalizeCoordinateInput(value)
+        latitudeInput = normalizedValue
+        latitude = normalizedValue.toDoubleOrNull()
     }
 
     fun onLongitudeChange(value: String) {
-        longitudeInput = value
-        longitude = value.toDoubleOrNull()
+        val normalizedValue = normalizeCoordinateInput(value)
+        longitudeInput = normalizedValue
+        longitude = normalizedValue.toDoubleOrNull()
     }
 
     fun onAddressChange(value: String) { address = value }
+
+    private fun normalizeCoordinateInput(value: String): String {
+        return value.replace(',', '.')
+    }
 
     val isStep2Valid: Boolean get() = latitude != null && longitude != null
 

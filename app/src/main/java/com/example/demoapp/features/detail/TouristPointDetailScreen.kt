@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.demoapp.domain.model.Comment
 import com.example.demoapp.domain.model.TouristPoint
@@ -80,7 +80,7 @@ fun TouristPointDetailScreen(
     onNavigateBack : () -> Unit    = {},
     onApproved     : () -> Unit    = {},
     onRejected     : () -> Unit    = {},
-    viewModel      : TouristPointDetailViewModel = viewModel()
+    viewModel      : TouristPointDetailViewModel = hiltViewModel()
 ) {
     LaunchedEffect(point) { viewModel.loadPoint(point) }
 
@@ -101,9 +101,9 @@ fun TouristPointDetailScreen(
     if (showRejectDialog) {
         RejectDialog(
             onConfirm = { reason ->
-                viewModel.rejectPoint(reason)
+                val rejected = viewModel.rejectPoint(reason)
                 showRejectDialog = false
-                onRejected()
+                if (rejected) onRejected()
             },
             onDismiss = { showRejectDialog = false }
         )
@@ -436,36 +436,38 @@ fun TouristPointDetailScreen(
                 }
             }
 
-            // ── Comentarios ────────────────────────────────────────────────
-            Column(
-                modifier            = Modifier
-                    .fillMaxWidth()
-                    .background(CardWhite)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text("Comentarios", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextDark)
+             // ── Comentarios ────────────────────────────────────────────────
+             if (viewModel.comments.isNotEmpty()) {
+                 Column(
+                     modifier            = Modifier
+                         .fillMaxWidth()
+                         .background(CardWhite)
+                         .padding(16.dp),
+                     verticalArrangement = Arrangement.spacedBy(12.dp)
+                 ) {
+                     Text("Comentarios", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextDark)
 
-                val visibleComments = if (showAllComments) viewModel.comments
-                else viewModel.comments.take(2)
+                     val visibleComments = if (showAllComments) viewModel.comments
+                     else viewModel.comments.take(2)
 
-                visibleComments.forEach { comment ->
-                    CommentItem(comment = comment)
-                }
+                     visibleComments.forEach { comment ->
+                         CommentItem(comment = comment)
+                     }
 
-                if (viewModel.comments.size > 2 && !showAllComments) {
-                    TextButton(
-                        onClick  = { showAllComments = true },
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    ) {
-                        Text(
-                            "Ver todos los comentarios (${viewModel.comments.size})",
-                            color    = GreenPrimary,
-                            fontSize = 13.sp
-                        )
-                    }
-                }
-            }
+                     if (viewModel.comments.size > 2 && !showAllComments) {
+                         TextButton(
+                             onClick  = { showAllComments = true },
+                             modifier = Modifier.align(Alignment.CenterHorizontally)
+                         ) {
+                             Text(
+                                 "Ver todos los comentarios (${viewModel.comments.size})",
+                                 color    = GreenPrimary,
+                                 fontSize = 13.sp
+                             )
+                         }
+                     }
+                 }
+             }
 
             // ── Botones moderador AL FINAL del scroll ──────────────────
             if (isModerator) {
@@ -496,8 +498,8 @@ fun TouristPointDetailScreen(
 
                     Button(
                         onClick  = {
-                            viewModel.approvePoint()
-                            onApproved()
+                            val approved = viewModel.approvePoint()
+                            if (approved) onApproved()
                         },
                         modifier = Modifier
                             .weight(1f)

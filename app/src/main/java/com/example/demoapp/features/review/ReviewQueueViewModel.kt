@@ -1,10 +1,17 @@
 package com.example.demoapp.features.review
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.demoapp.domain.model.TouristPoint
+import com.example.demoapp.domain.repository.TouristPointRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 
 enum class DateFilter(val label: String) {
     ALL("Todos"),
@@ -13,23 +20,44 @@ enum class DateFilter(val label: String) {
     DAY_5_PLUS("Más de 5 días")
 }
 
-class ReviewQueueViewModel : ViewModel() {
+@HiltViewModel
+class ReviewQueueViewModel @Inject constructor(
+    private val touristPointRepository: TouristPointRepository
+) : ViewModel() {
 
-    private val allPoints = TouristPoint.SAMPLE_LIST
+    private val _selectedDateFilter = MutableStateFlow(DateFilter.ALL)
+    val selectedDateFilter: StateFlow<DateFilter> = _selectedDateFilter.asStateFlow()
 
-    var selectedDateFilter by mutableStateOf(DateFilter.ALL)
-        private set
+    val pendingPoints: StateFlow<List<TouristPoint>> = combine(
+        touristPointRepository.touristPoints,
+        selectedDateFilter
+    ) { allPoints, filter ->
+            allPoints
+                .filter { !it.isVerified && !it.isRejected }
+                .applyDateFilter(filter)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
-    val pendingPoints get() = allPoints
-        .filter { !it.isVerified && !it.isRejected }
-        .applyDateFilter(selectedDateFilter)
-
-    val reportedPoints get() = allPoints
-        .filter { it.isVerified && it.isReported }
-        .applyDateFilter(selectedDateFilter)
+    val reportedPoints: StateFlow<List<TouristPoint>> = combine(
+        touristPointRepository.touristPoints,
+        selectedDateFilter
+    ) { allPoints, filter ->
+            allPoints
+                .filter { it.isVerified && it.isReported }
+                .applyDateFilter(filter)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
     fun setDateFilter(filter: DateFilter) {
-        selectedDateFilter = filter
+        _selectedDateFilter.value = filter
     }
 
     private fun List<TouristPoint>.applyDateFilter(

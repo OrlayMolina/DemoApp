@@ -6,9 +6,14 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.demoapp.domain.model.Comment
 import com.example.demoapp.domain.model.TouristPoint
-import com.example.demoapp.domain.model.TouristPointCategory
+import com.example.demoapp.domain.repository.TouristPointRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class TouristPointDetailViewModel : ViewModel() {
+@HiltViewModel
+class TouristPointDetailViewModel @Inject constructor(
+    private val touristPointRepository: TouristPointRepository
+) : ViewModel() {
 
     var point by mutableStateOf<TouristPoint?>(null)
         private set
@@ -41,12 +46,26 @@ class TouristPointDetailViewModel : ViewModel() {
     fun toggleLike()   { isLiked    = !isLiked }
 
     fun approvePoint(): Boolean {
-        // TODO: llamar a Firestore
-        return true
+        val currentPoint = point ?: return false
+        val result = touristPointRepository.approvePoint(currentPoint.id)
+        return result.fold(
+            onSuccess = {
+                point = currentPoint.copy(isVerified = true, isRejected = false, rejectionReason = null)
+                true
+            },
+            onFailure = { false }
+        )
     }
 
     fun rejectPoint(reason: String): Boolean {
-        // TODO: llamar a Firestore
-        return reason.isNotBlank()
+        val currentPoint = point ?: return false
+        val result = touristPointRepository.rejectPoint(currentPoint.id, reason)
+        return result.fold(
+            onSuccess = {
+                point = currentPoint.copy(isVerified = false, isRejected = true, rejectionReason = reason)
+                true
+            },
+            onFailure = { false }
+        )
     }
 }

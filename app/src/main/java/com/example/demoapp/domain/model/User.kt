@@ -14,7 +14,9 @@ data class User (
 
     val points: Int = 0,
     val badges: List<Badge> = emptyList(),
-    var level: UserLevel = UserLevel.NOVATO
+    var level: UserLevel = UserLevel.NOVATO,
 
-
+    val followers: Int = 0,
+    val following: Int = 0,
+    val savedPublications: List<String> = emptyList()
 )

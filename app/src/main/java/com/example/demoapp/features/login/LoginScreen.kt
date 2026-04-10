@@ -47,15 +47,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.demoapp.ui.theme.DemoAppTheme
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.demoapp.core.utils.RequestResult
+import com.example.demoapp.domain.model.User
 import com.example.demoapp.domain.model.UserRole
 
 private val GreenPrimary   = Color(0xFF2E7D5E)
@@ -63,7 +61,6 @@ private val BackgroundGray = Color(0xFFF0F4F2)
 private val CardWhite      = Color(0xFFFFFFFF)
 private val TextGray       = Color(0xFF6B6B6B)
 private val DividerColor   = Color(0xFFE0E0E0)
-private val TealModerator = Color(0xFF4A7B7B)
 
 @Composable
 fun LoginScreen(
@@ -71,7 +68,8 @@ fun LoginScreen(
     onNavigateToUsers: () -> Unit,
     onNavigateToRegister: (() -> Unit)? = null,   // opcional, para el link "Regístrate"
     onNavigateToPasswordRecovery: (() -> Unit)? = null,
-    onNavigateToModerator: (() -> Unit)? = null
+    onNavigateToModerator: (() -> Unit)? = null,
+    onLoginSuccess: (User) -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope             = rememberCoroutineScope()
@@ -81,7 +79,9 @@ fun LoginScreen(
     LaunchedEffect(loginResult) {
         when (val result = loginResult) {
             is RequestResult.Success -> {
-                if (result.data == UserRole.ADMIN) {
+                val user = result.data
+                onLoginSuccess(user)
+                if (user.role == UserRole.ADMIN) {
                     onNavigateToModerator?.invoke()
                 } else {
                     onNavigateToUsers()
@@ -141,10 +141,21 @@ fun LoginScreen(
                     )
 
                     // ── Selector de rol (segmented) ────────────────────────
-                    RoleSelector(
-                        selectedIndex = selectedRole,
-                        onRoleSelected = { selectedRole = it }
-                    )
+                    // Solo mostrar si es acceso de usuario
+                    if (selectedRole == UserRole.USER) {
+                        RoleSelector(
+                            selectedIndex = selectedRole,
+                            onRoleSelected = { selectedRole = it }
+                        )
+                    } else {
+                        Text(
+                            text       = "Acceso de Moderador",
+                            fontSize   = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color      = Color(0xFF1A1A1A),
+                            modifier   = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
 
                     // ── Campos ─────────────────────────────────────────────
                     OutlinedTextField(
