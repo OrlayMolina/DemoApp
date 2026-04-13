@@ -11,7 +11,11 @@ import javax.inject.Singleton
 @Singleton
 class CommentRepositoryImpl @Inject constructor() : CommentRepository {
 
-    private val commentsByPoint = MutableStateFlow(Comment.SAMPLE_BY_POINT)
+    // Los comentarios quemados SOLO se muestran en publicaciones quemadas (id 1 y 2)
+    // Las nuevas publicaciones nacen sin comentarios
+    private val commentsByPoint = MutableStateFlow(
+        Comment.SAMPLE_BY_POINT.filterKeys { it in listOf("1", "2") }  // Solo IDs quemadas
+    )
 
     override fun observeByPoint(pointId: String): Flow<List<Comment>> {
         return commentsByPoint.map { byPoint ->

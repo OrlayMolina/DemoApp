@@ -6,11 +6,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -47,12 +50,13 @@ internal fun categoryLabel(cat: TouristPointCategory) = when (cat) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreatePointStep1Screen(
-    photoUrl      : String?,
+    photoUrls     : List<String>,
     title         : String,
     category      : TouristPointCategory?,
     description   : String,
     isEditing     : Boolean = false,
-    onPhotoUrl    : (String) -> Unit,
+    onAddPhoto    : (String) -> Unit,
+    onRemovePhoto : (String) -> Unit,
     onTitle       : (String) -> Unit,
     onCategory    : (TouristPointCategory) -> Unit,
     onDescription : (String) -> Unit,
@@ -61,12 +65,12 @@ fun CreatePointStep1Screen(
 ) {
     var showCategoryMenu by remember { mutableStateOf(false) }
 
-    // Guarda la URI real seleccionada por el usuario
+    // Permite seleccionar varias fotos de una vez
     val galleryLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) {
-            onPhotoUrl(uri.toString())
+        ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        uris.forEach { uri ->
+            onAddPhoto(uri.toString())
         }
     }
 
@@ -140,39 +144,62 @@ fun CreatePointStep1Screen(
                             fontWeight = FontWeight.SemiBold,
                             color      = TextDark
                         )
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFFF0F0F0))
-                                .border(1.dp, DividerColor, RoundedCornerShape(10.dp))
-                                .clickable { galleryLauncher.launch("image/*") },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (photoUrl != null) {
-                                AsyncImage(
-                                    model              = photoUrl,
-                                    contentDescription = null,
-                                    contentScale       = ContentScale.Crop,
-                                    modifier           = Modifier.fillMaxSize()
-                                )
-                            } else {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFFF0F0F0))
+                                        .border(1.dp, DividerColor, RoundedCornerShape(10.dp))
+                                        .clickable { galleryLauncher.launch("image/*") },
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        Icons.Default.AddAPhoto,
-                                        null,
-                                        tint     = TextGray,
-                                        modifier = Modifier.size(24.dp)
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.AddAPhoto,
+                                            null,
+                                            tint = TextGray,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Text("Añadir", fontSize = 10.sp, color = TextGray)
+                                    }
+                                }
+                            }
+
+                            items(photoUrls, key = { it }) { photoUrl ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                ) {
+                                    AsyncImage(
+                                        model = photoUrl,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
                                     )
-                                    Text("Añadir foto", fontSize = 10.sp, color = TextGray)
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Eliminar foto",
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(4.dp)
+                                            .size(16.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.Black.copy(alpha = 0.55f))
+                                            .clickable { onRemovePhoto(photoUrl) }
+                                            .padding(1.dp)
+                                    )
                                 }
                             }
                         }
                         Text(
-                            "Puedes añadir hasta 6 fotos",
+                            "Puedes añadir hasta 5 fotos",
                             fontSize = 12.sp,
                             color    = TextGray
                         )

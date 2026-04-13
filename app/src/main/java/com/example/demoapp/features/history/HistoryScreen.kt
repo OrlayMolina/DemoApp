@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.demoapp.domain.model.ReviewAction
 import com.example.demoapp.domain.model.ReviewHistory
 import com.example.demoapp.domain.model.TouristPointCategory
@@ -56,7 +56,7 @@ private fun formatDateTime(millis: Long): String =
 
 @Composable
 fun HistoryScreen(
-    viewModel: HistoryViewModel = viewModel()
+    viewModel: HistoryViewModel = hiltViewModel()
 ) {
     var showFilterMenu by remember { mutableStateOf(false) }
 

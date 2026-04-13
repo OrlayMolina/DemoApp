@@ -40,6 +40,17 @@ private val DangerRedLight  = Color(0xFFFFEBEE)
 private val BluePrimary     = Color(0xFF1A73E8)
 private val GreenPrimary    = Color(0xFF2E7D5E)
 
+private fun safeInitials(value: String): String {
+    val initials = value
+        .trim()
+        .split(" ")
+        .filter { it.isNotBlank() }
+        .take(2)
+        .mapNotNull { it.firstOrNull()?.uppercaseChar()?.toString() }
+        .joinToString("")
+    return initials.ifBlank { "?" }
+}
+
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 
 @Composable
@@ -47,6 +58,7 @@ fun EditProfileScreen(
     onNavigateBack    : () -> Unit = {},
     onAccountDeleted  : () -> Unit = {},   // navega a Login
     onLogout          : () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
     viewModel: EditProfileViewModel = hiltViewModel()
 ) {
     var showDeleteDialog  by remember { mutableStateOf(false) }
@@ -159,9 +171,7 @@ fun EditProfileScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text       = name.split(" ")
-                                    .take(2)
-                                    .joinToString("") { it.first().uppercase() },
+                                text       = safeInitials(name),
                                 color      = Color.White,
                                 fontSize   = 28.sp,
                                 fontWeight = FontWeight.Bold
@@ -240,17 +250,6 @@ fun EditProfileScreen(
                     }
                 }
 
-                OutlinedButton(
-                    onClick = { photoPicker.launch("image/*") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(46.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(Icons.Default.AddAPhoto, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Cargar foto de perfil")
-                }
 
                 // ── Privacidad y seguridad ─────────────────────────────────
                 Card(

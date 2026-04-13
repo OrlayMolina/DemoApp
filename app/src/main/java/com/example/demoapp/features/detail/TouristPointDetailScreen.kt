@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -71,6 +73,17 @@ private fun formatDate(millis: Long): String =
 private fun formatShortDate(millis: Long): String =
     SimpleDateFormat("d/M/yyyy", Locale("es")).format(Date(millis))
 
+private fun safeInitials(value: String): String {
+    val initials = value
+        .trim()
+        .split(" ")
+        .filter { it.isNotBlank() }
+        .take(2)
+        .mapNotNull { it.firstOrNull()?.uppercaseChar()?.toString() }
+        .joinToString("")
+    return initials.ifBlank { "?" }
+}
+
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 
 @Composable
@@ -83,6 +96,10 @@ fun TouristPointDetailScreen(
     viewModel      : TouristPointDetailViewModel = hiltViewModel()
 ) {
     LaunchedEffect(point) { viewModel.loadPoint(point) }
+    val author = viewModel.authorUiState
+    val galleryPhotos = remember(point.photoUrls) { point.photoUrls.filter { it.isNotBlank() } }
+    var selectedPhotoIndex by remember(point.id) { mutableStateOf(0) }
+    var showGalleryViewer by remember { mutableStateOf(false) }
 
     var showRejectDialog   by remember { mutableStateOf(false) }
     var showAllComments    by remember { mutableStateOf(false) }
@@ -95,6 +112,30 @@ fun TouristPointDetailScreen(
             onNavigateBack = { showCommentsScreen = false }
         )
         return
+    }
+
+    if (showGalleryViewer && galleryPhotos.isNotEmpty()) {
+        Dialog(onDismissRequest = { showGalleryViewer = false }) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(380.dp)
+                    .background(Color.Black)
+            ) {
+                AsyncImage(
+                    model = galleryPhotos[selectedPhotoIndex.coerceIn(galleryPhotos.indices)],
+                    contentDescription = "Foto ampliada",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                )
+                IconButton(
+                    onClick = { showGalleryViewer = false },
+                    modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.White)
+                }
+            }
+        }
     }
 
     // ── Modal rechazo ──────────────────────────────────────────────────────
@@ -126,10 +167,14 @@ fun TouristPointDetailScreen(
                     .height(260.dp)
             ) {
                 AsyncImage(
-                    model              = point.photoUrls.firstOrNull(),
+                    model              = galleryPhotos.getOrNull(selectedPhotoIndex),
                     contentDescription = point.title,
                     contentScale       = ContentScale.Crop,
-                    modifier           = Modifier.fillMaxSize()
+                    modifier           = Modifier
+                        .fillMaxSize()
+                        .clickable(enabled = galleryPhotos.isNotEmpty()) {
+                            showGalleryViewer = true
+                        }
                 )
 
                 // Gradiente superior para los botones
@@ -177,6 +222,32 @@ fun TouristPointDetailScreen(
                         color      = Color.White,
                         fontWeight = FontWeight.SemiBold
                     )
+                }
+
+                if (galleryPhotos.size > 1) {
+                    LazyRow(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 12.dp, bottom = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        itemsIndexed(galleryPhotos) { index, imageUrl ->
+                            AsyncImage(
+                                model = imageUrl,
+                                contentDescription = "Miniatura ${index + 1}",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .border(
+                                        width = if (index == selectedPhotoIndex) 2.dp else 1.dp,
+                                        color = if (index == selectedPhotoIndex) Color.White else Color.White.copy(alpha = 0.6f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable { selectedPhotoIndex = index }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -273,10 +344,10 @@ fun TouristPointDetailScreen(
                                 .background(GreenPrimary),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("MG", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(author.initials, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                         Column {
-                            Text("María García", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                            Text(author.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                             Text("• ${formatShortDate(point.createdAt)}", fontSize = 11.sp, color = TextGray)
                         }
                     }
@@ -381,14 +452,14 @@ fun TouristPointDetailScreen(
                                         .background(GreenPrimary),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text("MG", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    Text(author.initials, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                 }
                                 Column {
-                                    Text("María García", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
-                                    Text("maria@example.com", fontSize = 12.sp, color = TextGray)
+                                    Text(author.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                                    Text(author.email.ifBlank { "Sin email" }, fontSize = 12.sp, color = TextGray)
                                 }
                                 Spacer(Modifier.weight(1f))
-                                Text("47 publicaciones", fontSize = 11.sp, color = TextGray)
+                                Text("${author.publicationsCount} publicaciones", fontSize = 11.sp, color = TextGray)
                             }
                         }
                     }
@@ -537,7 +608,7 @@ private fun CommentItem(comment: Comment) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text  = comment.authorName.split(" ").take(2).joinToString("") { it.first().uppercase() },
+                text  = safeInitials(comment.authorName),
                 color = Color.White,
                 fontSize   = 11.sp,
                 fontWeight = FontWeight.Bold

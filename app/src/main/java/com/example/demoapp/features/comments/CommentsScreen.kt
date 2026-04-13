@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.demoapp.domain.model.Comment
+import coil3.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 import java.util.concurrent.TimeUnit
 
 private val BgGray = Color(0xFFF0F4F2)
@@ -179,18 +181,30 @@ private fun CommentRow(comment: Comment) {
                 .padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(GreenPrimary.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = comment.authorName.firstOrNull()?.uppercase() ?: "?",
-                    color = GreenPrimary,
-                    fontWeight = FontWeight.Bold
+            // Avatar: foto de perfil o iniciales como fallback
+            if (!comment.authorAvatarUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = comment.authorAvatarUrl,
+                    contentDescription = "Foto de ${comment.authorName}",
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(GreenPrimary.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = comment.authorName.firstOrNull()?.uppercase() ?: "?",
+                        color = GreenPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
             Column(modifier = Modifier.weight(1f)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -23,6 +23,8 @@ import javax.inject.Inject
 class RegisterViewModel @Inject constructor(private val userRepository: UserRepository)
     : ViewModel() {
 
+    private fun normalizeEmail(value: String): String = value.trim().lowercase()
+
     val name = ValidatedField(initialValue = "", validate = {
         if (it.isEmpty()) "El nombre es obligatorio" else null
     })
@@ -74,9 +76,10 @@ class RegisterViewModel @Inject constructor(private val userRepository: UserRepo
             delay(1000)
 
             // Verifica si el email ya existe
-            val existingUser = userRepository.findById(
-                userRepository.users.value.find { it.email == email.value }?.id ?: ""
-            )
+            val normalizedEmail = normalizeEmail(email.value)
+            val existingUser = userRepository.users.value.firstOrNull {
+                it.email.trim().lowercase() == normalizedEmail
+            }
 
             if (existingUser != null) {
                 registerResult = RequestResult.Error("Este email ya está registrado")
@@ -85,11 +88,11 @@ class RegisterViewModel @Inject constructor(private val userRepository: UserRepo
 
             val newUser = User(
                 id = UUID.randomUUID().toString(),
-                name = name.value,
+                name = name.value.trim(),
                 city = "No especificada",
                 address = "No especificada",
-                email = email.value,
-                password = password.value,
+                email = normalizedEmail,
+                password = password.value.trim(),
                 role = UserRole.USER,
                 level = UserLevel.NOVATO
             )

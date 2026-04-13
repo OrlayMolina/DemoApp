@@ -196,7 +196,11 @@ class CreatePointViewModel @Inject constructor(
                 photoUrls = selectedPhotoUrls.toList()
             )
         } else {
-            val authorId = userRepository.currentUser.value?.id ?: "1"
+            val authorId = userRepository.currentUser.value?.id
+            if (authorId.isNullOrBlank()) {
+                createResult = RequestResult.Error("Debes iniciar sesion para publicar")
+                return false
+            }
             TouristPoint(
                 id = System.currentTimeMillis().toString(),
                 authorId = authorId,

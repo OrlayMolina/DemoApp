@@ -103,15 +103,13 @@ fun MainScreen(
                     // FLUJO DE CREACIÓN/EDICIÓN DE 2 PASOS
                     if (currentPublishStep == 1) {
                         CreatePointStep1Screen(
-                            photoUrl = createViewModel.selectedPhotoUrls.firstOrNull(),
+                            photoUrls = createViewModel.selectedPhotoUrls,
                             title = createViewModel.title.value,
                             category = createViewModel.selectedCategory,
                             description = createViewModel.description.value,
                             isEditing = pointToEdit != null,
-                            onPhotoUrl = { url ->
-                                createViewModel.selectedPhotoUrls.clear()
-                                createViewModel.addPhoto(url)
-                            },
+                            onAddPhoto = { url -> createViewModel.addPhoto(url) },
+                            onRemovePhoto = { url -> createViewModel.removePhoto(url) },
                             onTitle = { createViewModel.title.onChange(it) },
                             onCategory = { categoryEnum ->
                                 createViewModel.onCategoryChange(categoryEnum)
@@ -178,6 +176,10 @@ fun MainScreen(
                             onLogout = {
                                 showEditProfile = false
                                 onLogout()
+                            },
+                            onNavigateToNotifications = {
+                                selectedTab = BottomNavTab.NOTIFICATIONS
+                                showEditProfile = false
                             }
                         )
                         else -> ProfileScreen(
@@ -189,7 +191,8 @@ fun MainScreen(
                                     point ->
                                 pointToEdit  = point
                                 selectedTab  = BottomNavTab.PUBLISH
-                            }
+                            },
+                            onLogout = onLogout
                         )
                     }
                 }

@@ -30,6 +30,12 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         return user
     }
 
+    override fun restoreCurrentUser(userId: String): Boolean {
+        val user = findById(userId)
+        _currentUser.value = user
+        return user != null
+    }
+
     override fun logout() {
         _currentUser.value = null
     }

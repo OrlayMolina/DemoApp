@@ -57,7 +57,7 @@ class LoginViewModel @Inject constructor(
     fun login() {
         _loginResult.value = RequestResult.Loading
 
-        val user = repository.login(email.value,password.value)
+        val user = repository.login(email.value.trim(), password.value.trim())
         _loginResult.value = if (user != null){
             RequestResult.Success(user)
         } else {

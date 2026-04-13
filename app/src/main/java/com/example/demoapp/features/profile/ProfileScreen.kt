@@ -35,6 +35,17 @@ private val CardWhite      = Color(0xFFFFFFFF)
 private val TextGray       = Color(0xFF6B6B6B)
 private val DividerColor   = Color(0xFFE0E0E0)
 
+private fun safeInitials(value: String): String {
+    val initials = value
+        .trim()
+        .split(" ")
+        .filter { it.isNotBlank() }
+        .take(2)
+        .mapNotNull { it.firstOrNull()?.uppercaseChar()?.toString() }
+        .joinToString("")
+    return initials.ifBlank { "?" }
+}
+
 data class ProfileUser(
     val name        : String,
     val joinDate    : String,
@@ -55,6 +66,7 @@ fun ProfileScreen(
     onNavigateToSettings: (() -> Unit)? = null,
     onNavigateToAchievements : (() -> Unit)? = null,
     onNavigateToStatistics   : (() -> Unit)? = null,
+    onLogout: (() -> Unit)? = null,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -150,10 +162,7 @@ fun ProfileScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text       = profileUser.name
-                                            .split(" ")
-                                            .take(2)
-                                            .joinToString("") { it.first().uppercase() },
+                                        text       = safeInitials(profileUser.name),
                                         color      = Color.White,
                                         fontSize   = 22.sp,
                                         fontWeight = FontWeight.Bold

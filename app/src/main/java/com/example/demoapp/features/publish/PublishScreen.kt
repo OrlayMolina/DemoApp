@@ -12,7 +12,7 @@ fun PublishScreen(
     val isEditing = pointToEdit != null
 
     var step        by remember { mutableIntStateOf(1) }
-    var photoUrl    by remember { mutableStateOf<String?>(null) }
+    var photoUrls   by remember { mutableStateOf<List<String>>(emptyList()) }
     var title       by remember { mutableStateOf("") }
     var category    by remember { mutableStateOf<TouristPointCategory?>(null) }
     var description by remember { mutableStateOf("") }
@@ -22,7 +22,7 @@ fun PublishScreen(
 
     fun resetAll() {
         step        = 1
-        photoUrl    = null
+        photoUrls   = emptyList()
         title       = ""
         category    = null
         description = ""
@@ -33,12 +33,17 @@ fun PublishScreen(
 
     when (step) {
         1 -> CreatePointStep1Screen(
-            photoUrl      = photoUrl,
+            photoUrls     = photoUrls,
             title         = title,
             category      = category,
             description   = description,
             isEditing     = isEditing,
-            onPhotoUrl    = { photoUrl    = it },
+            onAddPhoto    = { url ->
+                if (!photoUrls.contains(url) && photoUrls.size < 5) {
+                    photoUrls = photoUrls + url
+                }
+            },
+            onRemovePhoto = { url -> photoUrls = photoUrls.filterNot { it == url } },
             onTitle       = { title       = it },
             onCategory    = { category    = it },
             onDescription = { description = it },

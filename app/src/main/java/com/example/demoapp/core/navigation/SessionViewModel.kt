@@ -27,19 +27,16 @@ class SessionViewModel @Inject constructor(
     private val userRepository: UserRepository
 ) : ViewModel() {
 
-    init {
-        // Limpia la sesión al iniciar (para propósitos de desarrollo)
-        // TODO: Remover esto en producción
-        viewModelScope.launch {
-            sessionDataStore.clearSession()
-        }
-    }
 
     // Flujo que representa el estado de la sesión
     val sessionState: StateFlow<SessionState> = sessionDataStore.sessionFlow
         .map { session -> // Mapea la sesión a un estado de sesión
             if (session != null) {
-                SessionState.Authenticated(session)
+                if (userRepository.restoreCurrentUser(session.userId)) {
+                    SessionState.Authenticated(session)
+                } else {
+                    SessionState.NotAuthenticated
+                }
             } else {
                 SessionState.NotAuthenticated
             }
