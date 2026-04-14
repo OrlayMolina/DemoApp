@@ -2,10 +2,11 @@ package com.example.demoapp.features.login
 
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
+import com.example.demoapp.R
 import com.example.demoapp.core.utils.RequestResult
+import com.example.demoapp.core.utils.ResourceProvider
 import com.example.demoapp.core.utils.ValidatedField
 import com.example.demoapp.domain.model.User
-import com.example.demoapp.domain.model.UserRole
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val repository: UserRepository
+    private val repository: UserRepository,
+    private val resourceProvider: ResourceProvider
 ) : ViewModel(){
 
     private val _loginResult = MutableStateFlow<RequestResult<User>?>(null)
@@ -25,8 +27,8 @@ class LoginViewModel @Inject constructor(
         initialValue = "",
         validate     = { value ->
             when {
-                value.isEmpty() -> "El email es obligatorio"
-                !Patterns.EMAIL_ADDRESS.matcher(value).matches() -> "Ingresa un email válido"
+                value.isEmpty() -> resourceProvider.getString(R.string.error_email_empty)
+                !Patterns.EMAIL_ADDRESS.matcher(value).matches() -> resourceProvider.getString(R.string.error_email_invalid)
                 else -> null
             }
         }
@@ -36,8 +38,8 @@ class LoginViewModel @Inject constructor(
         initialValue = "",
         validate     = { value ->
             when {
-                value.isEmpty() -> "La contraseña es obligatoria"
-                value.length < 6 -> "Debe tener al menos 6 caracteres"
+                value.isEmpty() -> resourceProvider.getString(R.string.error_password_empty)
+                value.length < 6 -> resourceProvider.getString(R.string.error_password_short)
                 else -> null
             }
         }
@@ -61,7 +63,7 @@ class LoginViewModel @Inject constructor(
         _loginResult.value = if (user != null){
             RequestResult.Success(user)
         } else {
-            RequestResult.Error("Credenciales incorrectas")
+            RequestResult.Error(resourceProvider.getString(R.string.login_failure))
         }
     }
 

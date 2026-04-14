@@ -10,9 +10,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.demoapp.R
 import com.example.demoapp.core.navigation.ModeratorBottomNavBar
 import com.example.demoapp.core.navigation.ModeratorTab
 import com.example.demoapp.domain.model.TouristPoint
@@ -25,7 +27,6 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.People
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.demoapp.features.users.list.UserListViewModel
 
 @Composable
@@ -62,24 +63,14 @@ fun ModeratorScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (selectedPoint != null) {
-                TouristPointDetailScreen(
-                    point          = selectedPoint!!,
-                    isModerator    = true,
-                    onNavigateBack = { selectedPoint = null },
-                    onApproved     = { selectedPoint = null },
-                    onRejected     = { selectedPoint = null }
+            when (selectedTab) {
+                ModeratorTab.DASHBOARD -> DashboardScreen(onLogout = onLogout)
+                ModeratorTab.REVIEW    -> ReviewQueueScreen(
+                    onNavigateToDetail = { selectedPoint = it }
                 )
-            } else {
-                when (selectedTab) {
-                    ModeratorTab.DASHBOARD -> DashboardScreen(onLogout = onLogout)
-                    ModeratorTab.REVIEW    -> ReviewQueueScreen(
-                        onNavigateToDetail = { selectedPoint = it }
-                    )
-                    ModeratorTab.HISTORY   -> HistoryScreen()
-                    ModeratorTab.REPORTS   -> ReportsScreen()
-                    ModeratorTab.USERS     -> UsersScreen()
-                }
+                ModeratorTab.HISTORY   -> HistoryScreen()
+                ModeratorTab.REPORTS   -> ReportsScreen()
+                ModeratorTab.USERS     -> UsersScreen()
             }
         }
     }
@@ -89,8 +80,10 @@ fun ModeratorScreen(
 
 @Composable
 fun ReportsScreen(
-    viewModel: DashboardViewModel = viewModel()
+    viewModel: DashboardViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -106,13 +99,13 @@ fun ReportsScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Default.Flag,
-                    contentDescription = "Reportes",
+                    contentDescription = stringResource(R.string.moderator_reports),
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(Modifier.width(12.dp))
                 Text(
-                    "Reportes",
+                    stringResource(R.string.moderator_reports),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -120,7 +113,7 @@ fun ReportsScreen(
             }
         }
 
-        val reportedPoints = viewModel.allPoints
+        val reportedPoints = uiState.allPoints
             .filter { it.isReported }
 
         if (reportedPoints.isEmpty()) {
@@ -130,7 +123,7 @@ fun ReportsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "No hay reportes pendientes",
+                    stringResource(R.string.moderator_no_reports),
                     fontSize = 16.sp,
                     color = Color(0xFF6B6B6B)
                 )
@@ -157,7 +150,7 @@ fun ReportsScreen(
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                "Razón: ${point.reportReason ?: "No especificada"}",
+                                stringResource(R.string.moderator_report_reason, point.reportReason ?: stringResource(R.string.common_not_specified)),
                                 fontSize = 12.sp,
                                 color = Color(0xFFD32F2F)
                             )
@@ -173,7 +166,7 @@ fun ReportsScreen(
                                     ),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
-                                    Text("Revisar", fontSize = 11.sp)
+                                    Text(stringResource(R.string.moderator_review), fontSize = 11.sp)
                                 }
                                 OutlinedButton(
                                     onClick = { },
@@ -182,7 +175,7 @@ fun ReportsScreen(
                                         .height(36.dp),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
-                                    Text("Descartar", fontSize = 11.sp)
+                                    Text(stringResource(R.string.moderator_discard), fontSize = 11.sp)
                                 }
                             }
                         }
@@ -228,13 +221,13 @@ fun UsersScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Default.People,
-                    contentDescription = "Usuarios",
+                    contentDescription = stringResource(R.string.users_title),
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(Modifier.width(12.dp))
                 Text(
-                    "Gestión de Usuarios",
+                    stringResource(R.string.moderator_user_management),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -248,7 +241,7 @@ fun UsersScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Aun no hay usuarios registrados",
+                    text = stringResource(R.string.moderator_no_users),
                     fontSize = 15.sp,
                     color = Color(0xFF6B6B6B)
                 )
@@ -291,12 +284,12 @@ fun UsersScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        "${user.followers} seguidores",
+                                        stringResource(R.string.moderator_followers_count, user.followers),
                                         fontSize = 11.sp,
                                         color = Color(0xFF00897B)
                                     )
                                     Text(
-                                        "${user.following} seguidos",
+                                        stringResource(R.string.moderator_following_count, user.following),
                                         fontSize = 11.sp,
                                         color = Color(0xFF2E7D5E)
                                     )
@@ -308,7 +301,7 @@ fun UsersScreen(
                             ) {
                                 Icon(
                                     Icons.Default.Block,
-                                    contentDescription = "Bloquear",
+                                    contentDescription = stringResource(R.string.moderator_block_user_desc),
                                     tint = Color(0xFFD32F2F)
                                 )
                             }

@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,30 +41,32 @@ fun HomeScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     val features = listOf(
         OnboardingFeature(
             icon = Icons.Default.LocationOn,
             iconTint = GreenPrimary,
-            title = "Descubre lugares únicos",
-            description = "Explora puntos de interés compartidos por la comunidad"
+            title = stringResource(R.string.home_feature_1_title),
+            description = stringResource(R.string.home_feature_1_desc)
         ),
         OnboardingFeature(
             icon = Icons.Default.Photo,
             iconTint = PinkAccent,
-            title = "Comparte tus hallazgos",
-            description = "Publica fotos y ubicaciones de lugares especiales"
+            title = stringResource(R.string.home_feature_2_title),
+            description = stringResource(R.string.home_feature_2_desc)
         ),
         OnboardingFeature(
             icon = Icons.Default.Person,
             iconTint = GreenPrimary,
-            title = "Conecta con exploradores",
-            description = "Únete a una comunidad de amantes de la exploración"
+            title = stringResource(R.string.home_feature_3_title),
+            description = stringResource(R.string.home_feature_3_desc)
         ),
         OnboardingFeature(
             icon = Icons.Default.Leaderboard,
             iconTint = OrangeAccent,
-            title = "Gana logros",
-            description = "Desbloquea badges y sube de nivel mientras exploras"
+            title = stringResource(R.string.home_feature_4_title),
+            description = stringResource(R.string.home_feature_4_desc)
         )
     )
 
@@ -71,7 +74,7 @@ fun HomeScreen(
     val scope        = rememberCoroutineScope()
     val isLastPage   = pagerState.currentPage == features.lastIndex
 
-    Scaffold(containerColor = Color.White) { paddingValues ->
+    Scaffold(containerColor = colorScheme.background) { paddingValues ->
 
         Box(
             modifier = Modifier
@@ -94,7 +97,7 @@ fun HomeScreen(
                     shape = RoundedCornerShape(50),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
                 ) {
-                    Text(text = "Saltar", fontSize = 13.sp)
+                    Text(text = stringResource(R.string.home_skip), fontSize = 13.sp)
                 }
             }
 
@@ -109,7 +112,7 @@ fun HomeScreen(
                 // Logo
                 androidx.compose.foundation.Image(
                     painter = painterResource(R.drawable.logo_red_explora),
-                    contentDescription = "Logo RedExplora",
+                    contentDescription = stringResource(R.string.app_name),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
@@ -145,7 +148,7 @@ fun HomeScreen(
                                 .width(if (selected) 22.dp else 8.dp)
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(
-                                    if (selected) GreenPrimary else Color(0xFFD0D0D0)
+                                    if (selected) GreenPrimary else colorScheme.outlineVariant
                                 )
                         )
                     }
@@ -173,7 +176,7 @@ fun HomeScreen(
                                 1.5.dp, GreenPrimary
                             )
                         ) {
-                            Text(text = "Iniciar sesión", fontWeight = FontWeight.SemiBold)
+                            Text(text = stringResource(R.string.login_button), fontWeight = FontWeight.SemiBold)
                         }
 
                         Button(
@@ -184,7 +187,7 @@ fun HomeScreen(
                                 containerColor = GreenPrimary
                             )
                         ) {
-                            Text(text = "Crear una cuenta", fontWeight = FontWeight.SemiBold)
+                            Text(text = stringResource(R.string.home_create_account), fontWeight = FontWeight.SemiBold)
                         }
                     }
                 } else {
@@ -203,7 +206,7 @@ fun HomeScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary)
                     ) {
                         Text(
-                            text = "Siguiente",
+                            text = stringResource(R.string.home_next),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )

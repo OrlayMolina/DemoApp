@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.Comment
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
@@ -124,7 +126,7 @@ fun TouristPointDetailScreen(
             ) {
                 AsyncImage(
                     model = galleryPhotos[selectedPhotoIndex.coerceIn(galleryPhotos.indices)],
-                    contentDescription = "Foto ampliada",
+                    contentDescription = stringResource(R.string.detail_zoomed_photo_desc),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -132,7 +134,7 @@ fun TouristPointDetailScreen(
                     onClick = { showGalleryViewer = false },
                     modifier = Modifier.align(Alignment.TopEnd)
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color.White)
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close), tint = Color.White)
                 }
             }
         }
@@ -198,11 +200,11 @@ fun TouristPointDetailScreen(
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Volver", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back), tint = Color.White)
                     }
                     if (!isModerator) {
                         IconButton(onClick = { /* TODO: compartir */ }) {
-                            Icon(Icons.Default.Share, "Compartir", tint = Color.White)
+                            Icon(Icons.Default.Share, stringResource(R.string.common_share), tint = Color.White)
                         }
                     }
                 }
@@ -234,7 +236,7 @@ fun TouristPointDetailScreen(
                         itemsIndexed(galleryPhotos) { index, imageUrl ->
                             AsyncImage(
                                 model = imageUrl,
-                                contentDescription = "Miniatura ${index + 1}",
+                                contentDescription = stringResource(R.string.detail_thumbnail_desc, index + 1),
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
                                     .size(48.dp)
@@ -289,7 +291,7 @@ fun TouristPointDetailScreen(
                     if (point.isVerified) {
                         Icon(
                             Icons.Default.CheckCircle,
-                            "Verificado",
+                            stringResource(R.string.detail_verified_desc),
                             tint     = VerifiedBlue,
                             modifier = Modifier.size(22.dp)
                         )
@@ -348,7 +350,7 @@ fun TouristPointDetailScreen(
                         }
                         Column {
                             Text(author.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
-                            Text("• ${formatShortDate(point.createdAt)}", fontSize = 11.sp, color = TextGray)
+                            Text(stringResource(R.string.detail_date_bullet, formatShortDate(point.createdAt)), fontSize = 11.sp, color = TextGray)
                         }
                     }
 
@@ -364,7 +366,8 @@ fun TouristPointDetailScreen(
                             modifier       = Modifier.height(32.dp)
                         ) {
                             Text(
-                                if (viewModel.isFollowing) "Siguiendo" else "Seguir",
+                                if (viewModel.isFollowing) stringResource(R.string.detail_following)
+                                else stringResource(R.string.detail_follow),
                                 fontSize = 12.sp,
                                 color    = if (viewModel.isFollowing) TextDark else Color.White
                             )
@@ -438,7 +441,7 @@ fun TouristPointDetailScreen(
                                 verticalAlignment     = Alignment.CenterVertically
                             ) {
                                 Icon(Icons.Default.Person, null, tint = GreenEmerald, modifier = Modifier.size(16.dp))
-                                Text("Información del Autor", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                                Text(stringResource(R.string.detail_author_info), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                             }
                             HorizontalDivider(color = Color(0xFFF0F0F0))
                             Row(
@@ -456,10 +459,10 @@ fun TouristPointDetailScreen(
                                 }
                                 Column {
                                     Text(author.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
-                                    Text(author.email.ifBlank { "Sin email" }, fontSize = 12.sp, color = TextGray)
+                                    Text(author.email.ifBlank { stringResource(R.string.detail_no_email) }, fontSize = 12.sp, color = TextGray)
                                 }
                                 Spacer(Modifier.weight(1f))
-                                Text("${author.publicationsCount} publicaciones", fontSize = 11.sp, color = TextGray)
+                                Text(stringResource(R.string.detail_author_publications, author.publicationsCount), fontSize = 11.sp, color = TextGray)
                             }
                         }
                     }
@@ -475,16 +478,16 @@ fun TouristPointDetailScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                "Criterios de Revisión",
+                                stringResource(R.string.detail_review_criteria),
                                 fontSize   = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color      = TextDark
                             )
                             listOf(
-                                "El contenido es apropiado y no viola las normas",
-                                "Las imágenes son de buena calidad",
-                                "La ubicación es precisa",
-                                "La descripción es clara y útil"
+                                stringResource(R.string.detail_criteria_1),
+                                stringResource(R.string.detail_criteria_2),
+                                stringResource(R.string.detail_criteria_3),
+                                stringResource(R.string.detail_criteria_4)
                             ).forEach { label ->
                                 Row(
                                     verticalAlignment     = Alignment.Top,
@@ -516,7 +519,7 @@ fun TouristPointDetailScreen(
                          .padding(16.dp),
                      verticalArrangement = Arrangement.spacedBy(12.dp)
                  ) {
-                     Text("Comentarios", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                     Text(stringResource(R.string.detail_comments_title), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextDark)
 
                      val visibleComments = if (showAllComments) viewModel.comments
                      else viewModel.comments.take(2)
@@ -531,7 +534,7 @@ fun TouristPointDetailScreen(
                              modifier = Modifier.align(Alignment.CenterHorizontally)
                          ) {
                              Text(
-                                 "Ver todos los comentarios (${viewModel.comments.size})",
+                                  stringResource(R.string.detail_view_all_comments, viewModel.comments.size),
                                  color    = GreenPrimary,
                                  fontSize = 13.sp
                              )
@@ -564,7 +567,7 @@ fun TouristPointDetailScreen(
                     ) {
                         Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Rechazar", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.detail_reject), fontWeight = FontWeight.SemiBold)
                     }
 
                     Button(
@@ -582,7 +585,7 @@ fun TouristPointDetailScreen(
                     ) {
                         Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Aprobar", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.detail_approve), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -656,14 +659,14 @@ private fun RejectDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
-                    Text("Motivo del Rechazo", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A1A))
+                    Text(stringResource(R.string.detail_reject_reason_title), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A1A))
                     IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
                         Icon(Icons.Default.Close, null, tint = Color(0xFF6B6B6B))
                     }
                 }
 
                 Text(
-                    "Por favor indica por qué se rechaza esta publicación. El usuario recibirá esta información.",
+                    stringResource(R.string.detail_reject_reason_message),
                     fontSize = 13.sp,
                     color    = Color(0xFF6B6B6B)
                 )
@@ -672,8 +675,8 @@ private fun RejectDialog(
                     value         = reason,
                     onValueChange = { reason = it },
                     modifier      = Modifier.fillMaxWidth(),
-                    label         = { Text("Motivo *") },
-                    placeholder   = { Text("Ej: La imagen no es clara, la ubicación es incorrecta, contenido inapropiado...", color = Color(0xFF6B6B6B)) },
+                    label         = { Text(stringResource(R.string.detail_reason_required)) },
+                    placeholder   = { Text(stringResource(R.string.detail_reason_placeholder), color = Color(0xFF6B6B6B)) },
                     shape         = RoundedCornerShape(10.dp),
                     minLines      = 2,
                     colors        = OutlinedTextFieldDefaults.colors(
@@ -683,7 +686,7 @@ private fun RejectDialog(
                 )
 
                 // Razones comunes
-                Text("Razones comunes:", fontSize = 12.sp, color = Color(0xFF6B6B6B))
+                Text(stringResource(R.string.detail_common_reasons), fontSize = 12.sp, color = Color(0xFF6B6B6B))
                 androidx.compose.foundation.layout.FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement   = Arrangement.spacedBy(6.dp)
@@ -711,7 +714,7 @@ private fun RejectDialog(
                         disabledContainerColor = DangerRed.copy(alpha = 0.35f)
                     )
                 ) {
-                    Text("Confirmar Rechazo", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.detail_confirm_rejection), fontWeight = FontWeight.SemiBold)
                 }
 
                 OutlinedButton(
@@ -719,7 +722,7 @@ private fun RejectDialog(
                     modifier = Modifier.fillMaxWidth().height(44.dp),
                     shape    = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Cancelar", color = Color(0xFF1A1A1A))
+                    Text(stringResource(R.string.common_cancel), color = Color(0xFF1A1A1A))
                 }
             }
         }

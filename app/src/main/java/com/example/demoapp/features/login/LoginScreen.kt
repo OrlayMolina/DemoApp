@@ -55,6 +55,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.demoapp.core.utils.RequestResult
 import com.example.demoapp.domain.model.User
 import com.example.demoapp.domain.model.UserRole
+import androidx.compose.ui.res.stringResource
+import com.example.demoapp.R
 
 private val GreenPrimary   = Color(0xFF2E7D5E)
 private val BackgroundGray = Color(0xFFF0F4F2)
@@ -75,6 +77,9 @@ fun LoginScreen(
     val scope             = rememberCoroutineScope()
     var selectedRole      by remember { mutableStateOf(UserRole.USER) }
     val loginResult by viewModel.loginResult.collectAsState()
+    val loadingMessage = stringResource(R.string.login_snackbar_loading)
+    val roleUserLabel = stringResource(R.string.role_user)
+    val roleModeratorLabel = stringResource(R.string.role_moderator)
 
     LaunchedEffect(loginResult) {
         when (val result = loginResult) {
@@ -127,13 +132,13 @@ fun LoginScreen(
 
                     // ── Encabezado ─────────────────────────────────────────
                     Text(
-                        text = "Bienvenido",
+                        text = stringResource(R.string.login_welcome_title),
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1A1A1A)
                     )
                     Text(
-                        text = "Inicia sesión para continuar",
+                        text = stringResource(R.string.login_subtitle),
                         fontSize = 14.sp,
                         color = TextGray,
                         textAlign = TextAlign.Center,
@@ -149,7 +154,7 @@ fun LoginScreen(
                         )
                     } else {
                         Text(
-                            text       = "Acceso de Moderador",
+                            text       = stringResource(R.string.login_moderator_access),
                             fontSize   = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color      = Color(0xFF1A1A1A),
@@ -162,8 +167,8 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         value = viewModel.email.value,
                         onValueChange = { viewModel.onEmailChange(it) },
-                        label = { Text("Email") },
-                        placeholder = { Text("tu@email.com", color = TextGray) },
+                        label = { Text(stringResource(R.string.login_email_label)) },
+                        placeholder = { Text(stringResource(R.string.login_email_placeholder), color = TextGray) },
                         isError = viewModel.email.error != null,
                         supportingText = {
                             viewModel.email.error?.let { Text(it) }
@@ -181,7 +186,7 @@ fun LoginScreen(
                         value = viewModel.password.value,
                         onValueChange = { viewModel.onPasswordChange(it) },
                         visualTransformation = PasswordVisualTransformation(),
-                        label = { Text("Contraseña") },
+                        label = { Text(stringResource(R.string.login_password_label)) },
                         isError = viewModel.password.error != null,
                         supportingText = {
                             viewModel.password.error?.let { Text(it) }
@@ -206,7 +211,7 @@ fun LoginScreen(
                                         fontWeight           = FontWeight.SemiBold
                                     )
                                 ) {
-                                    append("¿Olvidaste tu contraseña?")
+                                    append(stringResource(R.string.login_forgot_password))
                                 }
                             },
                             modifier = Modifier
@@ -220,7 +225,7 @@ fun LoginScreen(
                         onClick = {
                             scope.launch {
                                 snackbarHostState.showSnackbar(
-                                    message  = "Iniciando sesión...",
+                                    message  = loadingMessage,
                                     duration = SnackbarDuration.Short
                                 )
                             }
@@ -228,7 +233,7 @@ fun LoginScreen(
                                 "Login",
                                 "Email: ${viewModel.email.value}, " +
                                         "Password: ${viewModel.password.value}, " +
-                                        "Rol selector: ${if (selectedRole == UserRole.USER) "Usuario" else "Moderador"}"
+                                        "Rol selector: ${if (selectedRole == UserRole.USER) roleUserLabel else roleModeratorLabel}"
                             )
                             viewModel.login()   // ← solo llama login, la navegación la maneja LaunchedEffect
                         },
@@ -243,7 +248,7 @@ fun LoginScreen(
                         )
                     ) {
                         Text(
-                            text       = if (selectedRole == UserRole.USER) "Iniciar sesión" else "Acceso Moderador",
+                            text       = if (selectedRole == UserRole.USER) stringResource(R.string.login_button) else stringResource(R.string.login_moderator_button),
                             fontSize   = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -254,7 +259,7 @@ fun LoginScreen(
                         Text(
                             text = buildAnnotatedString {
                                 withStyle(SpanStyle(color = TextGray, fontSize = 13.sp)) {
-                                    append("¿No tienes cuenta?, ")
+                                    append(stringResource(R.string.login_no_account))
                                 }
                                 withStyle(
                                     SpanStyle(
@@ -263,7 +268,7 @@ fun LoginScreen(
                                         fontSize   = 13.sp
                                     )
                                 ) {
-                                    append("Regístrate")
+                                    append(stringResource(R.string.login_register))
                                 }
                             },
                             modifier = Modifier.clickable {
@@ -282,7 +287,10 @@ private fun RoleSelector(
     selectedIndex  : UserRole,
     onRoleSelected : (UserRole) -> Unit
 ) {
-    val roles = listOf(UserRole.USER to "Usuario", UserRole.ADMIN to "Moderador")
+    val roles = listOf(
+        UserRole.USER to stringResource(R.string.role_user),
+        UserRole.ADMIN to stringResource(R.string.role_moderator)
+    )
 
     Box(
         modifier = Modifier

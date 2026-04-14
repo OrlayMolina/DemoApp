@@ -20,7 +20,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.demoapp.R
 import com.example.demoapp.core.utils.RequestResult
 
 // ─── Paleta (misma que Login y Register) ──────────────────────────────────────
@@ -35,7 +37,7 @@ private val DividerColor   = Color(0xFFE0E0E0)
 
 @Composable
 fun PasswordRecoveryScreen(
-    viewModel: PasswordRecoveryViewModel = viewModel(),
+    viewModel: PasswordRecoveryViewModel = hiltViewModel(),
     onNavigateBack: (() -> Unit)? = null,
     onNavigateToLogin: (() -> Unit)? = null
 ) {
@@ -76,12 +78,12 @@ fun PasswordRecoveryScreen(
                         ) {
                             Icon(
                                 imageVector        = Icons.Default.ArrowBack,
-                                contentDescription = "Volver",
+                                contentDescription = stringResource(R.string.common_back),
                                 tint               = Color(0xFF1A1A1A)
                             )
                         }
                         Text(
-                            text       = "Recuperar Contraseña",
+                            text       = stringResource(R.string.recovery_title),
                             fontSize   = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color      = Color(0xFF1A1A1A),
@@ -91,7 +93,7 @@ fun PasswordRecoveryScreen(
 
                     // ── Subtítulo ──────────────────────────────────────────
                     Text(
-                        text      = "Ten enviaremos un enlace de recuperación",
+                        text      = stringResource(R.string.recovery_subtitle),
                         fontSize  = 13.sp,
                         color     = TextGray,
                         textAlign = TextAlign.Center,
@@ -103,12 +105,12 @@ fun PasswordRecoveryScreen(
                         modifier        = Modifier.fillMaxWidth(),
                         value           = viewModel.email.value,
                         onValueChange   = { viewModel.email.onChange(it) },
-                        label           = { Text("Email") },
-                        placeholder     = { Text("tu@email.com", color = TextGray) },
+                        label           = { Text(stringResource(R.string.login_email_label)) },
+                        placeholder     = { Text(stringResource(R.string.login_email_placeholder), color = TextGray) },
                         isError         = viewModel.email.error != null,
                         supportingText  = {
                             Text(
-                                text  = viewModel.email.error ?: "Ingresa el email asociado a tu cuenta",
+                                text  = viewModel.email.error ?: stringResource(R.string.recovery_email_helper),
                                 color = if (viewModel.email.error != null)
                                     MaterialTheme.colorScheme.error
                                 else TextGray
@@ -159,7 +161,7 @@ fun PasswordRecoveryScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text       = "Enviar Enlace de Recuperación",
+                            text       = stringResource(R.string.recovery_button),
                             fontSize   = 15.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -169,7 +171,7 @@ fun PasswordRecoveryScreen(
                     Text(
                         text = buildAnnotatedString {
                             withStyle(SpanStyle(color = TextGray, fontSize = 13.sp)) {
-                                append("¿Recordaste tu contraseña?, ")
+                                append(stringResource(R.string.recovery_remembered_password))
                             }
                             withStyle(
                                 SpanStyle(
@@ -178,7 +180,7 @@ fun PasswordRecoveryScreen(
                                     fontSize   = 13.sp
                                 )
                             ) {
-                                append("Inicia Sesión")
+                                append(stringResource(R.string.register_login_action))
                             }
                         },
                         modifier = Modifier.clickable { onNavigateToLogin?.invoke() }

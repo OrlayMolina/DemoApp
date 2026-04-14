@@ -39,12 +39,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.Comment
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
@@ -79,10 +81,10 @@ fun CommentsScreen(
         containerColor = BgGray,
         topBar = {
             TopAppBar(
-                title = { Text("Comentarios") },
+                title = { Text(stringResource(R.string.detail_comments_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 }
             )
@@ -112,7 +114,7 @@ fun CommentsScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Cargando comentarios...", color = TextGray)
+                    Text(stringResource(R.string.comments_loading), color = TextGray)
                 }
             } else if (uiState.comments.isEmpty()) {
                 Box(
@@ -121,7 +123,7 @@ fun CommentsScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Aun no hay comentarios. Se el primero en comentar.", color = TextGray)
+                    Text(stringResource(R.string.comments_empty), color = TextGray)
                 }
             } else {
                 LazyColumn(
@@ -147,7 +149,7 @@ fun CommentsScreen(
                     modifier = Modifier.weight(1f),
                     value = viewModel.commentInput,
                     onValueChange = viewModel::onCommentInputChange,
-                    placeholder = { Text("Escribe un comentario...") },
+                    placeholder = { Text(stringResource(R.string.comments_input_placeholder)) },
                     maxLines = 3,
                     shape = RoundedCornerShape(14.dp)
                 )
@@ -160,7 +162,7 @@ fun CommentsScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Send,
-                        contentDescription = "Publicar comentario",
+                        contentDescription = stringResource(R.string.comments_send_desc),
                         tint = Color.White
                     )
                 }
@@ -185,7 +187,7 @@ private fun CommentRow(comment: Comment) {
             if (!comment.authorAvatarUrl.isNullOrBlank()) {
                 AsyncImage(
                     model = comment.authorAvatarUrl,
-                    contentDescription = "Foto de ${comment.authorName}",
+                    contentDescription = stringResource(R.string.comments_photo_of, comment.authorName),
                     modifier = Modifier
                         .size(34.dp)
                         .clip(CircleShape),
@@ -222,6 +224,7 @@ private fun CommentRow(comment: Comment) {
     }
 }
 
+@Composable
 private fun formatTimeAgo(createdAt: Long): String {
     val diff = (System.currentTimeMillis() - createdAt).coerceAtLeast(0L)
     val minutes = TimeUnit.MILLISECONDS.toMinutes(diff)
@@ -229,10 +232,10 @@ private fun formatTimeAgo(createdAt: Long): String {
     val days = TimeUnit.MILLISECONDS.toDays(diff)
 
     return when {
-        minutes < 1L -> "ahora"
-        minutes < 60L -> "${minutes} min"
-        hours < 24L -> "${hours} h"
-        else -> "${days} d"
+        minutes < 1L -> stringResource(R.string.comments_time_now)
+        minutes < 60L -> stringResource(R.string.comments_time_minutes, minutes)
+        hours < 24L -> stringResource(R.string.comments_time_hours, hours)
+        else -> stringResource(R.string.comments_time_days, days)
     }
 }
 

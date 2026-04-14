@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -14,10 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.demoapp.R
 
 // ─── Paleta ───────────────────────────────────────────────────────────────────
 
@@ -25,7 +29,6 @@ private val GreenEmerald    = Color(0xFF00897B)
 private val GreenEmeraldDark= Color(0xFF00695C)
 private val BackgroundGray  = Color(0xFFF5F5F5)
 private val CardWhite       = Color(0xFFFFFFFF)
-private val TextGray        = Color(0xFF6B6B6B)
 private val TextDark        = Color(0xFF1A1A1A)
 private val OrangeWarning   = Color(0xFFF57C00)
 private val RedDanger       = Color(0xFFD32F2F)
@@ -33,9 +36,11 @@ private val BlueInfo        = Color(0xFF1976D2)
 
 @Composable
 fun DashboardScreen(
-    viewModel: DashboardViewModel = viewModel(),
+    viewModel: DashboardViewModel = hiltViewModel(),
     onLogout : () -> Unit         = {}
 ) {
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+
     Scaffold(containerColor = BackgroundGray) { padding ->
         Column(
             modifier = Modifier
@@ -58,12 +63,12 @@ fun DashboardScreen(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text     = "Panel de Moderador",
+                        text     = stringResource(R.string.dashboard_panel_title),
                         fontSize = 12.sp,
                         color    = Color.White.copy(alpha = 0.8f)
                     )
                     Text(
-                        text       = "¡Hola, Carlos Admin!",
+                        text       = stringResource(R.string.dashboard_greeting),
                         fontSize   = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color      = Color.White
@@ -73,7 +78,7 @@ fun DashboardScreen(
                     onClick  = onLogout,
                     modifier = Modifier.align(Alignment.TopEnd)
                 ) {
-                    Icon(Icons.Default.Logout, "Cerrar sesión", tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.profile_edit_logout), tint = Color.White)
                 }
             }
 
@@ -85,15 +90,15 @@ fun DashboardScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     DashStatCard(
                         modifier  = Modifier.weight(1f),
-                        label     = "Pendientes",
-                        value     = viewModel.pendingCount.toString(),
+                        label     = stringResource(R.string.dashboard_pending),
+                        value     = uiState.pendingCount.toString(),
                         icon      = Icons.Default.Pending,
                         iconColor = OrangeWarning
                     )
                     DashStatCard(
                         modifier  = Modifier.weight(1f),
-                        label     = "Aprobadas hoy",
-                        value     = viewModel.approvedToday.toString(),
+                        label     = stringResource(R.string.dashboard_approved_today),
+                        value     = uiState.approvedToday.toString(),
                         icon      = Icons.Default.CheckCircle,
                         iconColor = GreenEmerald
                     )
@@ -101,15 +106,15 @@ fun DashboardScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     DashStatCard(
                         modifier  = Modifier.weight(1f),
-                        label     = "Rechazadas hoy",
-                        value     = viewModel.rejectedToday.toString(),
+                        label     = stringResource(R.string.dashboard_rejected_today),
+                        value     = uiState.rejectedToday.toString(),
                         icon      = Icons.Default.Cancel,
                         iconColor = RedDanger
                     )
                     DashStatCard(
                         modifier  = Modifier.weight(1f),
-                        label     = "Usuarios Activos",
-                        value     = viewModel.activeUsers.toString(),
+                        label     = stringResource(R.string.dashboard_active_users),
+                        value     = uiState.activeUsers.toString(),
                         icon      = Icons.Default.Group,
                         iconColor = BlueInfo
                     )
@@ -129,14 +134,14 @@ fun DashboardScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        "Actividad Reciente",
+                        stringResource(R.string.dashboard_recent_activity),
                         fontSize   = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color      = TextDark
                     )
-                    viewModel.recentActivity.forEach { activity ->
+                    uiState.recentActivity.forEach { activity ->
                         RecentActivityItem(activity)
-                        if (activity != viewModel.recentActivity.last()) {
+                        if (activity != uiState.recentActivity.last()) {
                             HorizontalDivider(color = Color(0xFFF0F0F0))
                         }
                     }
@@ -161,9 +166,14 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment     = Alignment.CenterVertically
                     ) {
-                        Text("🏆", fontSize = 16.sp)
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
                         Text(
-                            "Tu Rendimiento",
+                            stringResource(R.string.dashboard_performance),
                             fontSize   = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color      = Color.White
@@ -173,9 +183,9 @@ fun DashboardScreen(
                         modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
-                        PerformanceStat("${viewModel.reviewsToday}", "Revisiones Hoy")
-                        PerformanceStat("${viewModel.precision}%", "Precisión")
-                        PerformanceStat("${viewModel.minPerReview}", "Min/ Revisión")
+                        PerformanceStat("${uiState.reviewsToday}", stringResource(R.string.dashboard_reviews_today))
+                        PerformanceStat("${uiState.precision}%", stringResource(R.string.dashboard_precision))
+                        PerformanceStat("${uiState.minPerReview}", stringResource(R.string.dashboard_min_per_review))
                     }
                 }
             }
@@ -222,6 +232,27 @@ private fun DashStatCard(
 
 @Composable
 private fun RecentActivityItem(activity: RecentActivity) {
+    val title = stringResource(
+        id = when (activity.type) {
+            ActivityType.APPROVED -> R.string.dashboard_activity_title_approved
+            ActivityType.REJECTED -> R.string.dashboard_activity_title_rejected
+            ActivityType.REPORTED -> R.string.dashboard_activity_title_reported
+        }
+    )
+    val time = stringResource(
+        id = when (activity.timeSlot) {
+            ActivityTimeSlot.MIN_5 -> R.string.dashboard_activity_time_5m
+            ActivityTimeSlot.MIN_12 -> R.string.dashboard_activity_time_12m
+            ActivityTimeSlot.MIN_30 -> R.string.dashboard_activity_time_30m
+            ActivityTimeSlot.HOUR_1 -> R.string.dashboard_activity_time_1h
+        }
+    )
+    val subtitle = stringResource(
+        R.string.dashboard_activity_subtitle,
+        activity.userName.ifBlank { stringResource(R.string.dashboard_unknown_user) },
+        time
+    )
+
     Row(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -239,8 +270,8 @@ private fun RecentActivityItem(activity: RecentActivity) {
                 )
         )
         Column(modifier = Modifier.weight(1f)) {
-            Text(activity.title, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1A1A1A))
-            Text(activity.subtitle, fontSize = 11.sp, color = Color(0xFF6B6B6B))
+            Text(title, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1A1A1A))
+            Text(subtitle, fontSize = 11.sp, color = Color(0xFF6B6B6B))
         }
     }
 }

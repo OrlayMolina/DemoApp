@@ -17,12 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
 import com.example.demoapp.ui.theme.DemoAppTheme
@@ -152,13 +154,13 @@ fun ExploreScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text       = "Explorar",
+                        text       = stringResource(R.string.explore_title),
                         fontSize   = 26.sp,
                         fontWeight = FontWeight.Bold,
                         color      = Color(0xFF1A1A1A)
                     )
                     IconButton(onClick = onOpenMap) {
-                        Icon(Icons.Default.Map, "Ver mapa", tint = Color(0xFF1A1A1A))
+                        Icon(Icons.Default.Map, stringResource(R.string.explore_open_map_desc), tint = Color(0xFF1A1A1A))
                     }
                 }
             }
@@ -176,7 +178,7 @@ fun ExploreScreen(
                         value         = searchQuery,
                         onValueChange = { searchQuery = it },
                         modifier      = Modifier.weight(1f),
-                        placeholder   = { Text("Buscar lugares ...", color = TextGray) },
+                        placeholder   = { Text(stringResource(R.string.explore_search_placeholder), color = TextGray) },
                         leadingIcon   = { Icon(Icons.Default.Search, null, tint = TextGray) },
                         shape         = RoundedCornerShape(14.dp),
                         colors        = OutlinedTextFieldDefaults.colors(
@@ -206,7 +208,7 @@ fun ExploreScreen(
                         ) {
                             Icon(
                                 imageVector        = Icons.Default.Tune,
-                                contentDescription = "Filtros",
+                                contentDescription = stringResource(R.string.explore_filters_desc),
                                 tint               = if (activeFilterCount > 0) GreenPrimary
                                 else Color(0xFF1A1A1A)
                             )
@@ -244,7 +246,7 @@ fun ExploreScreen(
                         verticalAlignment     = Alignment.CenterVertically
                     ) {
                         Text(
-                            text     = "${filtered.size} resultado${if (filtered.size != 1) "s" else ""}",
+                            text     = stringResource(R.string.explore_results_count, filtered.size),
                             fontSize = 13.sp,
                             color    = TextGray
                         )
@@ -253,7 +255,7 @@ fun ExploreScreen(
                             onClick = { appliedFilters = FilterState() },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                         ) {
-                            Text("Limpiar filtros", fontSize = 12.sp, color = GreenPrimary)
+                            Text(stringResource(R.string.explore_clear_filters), fontSize = 12.sp, color = GreenPrimary)
                         }
                     }
                 }
@@ -278,7 +280,7 @@ fun ExploreScreen(
                                 tint     = TextGray,
                                 modifier = Modifier.size(48.dp)
                             )
-                            Text("Sin resultados", color = TextGray, fontSize = 15.sp)
+                            Text(stringResource(R.string.history_no_results), color = TextGray, fontSize = 15.sp)
                         }
                     }
                 }
@@ -349,20 +351,20 @@ private fun FilterSheetContent(
             verticalAlignment     = Alignment.CenterVertically
         ) {
             Text(
-                text       = "Filtros",
+                text       = stringResource(R.string.explore_filters_title),
                 fontSize   = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color      = Color(0xFF1A1A1A)
             )
             IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = Color(0xFF1A1A1A))
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close), tint = Color(0xFF1A1A1A))
             }
         }
 
         HorizontalDivider(color = Color(0xFFEEEEEE))
 
         // ── Categoría ──────────────────────────────────────────────────────
-        FilterSection(title = "Categoría") {
+        FilterSection(title = stringResource(R.string.create_category_required)) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TouristPointCategory.entries.forEach { category ->
                     val selected = category in draft.selectedCategories
@@ -396,7 +398,7 @@ private fun FilterSheetContent(
         HorizontalDivider(color = Color(0xFFEEEEEE))
 
         // ── Lugares cercanos ───────────────────────────────────────────────
-        FilterSection(title = "Lugares cercanos a ti") {
+        FilterSection(title = stringResource(R.string.explore_nearby_places)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 DistanceFilter.entries.forEach { option ->
                     val selected = draft.distanceFilter == option
@@ -424,7 +426,7 @@ private fun FilterSheetContent(
         HorizontalDivider(color = Color(0xFFEEEEEE))
 
         // ── Estado de verificación ─────────────────────────────────────────
-        FilterSection(title = "Estado de verificación") {
+        FilterSection(title = stringResource(R.string.explore_verification_status)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 VerificationFilter.entries.forEach { option ->
                     val selected = draft.verificationFilter == option
@@ -468,7 +470,7 @@ private fun FilterSheetContent(
             colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary)
         ) {
             Text(
-                text       = "Aplicar Filtros",
+                text       = stringResource(R.string.explore_apply_filters),
                 fontSize   = 15.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -589,24 +591,24 @@ fun TouristPointCard(
                         ) {
                             Icon(Icons.Default.Person, null, tint = GreenPrimary, modifier = Modifier.size(16.dp))
                         }
-                        Text("Usuario • ${formatTimestamp(point.createdAt)}", fontSize = 11.sp, color = TextGray)
+                        Text(stringResource(R.string.explore_user_date, formatTimestamp(point.createdAt)), fontSize = 11.sp, color = TextGray)
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                             Icon(
                                 if (liked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                                "Me importa",
+                                stringResource(R.string.explore_like_desc),
                                 tint     = if (liked) Color(0xFFE91E63) else TextGray,
                                 modifier = Modifier.size(16.dp).clickable { liked = !liked }
                             )
                             Text("${point.importantVotes + if (liked) 1 else 0}", fontSize = 11.sp, color = TextGray)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Icon(Icons.Outlined.PhotoLibrary, "Fotos", tint = TextGray, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Outlined.PhotoLibrary, stringResource(R.string.create_photos_label), tint = TextGray, modifier = Modifier.size(16.dp))
                             Text("${point.photoUrls.size}", fontSize = 11.sp, color = TextGray)
                         }
-                        Icon(Icons.Outlined.Share, "Compartir", tint = TextGray, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Outlined.Share, stringResource(R.string.common_share), tint = TextGray, modifier = Modifier.size(16.dp))
                     }
                 }
             }

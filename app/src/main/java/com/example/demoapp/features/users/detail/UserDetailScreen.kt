@@ -15,7 +15,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,13 +25,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.example.demoapp.R
 
 @Composable
 fun UserDetailScreen(
@@ -58,7 +58,7 @@ fun UserDetailScreen(
         ) {
             CircularProgressIndicator()
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Cargando usuario...")
+            Text(stringResource(R.string.users_loading))
         }
         return
     }
@@ -77,7 +77,7 @@ fun UserDetailScreen(
                 .data(currentUser.profilePictureUrl)
                 .crossfade(true)
                 .build(),
-            contentDescription = "Foto de perfil",
+            contentDescription = stringResource(R.string.profile_photo_desc),
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(140.dp)
@@ -99,30 +99,30 @@ fun UserDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Información del usuario",
+                    text = stringResource(R.string.users_info_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 Text(
-                    text = "ID: ${currentUser.id}",
+                    text = stringResource(R.string.users_info_id, currentUser.id),
                     style = MaterialTheme.typography.bodyLarge
                 )
 
                 Text(
-                    text = "Nombre: ${currentUser.name}",
+                    text = stringResource(R.string.users_info_name, currentUser.name),
                     style = MaterialTheme.typography.bodyLarge
                 )
 
                 Text(
-                    text = "Email: ${currentUser.email}",
+                    text = stringResource(R.string.users_info_email, currentUser.email),
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
 
         Button(onClick = onNavigateBack) {
-            Text("Volver")
+            Text(stringResource(R.string.common_back))
         }
     }
 }

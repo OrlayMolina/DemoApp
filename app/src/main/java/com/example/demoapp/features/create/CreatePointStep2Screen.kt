@@ -25,6 +25,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.res.stringResource
+import com.example.demoapp.R
 import java.util.Locale
 
 @Composable
@@ -61,13 +63,13 @@ fun CreatePointStep2Screen(
         OutlinedButton(
             onClick = {
                 onSaveDraft()
-                Toast.makeText(context, "Guardado como borrador", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.create_saved_draft), Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape    = RoundedCornerShape(12.dp),
             colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextDark)
         ) {
-            Text("Guardar como borrador", fontSize = 15.sp)
+            Text(stringResource(R.string.create_save_draft), fontSize = 15.sp)
         }
     }
 
@@ -86,11 +88,12 @@ fun CreatePointStep2Screen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, "Atrás", tint = TextDark)
+                    Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back), tint = TextDark)
                 }
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text       = if (isEditing) "Editar Publicación" else "Nueva Publicación",
+                    text       = if (isEditing) stringResource(R.string.create_edit_publication)
+                    else stringResource(R.string.create_new_publication),
                     fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color      = TextDark
@@ -107,8 +110,8 @@ fun CreatePointStep2Screen(
                 trackColor = DividerColor
             )
             Text(
-                text     = if (isEditing) "Paso 2 de 2: Editar ubicación"
-                else "Paso 2 de 2: Ubicación",
+                text     = if (isEditing) stringResource(R.string.create_step2_edit_location)
+                else stringResource(R.string.create_step2_location),
                 fontSize = 12.sp,
                 color    = TextGray,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
@@ -153,7 +156,7 @@ fun CreatePointStep2Screen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            "Coordenadas",
+                            stringResource(R.string.create_coordinates),
                             fontSize   = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color      = TextDark
@@ -170,7 +173,7 @@ fun CreatePointStep2Screen(
                                     }
                                 },
                                 modifier      = Modifier.weight(1f),
-                                placeholder   = { Text("Latitud", color = TextGray) },
+                                placeholder   = { Text(stringResource(R.string.create_latitude), color = TextGray) },
                                 shape         = RoundedCornerShape(10.dp),
                                 colors        = publishFieldColors(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -187,7 +190,7 @@ fun CreatePointStep2Screen(
                                     }
                                 },
                                 modifier      = Modifier.weight(1f),
-                                placeholder   = { Text("Longitud", color = TextGray) },
+                                placeholder   = { Text(stringResource(R.string.create_longitude), color = TextGray) },
                                 shape         = RoundedCornerShape(10.dp),
                                 colors        = publishFieldColors(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -196,7 +199,7 @@ fun CreatePointStep2Screen(
                         }
 
                         Text(
-                            "Dirección (opcional)",
+                            stringResource(R.string.create_address_optional),
                             fontSize   = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color      = TextDark
@@ -205,7 +208,7 @@ fun CreatePointStep2Screen(
                             value         = address,
                             onValueChange = onAddress,
                             modifier      = Modifier.fillMaxWidth(),
-                            placeholder   = { Text("Calle, colonia, ciudad ...", color = TextGray) },
+                            placeholder   = { Text(stringResource(R.string.create_address_placeholder), color = TextGray) },
                             shape         = RoundedCornerShape(10.dp),
                             colors        = publishFieldColors(),
                             singleLine    = true
@@ -230,7 +233,7 @@ fun CreatePointStep2Screen(
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text     = "Arrastra el mapa o ingresa las coordenadas manualmente para marcar la ubicación exacta del lugar",
+                            text     = stringResource(R.string.create_location_tip),
                             fontSize = 13.sp,
                             color    = Color(0xFF795548)
                         )
@@ -251,10 +254,10 @@ fun CreatePointStep2Screen(
                         Toast.makeText(
                             context,
                             if (success) {
-                                if (isEditing) "¡Publicación actualizada con éxito!"
-                                else "¡Publicación realizada con éxito!"
+                                if (isEditing) context.getString(R.string.create_update_success)
+                                else context.getString(R.string.create_publish_success)
                             } else {
-                                "Completa coordenadas válidas para publicar"
+                                context.getString(R.string.create_invalid_coordinates)
                             },
                             Toast.LENGTH_LONG
                         ).show()
@@ -266,7 +269,7 @@ fun CreatePointStep2Screen(
                     colors = ButtonDefaults.buttonColors(containerColor = TextDark)
                 ) {
                     Text(
-                        if (isEditing) "Guardar cambios" else "Publicar",
+                        if (isEditing) stringResource(R.string.common_save_changes) else stringResource(R.string.create_publish),
                         fontSize   = 15.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -277,7 +280,7 @@ fun CreatePointStep2Screen(
                         onSaveDraft()
                         Toast.makeText(
                             context,
-                            "Guardado como borrador",
+                            context.getString(R.string.create_saved_draft),
                             Toast.LENGTH_SHORT
                         ).show()
                     },
@@ -287,7 +290,7 @@ fun CreatePointStep2Screen(
                     shape  = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = TextDark)
                 ) {
-                    Text("Guardar como borrador", fontSize = 15.sp)
+                    Text(stringResource(R.string.create_save_draft), fontSize = 15.sp)
                 }
             }
         }

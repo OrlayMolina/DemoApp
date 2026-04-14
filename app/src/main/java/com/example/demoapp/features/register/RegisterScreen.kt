@@ -26,7 +26,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
+import com.example.demoapp.R
 import com.example.demoapp.core.utils.RequestResult
 import com.example.demoapp.ui.theme.DemoAppTheme
 import kotlinx.coroutines.delay
@@ -51,6 +52,7 @@ fun RegisterScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope             = rememberCoroutineScope()
     var termsAccepted by remember { mutableStateOf(false) }
+    val registerLoadingMessage = stringResource(R.string.register_snackbar_loading)
 
     LaunchedEffect(viewModel.registerResult) {
         val result = viewModel.registerResult
@@ -99,12 +101,12 @@ fun RegisterScreen(
                         ) {
                             Icon(
                                 imageVector        = Icons.Default.ArrowBack,
-                                contentDescription = "Volver",
+                                contentDescription = stringResource(R.string.common_back),
                                 tint               = Color(0xFF1A1A1A)
                             )
                         }
                         Text(
-                            text       = "Crear Cuenta",
+                            text       = stringResource(R.string.register_title),
                             fontSize   = 22.sp,
                             fontWeight = FontWeight.Bold,
                             color      = Color(0xFF1A1A1A),
@@ -113,7 +115,7 @@ fun RegisterScreen(
                     }
 
                     Text(
-                        text      = "Únete a la comunidad",
+                        text      = stringResource(R.string.register_subtitle),
                         fontSize  = 14.sp,
                         color     = TextGray,
                         textAlign = TextAlign.Center,
@@ -125,8 +127,8 @@ fun RegisterScreen(
                         modifier      = Modifier.fillMaxWidth(),
                         value         = viewModel.name.value,
                         onValueChange = { viewModel.name.onChange(it) },
-                        label         = { Text("Nombre completo") },
-                        placeholder   = { Text("Tu nombre", color = TextGray) },
+                        label         = { Text(stringResource(R.string.register_name_label)) },
+                        placeholder   = { Text(stringResource(R.string.register_name_placeholder), color = TextGray) },
                         isError       = viewModel.name.error != null,
                         supportingText = { viewModel.name.error?.let { Text(it) } },
                         shape  = RoundedCornerShape(12.dp),
@@ -140,8 +142,8 @@ fun RegisterScreen(
                         modifier      = Modifier.fillMaxWidth(),
                         value         = viewModel.email.value,
                         onValueChange = { viewModel.email.onChange(it) },
-                        label         = { Text("Email") },
-                        placeholder   = { Text("tu@email.com", color = TextGray) },
+                        label         = { Text(stringResource(R.string.login_email_label)) },
+                        placeholder   = { Text(stringResource(R.string.login_email_placeholder), color = TextGray) },
                         isError       = viewModel.email.error != null,
                         supportingText = { viewModel.email.error?.let { Text(it) } },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -156,8 +158,8 @@ fun RegisterScreen(
                         modifier              = Modifier.fillMaxWidth(),
                         value                 = viewModel.password.value,
                         onValueChange         = { viewModel.password.onChange(it) },
-                        label                 = { Text("Contraseña") },
-                        placeholder           = { Text("Mínimo 8 caracteres", color = TextGray) },
+                        label                 = { Text(stringResource(R.string.login_password_label)) },
+                        placeholder           = { Text(stringResource(R.string.register_password_placeholder), color = TextGray) },
                         visualTransformation  = PasswordVisualTransformation(),
                         isError               = viewModel.password.error != null,
                         supportingText        = { viewModel.password.error?.let { Text(it) } },
@@ -173,8 +175,8 @@ fun RegisterScreen(
                         modifier              = Modifier.fillMaxWidth(),
                         value                 = viewModel.confirmPassword.value,
                         onValueChange         = { viewModel.confirmPassword.onChange(it) },
-                        label                 = { Text("Confirmar contraseña") },
-                        placeholder           = { Text("Repite tu contraseña", color = TextGray) },
+                        label                 = { Text(stringResource(R.string.register_confirm_password_label)) },
+                        placeholder           = { Text(stringResource(R.string.register_confirm_password_placeholder), color = TextGray) },
                         visualTransformation  = PasswordVisualTransformation(),
                         isError               = viewModel.confirmPassword.error != null,
                         supportingText        = { viewModel.confirmPassword.error?.let { Text(it) } },
@@ -199,7 +201,7 @@ fun RegisterScreen(
                             )
                         )
                         Text(
-                            text     = "Acepto los términos y condiciones y la política de privacidad",
+                            text     = stringResource(R.string.register_terms_text),
                             fontSize = 13.sp,
                             color    = TextGray,
                             modifier = Modifier.clickable { termsAccepted = !termsAccepted }
@@ -228,7 +230,7 @@ fun RegisterScreen(
                             viewModel.register()
                             scope.launch {
                                 snackbarHostState.showSnackbar(
-                                    message  = "Registrando usuario...",
+                                    message  = registerLoadingMessage,
                                     duration = SnackbarDuration.Short
                                 )
                             }
@@ -246,7 +248,7 @@ fun RegisterScreen(
                         )
                     ) {
                         Text(
-                            text       = "Registrarse",
+                            text       = stringResource(R.string.register_button),
                             fontSize   = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -256,7 +258,7 @@ fun RegisterScreen(
                     Text(
                         text = buildAnnotatedString {
                             withStyle(SpanStyle(color = TextGray, fontSize = 13.sp)) {
-                                append("¿Ya tienes cuenta?, ")
+                                append(stringResource(R.string.register_have_account))
                             }
                             withStyle(
                                 SpanStyle(
@@ -265,7 +267,7 @@ fun RegisterScreen(
                                     fontSize   = 13.sp
                                 )
                             ) {
-                                append("Inicia Sesión")
+                                append(stringResource(R.string.register_login_action))
                             }
                         },
                         modifier = Modifier.clickable { onNavigateToLogin?.invoke() }

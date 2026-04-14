@@ -13,11 +13,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-enum class DateFilter(val label: String) {
-    ALL("Todos"),
-    DAY_1("Hace 1 día"),
-    DAY_2("Hace 2 días"),
-    DAY_5_PLUS("Más de 5 días")
+enum class DateFilter {
+    ALL,
+    DAY_1,
+    DAY_2,
+    DAY_5_PLUS
 }
 
 @HiltViewModel

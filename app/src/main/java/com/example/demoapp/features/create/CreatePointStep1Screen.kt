@@ -22,10 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPointCategory
 
 // ─── Paleta compartida (internal para el paquete publish) ────────────────────
@@ -92,13 +94,14 @@ fun CreatePointStep1Screen(
                 verticalAlignment     = Alignment.CenterVertically
             ) {
                 Text(
-                    text       = if (isEditing) "Editar Publicación" else "Nueva Publicación",
+                    text       = if (isEditing) stringResource(R.string.create_edit_publication)
+                    else stringResource(R.string.create_new_publication),
                     fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color      = TextDark
                 )
                 Text(
-                    text     = "Cancelar",
+                    text     = stringResource(R.string.common_cancel),
                     fontSize = 14.sp,
                     color    = TextGray,
                     modifier = Modifier.clickable { onCancel() }
@@ -113,8 +116,8 @@ fun CreatePointStep1Screen(
                 trackColor = DividerColor
             )
             Text(
-                text     = if (isEditing) "Paso 1 de 2: Editar información"
-                else "Paso 1 de 2: Información básica",
+                text     = if (isEditing) stringResource(R.string.create_step1_edit_info)
+                else stringResource(R.string.create_step1_basic_info),
                 fontSize = 12.sp,
                 color    = TextGray,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
@@ -139,7 +142,7 @@ fun CreatePointStep1Screen(
 
                         // Fotos
                         Text(
-                            "Fotos",
+                            stringResource(R.string.create_photos_label),
                             fontSize   = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color      = TextDark
@@ -165,7 +168,7 @@ fun CreatePointStep1Screen(
                                             tint = TextGray,
                                             modifier = Modifier.size(24.dp)
                                         )
-                                        Text("Añadir", fontSize = 10.sp, color = TextGray)
+                                        Text(stringResource(R.string.common_add), fontSize = 10.sp, color = TextGray)
                                     }
                                 }
                             }
@@ -184,7 +187,7 @@ fun CreatePointStep1Screen(
                                     )
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "Eliminar foto",
+                                        contentDescription = stringResource(R.string.create_remove_photo_desc),
                                         tint = Color.White,
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)
@@ -199,7 +202,7 @@ fun CreatePointStep1Screen(
                             }
                         }
                         Text(
-                            "Puedes añadir hasta 5 fotos",
+                            stringResource(R.string.create_max_photos_hint),
                             fontSize = 12.sp,
                             color    = TextGray
                         )
@@ -209,7 +212,7 @@ fun CreatePointStep1Screen(
                         // Título
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                "Título *",
+                                stringResource(R.string.create_title_required),
                                 fontSize   = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color      = TextDark
@@ -218,7 +221,7 @@ fun CreatePointStep1Screen(
                                 value         = title,
                                 onValueChange = onTitle,
                                 modifier      = Modifier.fillMaxWidth(),
-                                placeholder   = { Text("¿Qué lugar descubriste?", color = TextGray) },
+                                placeholder   = { Text(stringResource(R.string.create_title_placeholder), color = TextGray) },
                                 shape         = RoundedCornerShape(10.dp),
                                 colors        = publishFieldColors(),
                                 singleLine    = true
@@ -228,7 +231,7 @@ fun CreatePointStep1Screen(
                         // Categoría
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                "Categoría *",
+                                stringResource(R.string.create_category_required),
                                 fontSize   = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color      = TextDark
@@ -244,7 +247,7 @@ fun CreatePointStep1Screen(
                                     modifier      = Modifier
                                         .fillMaxWidth()
                                         .menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                                    placeholder   = { Text("Selecciona una categoría", color = TextGray) },
+                                    placeholder   = { Text(stringResource(R.string.create_category_placeholder), color = TextGray) },
                                     trailingIcon  = {
                                         Icon(Icons.Default.KeyboardArrowDown, null, tint = TextGray)
                                     },
@@ -271,7 +274,7 @@ fun CreatePointStep1Screen(
                         // Descripción
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                "Descripción",
+                                stringResource(R.string.create_description_label),
                                 fontSize   = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color      = TextDark
@@ -282,7 +285,7 @@ fun CreatePointStep1Screen(
                                 modifier      = Modifier
                                     .fillMaxWidth()
                                     .height(100.dp),
-                                placeholder   = { Text("Cuéntanos más sobre este lugar", color = TextGray) },
+                                placeholder   = { Text(stringResource(R.string.create_description_placeholder), color = TextGray) },
                                 shape         = RoundedCornerShape(10.dp),
                                 colors        = publishFieldColors()
                             )
@@ -307,7 +310,7 @@ fun CreatePointStep1Screen(
                 )
             ) {
                 Text(
-                    if (isEditing) "Siguiente: Ubicación" else "Siguiente: Ubicación",
+                    stringResource(R.string.create_next_location),
                     fontSize   = 15.sp,
                     fontWeight = FontWeight.SemiBold
                 )

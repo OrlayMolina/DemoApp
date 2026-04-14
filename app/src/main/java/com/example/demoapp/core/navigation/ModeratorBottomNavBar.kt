@@ -6,12 +6,12 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.demoapp.R
 
 private val GreenEmerald = Color(0xFF00897B)
-private val TextGray     = Color(0xFF6B6B6B)
-private val CardWhite    = Color(0xFFFFFFFF)
 
 enum class ModeratorTab { DASHBOARD, REVIEW, HISTORY, REPORTS, USERS }
 
@@ -20,8 +20,10 @@ fun ModeratorBottomNavBar(
     selectedTab  : ModeratorTab,
     onTabSelected: (ModeratorTab) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     NavigationBar(
-        containerColor = CardWhite,
+        containerColor = colorScheme.surface,
         tonalElevation = 8.dp
     ) {
         NavigationBarItem(
@@ -31,10 +33,10 @@ fun ModeratorBottomNavBar(
                 Icon(
                     if (selectedTab == ModeratorTab.DASHBOARD) Icons.Filled.Dashboard
                     else Icons.Outlined.Dashboard,
-                    "Panel"
+                    stringResource(R.string.moderator_nav_dashboard)
                 )
             },
-            label  = { Text("Panel", fontSize = 10.sp) },
+            label  = { Text(stringResource(R.string.moderator_nav_dashboard), fontSize = 10.sp) },
             colors = modNavColors()
         )
         NavigationBarItem(
@@ -44,10 +46,10 @@ fun ModeratorBottomNavBar(
                 Icon(
                     if (selectedTab == ModeratorTab.REVIEW) Icons.Filled.RateReview
                     else Icons.Outlined.RateReview,
-                    "Revisión"
+                    stringResource(R.string.moderator_nav_review)
                 )
             },
-            label  = { Text("Revisión", fontSize = 10.sp) },
+            label  = { Text(stringResource(R.string.moderator_nav_review), fontSize = 10.sp) },
             colors = modNavColors()
         )
         NavigationBarItem(
@@ -57,10 +59,10 @@ fun ModeratorBottomNavBar(
                 Icon(
                     if (selectedTab == ModeratorTab.HISTORY) Icons.Filled.History
                     else Icons.Outlined.History,
-                    "Historial"
+                    stringResource(R.string.moderator_nav_history)
                 )
             },
-            label  = { Text("Historial", fontSize = 10.sp) },
+            label  = { Text(stringResource(R.string.moderator_nav_history), fontSize = 10.sp) },
             colors = modNavColors()
         )
         NavigationBarItem(
@@ -70,10 +72,10 @@ fun ModeratorBottomNavBar(
                 Icon(
                     if (selectedTab == ModeratorTab.REPORTS) Icons.Filled.Flag
                     else Icons.Outlined.Flag,
-                    "Reportes"
+                    stringResource(R.string.moderator_nav_reports)
                 )
             },
-            label  = { Text("Reportes", fontSize = 10.sp) },
+            label  = { Text(stringResource(R.string.moderator_nav_reports), fontSize = 10.sp) },
             colors = modNavColors()
         )
         NavigationBarItem(
@@ -83,10 +85,10 @@ fun ModeratorBottomNavBar(
                 Icon(
                     if (selectedTab == ModeratorTab.USERS) Icons.Filled.Group
                     else Icons.Outlined.Group,
-                    "Usuarios"
+                    stringResource(R.string.moderator_nav_users)
                 )
             },
-            label  = { Text("Usuarios", fontSize = 10.sp) },
+            label  = { Text(stringResource(R.string.moderator_nav_users), fontSize = 10.sp) },
             colors = modNavColors()
         )
     }
@@ -97,6 +99,6 @@ private fun modNavColors() = NavigationBarItemDefaults.colors(
     indicatorColor      = GreenEmerald.copy(alpha = 0.12f),
     selectedIconColor   = GreenEmerald,
     selectedTextColor   = GreenEmerald,
-    unselectedIconColor = TextGray,
-    unselectedTextColor = TextGray
+    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
 )

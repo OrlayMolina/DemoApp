@@ -12,11 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.demoapp.R
 import com.example.demoapp.core.component.MapBox
 import com.example.demoapp.core.components.DropdownMenu
 import com.example.demoapp.domain.model.TouristPoint
@@ -33,13 +35,14 @@ private val ChipGray       = Color(0xFFDDE4E1)
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+@Composable
 internal fun categoryLabel(cat: TouristPointCategory) = when (cat) {
-    TouristPointCategory.GASTRONOMY    -> "Gastronomía"
-    TouristPointCategory.CULTURE       -> "Cultura"
-    TouristPointCategory.NATURE        -> "Naturaleza"
-    TouristPointCategory.ENTERTAINMENT -> "Entretenimiento"
-    TouristPointCategory.HISTORY       -> "Historia"
-    else                               -> "Otro"
+    TouristPointCategory.GASTRONOMY    -> stringResource(R.string.map_points_cat_gastronomy)
+    TouristPointCategory.CULTURE       -> stringResource(R.string.map_points_cat_culture)
+    TouristPointCategory.NATURE        -> stringResource(R.string.map_points_cat_nature)
+    TouristPointCategory.ENTERTAINMENT -> stringResource(R.string.map_points_cat_entertainment)
+    TouristPointCategory.HISTORY       -> stringResource(R.string.map_points_cat_history)
+    else                               -> stringResource(R.string.map_points_cat_other)
 }
 
 private fun categoryEmoji(cat: TouristPointCategory) = when (cat) {
@@ -83,10 +86,13 @@ private fun CategorySelectionScreen(
     viewModel     : MapPointsViewModel,
     onNavigateBack: () -> Unit
 ) {
-    val categoryOptions = listOf("Todas") +
-            TouristPointCategory.entries.map { categoryLabel(it) }
+    val allLabel = stringResource(R.string.map_points_all)
+    val localizedCategories = TouristPointCategory.entries.map { category ->
+        category to categoryLabel(category)
+    }
+    val categoryOptions = listOf(allLabel) + localizedCategories.map { it.second }
 
-    var dropdownValue by remember { mutableStateOf("Todas") }
+    var dropdownValue by remember { mutableStateOf(allLabel) }
 
     Scaffold(containerColor = BackgroundGray) { padding ->
         Column(
@@ -105,17 +111,16 @@ private fun CategorySelectionScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.Default.ArrowBack, "Volver", tint = TextDark)
+                    Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back), tint = TextDark)
                 }
                 Box(modifier = Modifier.weight(1f)) {
                     DropdownMenu(
                         value         = dropdownValue,
-                        label         = "Mapa por puntos de interés",
+                        label         = stringResource(R.string.map_points_dropdown_label),
                         list          = categoryOptions,
                         onValueChange = { selected ->
                             dropdownValue = selected
-                            val cat = TouristPointCategory.entries
-                                .find { categoryLabel(it) == selected }
+                            val cat = localizedCategories.find { it.second == selected }?.first
                             viewModel.selectCategory(cat)
                         }
                     )
@@ -141,13 +146,13 @@ private fun CategorySelectionScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text       = "Vista de Mapa",
+                            text       = stringResource(R.string.map_points_title),
                             fontSize   = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color      = TextDark
                         )
                         Text(
-                            text     = "${viewModel.allPoints.size} puntos de interés en el área",
+                            text     = stringResource(R.string.map_points_count_area, viewModel.allPoints.size),
                             fontSize = 13.sp,
                             color    = TextGray
                         )
@@ -183,7 +188,7 @@ private fun CategorySelectionScreen(
                             ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Ver todas en el mapa", fontSize = 13.sp)
+                            Text(stringResource(R.string.map_points_view_all), fontSize = 13.sp)
                         }
                     }
                 }
@@ -224,7 +229,7 @@ private fun CategoryChip(
                 )
             }
             Text(
-                text     = "$count publicación${if (count != 1) "es" else ""}",
+                text     = stringResource(R.string.map_points_publications_count, count),
                 fontSize = 11.sp,
                 color    = TextGray
             )
@@ -241,7 +246,7 @@ private fun MapWithPointsScreen(
 ) {
     val label = viewModel.selectedCategory
         ?.let { categoryLabel(it) }
-        ?: "Todas las categorías"
+        ?: stringResource(R.string.map_points_all_categories)
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -262,7 +267,7 @@ private fun MapWithPointsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, "Volver", tint = TextDark)
+                Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back), tint = TextDark)
             }
             Column {
                 Text(
@@ -272,7 +277,7 @@ private fun MapWithPointsScreen(
                     color      = TextDark
                 )
                 Text(
-                    text     = "${viewModel.filteredPoints.size} punto${if (viewModel.filteredPoints.size != 1) "s" else ""} en el mapa",
+                    text     = stringResource(R.string.map_points_count_on_map, viewModel.filteredPoints.size),
                     fontSize = 12.sp,
                     color    = TextGray
                 )

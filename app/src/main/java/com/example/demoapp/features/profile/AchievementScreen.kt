@@ -16,9 +16,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.Achievement
 import com.example.demoapp.domain.model.AchievementIcon
 
@@ -57,11 +59,11 @@ fun AchievementScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.Default.ArrowBack, "Volver", tint = TextDark)
+                    Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back), tint = TextDark)
                 }
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text       = "Logros y Badges",
+                    text       = stringResource(R.string.achievements_title),
                     fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color      = TextDark
@@ -95,13 +97,13 @@ fun AchievementScreen(
                         modifier           = Modifier.size(48.dp)
                     )
                     Text(
-                        text       = "${unlocked.size} Logros",
+                        text       = stringResource(R.string.achievements_unlocked_count, unlocked.size),
                         fontSize   = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color      = Color.White
                     )
                     Text(
-                        text     = "${locked.size} más por desbloquear",
+                        text     = stringResource(R.string.achievements_locked_count, locked.size),
                         fontSize = 14.sp,
                         color    = Color.White.copy(alpha = 0.85f)
                     )
@@ -113,7 +115,7 @@ fun AchievementScreen(
             // ── Desbloqueados ──────────────────────────────────────────────
             if (unlocked.isNotEmpty()) {
                 Text(
-                    text     = "Desbloqueados (${unlocked.size})",
+                    text     = stringResource(R.string.achievements_section_unlocked, unlocked.size),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color    = TextDark,
@@ -133,7 +135,7 @@ fun AchievementScreen(
             // ── Por desbloquear ────────────────────────────────────────────
             if (locked.isNotEmpty()) {
                 Text(
-                    text       = "Por Desbloquear (${locked.size})",
+                    text       = stringResource(R.string.achievements_section_locked, locked.size),
                     fontSize   = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color      = TextDark,
@@ -168,17 +170,17 @@ fun AchievementScreen(
                     ) {
                         Text("💡", fontSize = 18.sp)
                         Text(
-                            text       = "Cómo ganar más logros",
+                            text       = stringResource(R.string.achievements_how_to_gain_more),
                             fontSize   = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color      = TextDark
                         )
                     }
                     listOf(
-                        "Publica lugares únicos e interesantes",
-                        "Interactúa con la comunidad",
-                        "Sube fotos de calidad",
-                        "Explora diferentes categorías"
+                        stringResource(R.string.achievements_tip_1),
+                        stringResource(R.string.achievements_tip_2),
+                        stringResource(R.string.achievements_tip_3),
+                        stringResource(R.string.achievements_tip_4)
                     ).forEach { tip ->
                         Text(
                             text     = "• $tip",
@@ -256,7 +258,7 @@ private fun AchievementItem(
                 if (isUnlocked) {
                     // Fecha de desbloqueo
                     Text(
-                        text     = "Desbloqueado el ${achievement.unlockedDate}",
+                        text     = stringResource(R.string.achievements_unlocked_date, achievement.unlockedDate.orEmpty()),
                         fontSize = 11.sp,
                         color    = GreenPrimary,
                         fontWeight = FontWeight.Medium
@@ -270,7 +272,7 @@ private fun AchievementItem(
                         verticalAlignment     = Alignment.CenterVertically
                     ) {
                         Text(
-                            text     = "Progreso",
+                            text     = stringResource(R.string.achievements_progress),
                             fontSize = 11.sp,
                             color    = TextGray
                         )
