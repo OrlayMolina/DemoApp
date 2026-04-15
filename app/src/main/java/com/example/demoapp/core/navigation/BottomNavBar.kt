@@ -10,8 +10,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 private val GreenPrimary = Color(0xFF2E7D5E)
-private val TextGray     = Color(0xFF6B6B6B)
-private val CardWhite    = Color(0xFFFFFFFF)
 
 enum class BottomNavTab { HOME, PUBLISH, NOTIFICATIONS, PROFILE }
 
@@ -20,8 +18,10 @@ fun BottomNavBar(
     selectedTab : BottomNavTab,
     onTabSelected: (BottomNavTab) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     NavigationBar(
-        containerColor = CardWhite,
+        containerColor = colorScheme.surface,
         tonalElevation = 8.dp
     ) {
         NavigationBarItem(
@@ -84,6 +84,6 @@ private fun navBarColors() = NavigationBarItemDefaults.colors(
     indicatorColor      = GreenPrimary.copy(alpha = 0.12f),
     selectedIconColor   = GreenPrimary,
     selectedTextColor   = GreenPrimary,
-    unselectedIconColor = TextGray,
-    unselectedTextColor = TextGray
+    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
 )

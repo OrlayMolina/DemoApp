@@ -15,12 +15,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPoint
 import java.text.SimpleDateFormat
 import java.util.*
@@ -37,15 +40,27 @@ private val NewBadgeColor  = Color(0xFFFFF9C4)
 private val NewBadgeText   = Color(0xFF795548)
 
 @Composable
+private fun dateFilterLabel(filter: DateFilter): String = when (filter) {
+    DateFilter.ALL -> stringResource(R.string.review_date_filter_all)
+    DateFilter.DAY_1 -> stringResource(R.string.review_date_filter_day_1)
+    DateFilter.DAY_2 -> stringResource(R.string.review_date_filter_day_2)
+    DateFilter.DAY_5_PLUS -> stringResource(R.string.review_date_filter_day_5_plus)
+}
+
+@Composable
 fun ReviewQueueScreen(
-    viewModel: ReviewQueueViewModel = viewModel(),
+    viewModel: ReviewQueueViewModel = hiltViewModel(),
     onNavigateToDetail: (TouristPoint) -> Unit = {}
 ) {
     var selectedTab        by remember { mutableStateOf(0) }
     var showFilterDropdown by remember { mutableStateOf(false) }
 
+    val pendingPoints by viewModel.pendingPoints.collectAsStateWithLifecycle()
+    val reportedPoints by viewModel.reportedPoints.collectAsStateWithLifecycle()
+    val selectedDateFilter by viewModel.selectedDateFilter.collectAsStateWithLifecycle()
+
     val currentList = if (selectedTab == 0)
-        viewModel.pendingPoints else viewModel.reportedPoints
+        pendingPoints else reportedPoints
 
     Scaffold(containerColor = BackgroundGray) { padding ->
         Column(
@@ -64,7 +79,7 @@ fun ReviewQueueScreen(
                 verticalAlignment     = Alignment.CenterVertically
             ) {
                 Text(
-                    text       = "Cola de Revisión",
+                    text       = stringResource(R.string.review_queue_title),
                     fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color      = TextDark
@@ -75,8 +90,8 @@ fun ReviewQueueScreen(
                     IconButton(onClick = { showFilterDropdown = true }) {
                         Icon(
                             Icons.Default.FilterList,
-                            "Filtrar",
-                            tint = if (viewModel.selectedDateFilter != DateFilter.ALL)
+                            stringResource(R.string.history_filter_desc),
+                            tint = if (selectedDateFilter != DateFilter.ALL)
                                 GreenEmerald else TextDark
                         )
                     }
@@ -91,7 +106,7 @@ fun ReviewQueueScreen(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment     = Alignment.CenterVertically
                                     ) {
-                                        if (viewModel.selectedDateFilter == filter) {
+                                        if (selectedDateFilter == filter) {
                                             Icon(
                                                 Icons.Default.Check,
                                                 null,
@@ -101,7 +116,7 @@ fun ReviewQueueScreen(
                                         } else {
                                             Spacer(Modifier.size(16.dp))
                                         }
-                                        Text(filter.label)
+                                        Text(dateFilterLabel(filter))
                                     }
                                 },
                                 onClick = {
@@ -121,8 +136,8 @@ fun ReviewQueueScreen(
                     .background(CardWhite)
             ) {
                 listOf(
-                    "Nuevas (${viewModel.pendingPoints.size})",
-                    "Reportadas (${viewModel.reportedPoints.size})"
+                    stringResource(R.string.review_tab_new_count, pendingPoints.size),
+                    stringResource(R.string.review_tab_reported_count, reportedPoints.size)
                 ).forEachIndexed { index, title ->
                     Box(
                         modifier = Modifier
@@ -183,13 +198,13 @@ fun ReviewQueueScreen(
                             modifier = Modifier.size(48.dp)
                         )
                         Text(
-                            "Todo al día",
+                            stringResource(R.string.review_all_caught_up),
                             fontSize   = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             color      = TextDark
                         )
                         Text(
-                            "No hay publicaciones pendientes",
+                            stringResource(R.string.review_no_pending),
                             fontSize = 13.sp,
                             color    = TextGray
                         )
@@ -262,7 +277,8 @@ private fun ReviewItem(
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text     = if (isReported) "Reportado" else "Nuevo",
+                        text     = if (isReported) stringResource(R.string.review_badge_reported)
+                        else stringResource(R.string.review_badge_new),
                         fontSize = 10.sp,
                         color    = if (isReported) Color(0xFFD32F2F) else NewBadgeText,
                         fontWeight = FontWeight.SemiBold
@@ -312,7 +328,7 @@ private fun ReviewItem(
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 private fun formatDate(millis: Long): String =
-    SimpleDateFormat("d MMM", Locale("es")).format(Date(millis))
+    SimpleDateFormat("d MMM", Locale.getDefault()).format(Date(millis))
 
 private fun formatTime(millis: Long): String =
     SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(millis))

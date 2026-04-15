@@ -2,7 +2,9 @@ package com.example.demoapp.data.repository
 
 import android.util.Log
 import com.example.demoapp.domain.model.TouristPoint
+import com.example.demoapp.domain.repository.ReviewHistoryRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
+import com.example.demoapp.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,13 +16,20 @@ import javax.inject.Singleton
  * El uso de @Singleton asegura que los puntos publicados no se borren al navegar.
  */
 @Singleton
-class TouristPointRepositoryImpl @Inject constructor() : TouristPointRepository {
+class TouristPointRepositoryImpl @Inject constructor(
+    private val reviewHistoryRepository: ReviewHistoryRepository,
+    private val userRepository: UserRepository
+) : TouristPointRepository {
 
     // 1. Lista interna reactiva que inicia con tus datos quemados (SAMPLE_LIST)
     private val _touristPoints = MutableStateFlow<List<TouristPoint>>(TouristPoint.SAMPLE_LIST)
 
     // 2. Propiedad pública que el Feed (Inicio) observará para actualizarse solo
     override val touristPoints: StateFlow<List<TouristPoint>> = _touristPoints.asStateFlow()
+
+    init {
+        reviewHistoryRepository.seedFromPoints(_touristPoints.value)
+    }
 
     /**
      * Guarda un nuevo punto turístico.
@@ -65,5 +74,50 @@ class TouristPointRepositoryImpl @Inject constructor() : TouristPointRepository 
     override fun delete(id: String) {
         _touristPoints.value = _touristPoints.value.filterNot { it.id == id }
         Log.d("Repository", "Punto con ID $id eliminado.")
+    }
+
+    override fun approvePoint(id: String): Result<Unit> {
+        val index = _touristPoints.value.indexOfFirst { it.id == id }
+        if (index == -1) {
+            return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
+        }
+
+        val updated = _touristPoints.value.toMutableList()
+        val current = updated[index]
+        updated[index] = current.copy(
+            isVerified = true,
+            isRejected = false,
+            rejectionReason = null
+        )
+        _touristPoints.value = updated
+        reviewHistoryRepository.recordApproval(updated[index], currentReviewerName())
+        Log.d("Repository", "Punto '$id' aprobado por moderacion.")
+        return Result.success(Unit)
+    }
+
+    override fun rejectPoint(id: String, reason: String): Result<Unit> {
+        val index = _touristPoints.value.indexOfFirst { it.id == id }
+        if (index == -1) {
+            return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
+        }
+        if (reason.isBlank()) {
+            return Result.failure(IllegalArgumentException("El motivo de rechazo es obligatorio"))
+        }
+
+        val updated = _touristPoints.value.toMutableList()
+        val current = updated[index]
+        updated[index] = current.copy(
+            isVerified = false,
+            isRejected = true,
+            rejectionReason = reason.trim()
+        )
+        _touristPoints.value = updated
+        reviewHistoryRepository.recordRejection(updated[index], currentReviewerName(), reason)
+        Log.d("Repository", "Punto '$id' rechazado por moderacion.")
+        return Result.success(Unit)
+    }
+
+    private fun currentReviewerName(): String {
+        return userRepository.currentUser.value?.name?.takeIf { it.isNotBlank() } ?: "Moderador"
     }
 }

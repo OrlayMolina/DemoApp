@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">DemoApp</string>
+    <!-- Login Screen -->
+    <string name="login_email_label">Correo electrónico</string>
+    <string name="login_password_label">Contraseña</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="login_icon_description">Icono de inicio de sesión</string>
+    <!-- Login ViewModel -->
+    <string name="error_email_empty">El correo electrónico es obligatorio</string>
+    <string name="error_email_invalid">Ingresa un correo electrónico válido</string>
+    <string name="error_password_empty">La contraseña es obligatoria</string>
+    <string name="error_password_short">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="login_success">Inicio de sesión exitoso</string>
+    <string name="login_failure">Credenciales inválidas</string>
+</resources>

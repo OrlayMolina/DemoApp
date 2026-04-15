@@ -16,11 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.ReviewAction
 import com.example.demoapp.domain.model.ReviewHistory
 import com.example.demoapp.domain.model.TouristPointCategory
@@ -40,30 +42,30 @@ private val RejectedRed     = Color(0xFFD32F2F)
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+@Composable
 private fun categoryLabel(cat: TouristPointCategory) = when (cat) {
-    TouristPointCategory.NATURE        -> "Naturaleza"
-    TouristPointCategory.GASTRONOMY    -> "Gastronomía"
-    TouristPointCategory.CULTURE       -> "Cultura"
-    TouristPointCategory.ENTERTAINMENT -> "Arte Urbano"
-    TouristPointCategory.HISTORY       -> "Historia"
-    else                               -> "Otro"
+    TouristPointCategory.NATURE        -> stringResource(R.string.stats_category_nature)
+    TouristPointCategory.GASTRONOMY    -> stringResource(R.string.stats_category_gastronomy)
+    TouristPointCategory.CULTURE       -> stringResource(R.string.stats_category_culture)
+    TouristPointCategory.ENTERTAINMENT -> stringResource(R.string.stats_category_urban_art)
+    TouristPointCategory.HISTORY       -> stringResource(R.string.detail_category_history)
 }
 
 private fun formatDateTime(millis: Long): String =
-    SimpleDateFormat("d MMM, HH:mm", Locale("es")).format(Date(millis))
+    SimpleDateFormat("d MMM, HH:mm", Locale.getDefault()).format(Date(millis))
 
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 
 @Composable
 fun HistoryScreen(
-    viewModel: HistoryViewModel = viewModel()
+    viewModel: HistoryViewModel = hiltViewModel()
 ) {
     var showFilterMenu by remember { mutableStateOf(false) }
 
     val tabs = listOf(
-        "Todas (${viewModel.totalCount})",
-        "Aprobadas (${viewModel.approvedCount})",
-        "Rechazadas (${viewModel.rejectedCount})"
+        stringResource(R.string.history_tab_all_count, viewModel.totalCount),
+        stringResource(R.string.history_tab_approved_count, viewModel.approvedCount),
+        stringResource(R.string.history_tab_rejected_count, viewModel.rejectedCount)
     )
 
     val tabFilters = listOf(
@@ -88,7 +90,7 @@ fun HistoryScreen(
             verticalAlignment     = Alignment.CenterVertically
         ) {
             Text(
-                text       = "Historial",
+                text       = stringResource(R.string.history_title),
                 fontSize   = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color      = TextDark
@@ -97,7 +99,7 @@ fun HistoryScreen(
                 IconButton(onClick = { showFilterMenu = true }) {
                     Icon(
                         Icons.Default.FilterList,
-                        "Filtrar",
+                        stringResource(R.string.history_filter_desc),
                         tint = if (viewModel.activeFilter != HistoryFilter.ALL)
                             GreenEmerald else TextDark
                     )
@@ -107,9 +109,9 @@ fun HistoryScreen(
                     onDismissRequest = { showFilterMenu = false }
                 ) {
                     listOf(
-                        HistoryFilter.ALL      to "Todos",
-                        HistoryFilter.APPROVED to "Aprobadas",
-                        HistoryFilter.REJECTED to "Rechazadas"
+                        HistoryFilter.ALL      to stringResource(R.string.history_filter_all),
+                        HistoryFilter.APPROVED to stringResource(R.string.history_filter_approved),
+                        HistoryFilter.REJECTED to stringResource(R.string.history_filter_rejected)
                     ).forEach { (filter, label) ->
                         DropdownMenuItem(
                             text  = {
@@ -147,7 +149,7 @@ fun HistoryScreen(
             modifier      = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 10.dp),
-            placeholder   = { Text("Buscar en historial...", color = TextGray) },
+            placeholder   = { Text(stringResource(R.string.history_search_placeholder), color = TextGray) },
             leadingIcon   = { Icon(Icons.Default.Search, null, tint = TextGray) },
             shape         = RoundedCornerShape(12.dp),
             singleLine    = true,
@@ -224,7 +226,7 @@ fun HistoryScreen(
                         tint     = TextGray,
                         modifier = Modifier.size(48.dp)
                     )
-                    Text("Sin resultados", color = TextGray, fontSize = 14.sp)
+                    Text(stringResource(R.string.history_no_results), color = TextGray, fontSize = 14.sp)
                 }
             }
         } else {
@@ -261,15 +263,15 @@ fun HistoryScreen(
             ) {
                 SummaryItem(
                     value = viewModel.totalCount.toString(),
-                    label = "Total"
+                    label = stringResource(R.string.history_summary_total)
                 )
                 SummaryItem(
                     value = viewModel.approvedCount.toString(),
-                    label = "Aprobadas"
+                    label = stringResource(R.string.history_filter_approved)
                 )
                 SummaryItem(
                     value = viewModel.rejectedCount.toString(),
-                    label = "Rechazadas"
+                    label = stringResource(R.string.history_filter_rejected)
                 )
             }
         }
@@ -333,7 +335,7 @@ private fun HistoryItem(item: ReviewHistory) {
                 // Razón de rechazo si existe
                 if (!isApproved && item.rejectionReason != null) {
                     Text(
-                        text     = "Razón: ${item.rejectionReason}",
+                        text     = stringResource(R.string.history_rejection_reason, item.rejectionReason),
                         fontSize = 12.sp,
                         color    = RejectedRed
                     )
@@ -348,7 +350,7 @@ private fun HistoryItem(item: ReviewHistory) {
                         fontSize = 11.sp,
                         color    = TextGray
                     )
-                    Text("·", fontSize = 11.sp, color = TextGray)
+                    Text(stringResource(R.string.common_middle_dot), fontSize = 11.sp, color = TextGray)
                     Text(
                         text     = formatDateTime(item.reviewedAt),
                         fontSize = 11.sp,

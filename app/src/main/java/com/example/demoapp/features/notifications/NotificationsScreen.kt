@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.Notification
 import com.example.demoapp.domain.model.NotificationType
 
@@ -64,19 +66,19 @@ fun NotificationsScreen(
     if (showDeleteAllDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteAllDialog = false },
-            title   = { Text("Eliminar notificaciones") },
-            text    = { Text("¿Eliminar todas las notificaciones?") },
+            title   = { Text(stringResource(R.string.notifications_delete_all_title)) },
+            text    = { Text(stringResource(R.string.notifications_delete_all_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteAll()
                     showDeleteAllDialog = false
                 }) {
-                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteAllDialog = false }) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.common_cancel))
                 }
             }
         )
@@ -99,7 +101,7 @@ fun NotificationsScreen(
                 verticalAlignment     = Alignment.CenterVertically
             ) {
                 Text(
-                    text       = "Notificaciones",
+                    text       = stringResource(R.string.notifications_title),
                     fontSize   = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color      = Color(0xFF1A1A1A)
@@ -108,7 +110,7 @@ fun NotificationsScreen(
                     IconButton(onClick = { showDeleteAllDialog = true }) {
                         Icon(
                             imageVector        = Icons.Default.Delete,
-                            contentDescription = "Eliminar todas",
+                            contentDescription = stringResource(R.string.notifications_delete_all_desc),
                             tint               = TextGray
                         )
                     }
@@ -124,12 +126,16 @@ fun NotificationsScreen(
                 verticalAlignment     = Alignment.CenterVertically
             ) {
                 FilterPill(
-                    label    = "Todas",
+                    label    = stringResource(R.string.notifications_filter_all),
                     selected = selectedFilter == 0,
                     onClick  = { selectedFilter = 0 }
                 )
                 FilterPill(
-                    label    = if (unreadCount > 0) "No leídas ($unreadCount)" else "No leídas",
+                    label    = if (unreadCount > 0) {
+                        stringResource(R.string.notifications_filter_unread_count, unreadCount)
+                    } else {
+                        stringResource(R.string.notifications_filter_unread)
+                    },
                     selected = selectedFilter == 1,
                     onClick  = { selectedFilter = 1 }
                 )
@@ -140,7 +146,7 @@ fun NotificationsScreen(
                         contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
                         Text(
-                            text     = "Marcar todas como leídas",
+                            text     = stringResource(R.string.notifications_mark_all_read),
                             fontSize = 11.sp,
                             color    = GreenPrimary
                         )
@@ -156,7 +162,7 @@ fun NotificationsScreen(
                     modifier         = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Sin notificaciones", color = TextGray, fontSize = 14.sp)
+                    Text(stringResource(R.string.notifications_empty), color = TextGray, fontSize = 14.sp)
                 }
             } else {
                 LazyColumn(
@@ -230,7 +236,7 @@ private fun SwipeToDismissNotification(
             ) {
                 Icon(
                     imageVector        = Icons.Default.Delete,
-                    contentDescription = "Eliminar",
+                    contentDescription = stringResource(R.string.common_delete),
                     tint               = Color.White,
                     modifier           = Modifier.size(22.dp)
                 )
@@ -389,18 +395,24 @@ private fun FilterPill(
 
 // ─── Helpers de tipo ──────────────────────────────────────────────────────────
 
+@Composable
 private fun notifTypeLabel(type: NotificationType) = when (type) {
-    NotificationType.LIKE     -> "Nuevo like"
-    NotificationType.COMMENT  -> "Nuevo comentario"
-    NotificationType.FOLLOWER -> "Nuevo seguidor"
-    NotificationType.VERIFIED -> "Publicación verificada"
+    NotificationType.LIKE     -> stringResource(R.string.notifications_type_like)
+    NotificationType.COMMENT  -> stringResource(R.string.notifications_type_comment)
+    NotificationType.FOLLOWER -> stringResource(R.string.notifications_type_follower)
+    NotificationType.VERIFIED -> stringResource(R.string.notifications_type_verified)
 }
 
+@Composable
 private fun notifBody(n: Notification) = when (n.type) {
-    NotificationType.LIKE     -> "A ${n.userName} le gustó tu publicación \"${n.publicationTitle}\""
-    NotificationType.COMMENT  -> "${n.userName} comentó en tu publicación \"${n.publicationTitle}\""
-    NotificationType.FOLLOWER -> "${n.userName} comenzó a seguirte"
-    NotificationType.VERIFIED -> "Tu publicación \"${n.publicationTitle}\" ha sido verificada"
+    NotificationType.LIKE ->
+        stringResource(R.string.notifications_body_like, n.userName, n.publicationTitle.orEmpty())
+    NotificationType.COMMENT ->
+        stringResource(R.string.notifications_body_comment, n.userName, n.publicationTitle.orEmpty())
+    NotificationType.FOLLOWER ->
+        stringResource(R.string.notifications_body_follower, n.userName)
+    NotificationType.VERIFIED ->
+        stringResource(R.string.notifications_body_verified, n.publicationTitle.orEmpty())
 }
 
 private fun notifTypeColor(type: NotificationType) = when (type) {

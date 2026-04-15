@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,13 +22,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.Comment
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
@@ -71,6 +75,17 @@ private fun formatDate(millis: Long): String =
 private fun formatShortDate(millis: Long): String =
     SimpleDateFormat("d/M/yyyy", Locale("es")).format(Date(millis))
 
+private fun safeInitials(value: String): String {
+    val initials = value
+        .trim()
+        .split(" ")
+        .filter { it.isNotBlank() }
+        .take(2)
+        .mapNotNull { it.firstOrNull()?.uppercaseChar()?.toString() }
+        .joinToString("")
+    return initials.ifBlank { "?" }
+}
+
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 
 @Composable
@@ -80,9 +95,13 @@ fun TouristPointDetailScreen(
     onNavigateBack : () -> Unit    = {},
     onApproved     : () -> Unit    = {},
     onRejected     : () -> Unit    = {},
-    viewModel      : TouristPointDetailViewModel = viewModel()
+    viewModel      : TouristPointDetailViewModel = hiltViewModel()
 ) {
     LaunchedEffect(point) { viewModel.loadPoint(point) }
+    val author = viewModel.authorUiState
+    val galleryPhotos = remember(point.photoUrls) { point.photoUrls.filter { it.isNotBlank() } }
+    var selectedPhotoIndex by remember(point.id) { mutableStateOf(0) }
+    var showGalleryViewer by remember { mutableStateOf(false) }
 
     var showRejectDialog   by remember { mutableStateOf(false) }
     var showAllComments    by remember { mutableStateOf(false) }
@@ -97,13 +116,37 @@ fun TouristPointDetailScreen(
         return
     }
 
+    if (showGalleryViewer && galleryPhotos.isNotEmpty()) {
+        Dialog(onDismissRequest = { showGalleryViewer = false }) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(380.dp)
+                    .background(Color.Black)
+            ) {
+                AsyncImage(
+                    model = galleryPhotos[selectedPhotoIndex.coerceIn(galleryPhotos.indices)],
+                    contentDescription = stringResource(R.string.detail_zoomed_photo_desc),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                )
+                IconButton(
+                    onClick = { showGalleryViewer = false },
+                    modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close), tint = Color.White)
+                }
+            }
+        }
+    }
+
     // ── Modal rechazo ──────────────────────────────────────────────────────
     if (showRejectDialog) {
         RejectDialog(
             onConfirm = { reason ->
-                viewModel.rejectPoint(reason)
+                val rejected = viewModel.rejectPoint(reason)
                 showRejectDialog = false
-                onRejected()
+                if (rejected) onRejected()
             },
             onDismiss = { showRejectDialog = false }
         )
@@ -126,10 +169,14 @@ fun TouristPointDetailScreen(
                     .height(260.dp)
             ) {
                 AsyncImage(
-                    model              = point.photoUrls.firstOrNull(),
+                    model              = galleryPhotos.getOrNull(selectedPhotoIndex),
                     contentDescription = point.title,
                     contentScale       = ContentScale.Crop,
-                    modifier           = Modifier.fillMaxSize()
+                    modifier           = Modifier
+                        .fillMaxSize()
+                        .clickable(enabled = galleryPhotos.isNotEmpty()) {
+                            showGalleryViewer = true
+                        }
                 )
 
                 // Gradiente superior para los botones
@@ -153,11 +200,11 @@ fun TouristPointDetailScreen(
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Volver", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back), tint = Color.White)
                     }
                     if (!isModerator) {
                         IconButton(onClick = { /* TODO: compartir */ }) {
-                            Icon(Icons.Default.Share, "Compartir", tint = Color.White)
+                            Icon(Icons.Default.Share, stringResource(R.string.common_share), tint = Color.White)
                         }
                     }
                 }
@@ -177,6 +224,32 @@ fun TouristPointDetailScreen(
                         color      = Color.White,
                         fontWeight = FontWeight.SemiBold
                     )
+                }
+
+                if (galleryPhotos.size > 1) {
+                    LazyRow(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 12.dp, bottom = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        itemsIndexed(galleryPhotos) { index, imageUrl ->
+                            AsyncImage(
+                                model = imageUrl,
+                                contentDescription = stringResource(R.string.detail_thumbnail_desc, index + 1),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .border(
+                                        width = if (index == selectedPhotoIndex) 2.dp else 1.dp,
+                                        color = if (index == selectedPhotoIndex) Color.White else Color.White.copy(alpha = 0.6f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable { selectedPhotoIndex = index }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -218,7 +291,7 @@ fun TouristPointDetailScreen(
                     if (point.isVerified) {
                         Icon(
                             Icons.Default.CheckCircle,
-                            "Verificado",
+                            stringResource(R.string.detail_verified_desc),
                             tint     = VerifiedBlue,
                             modifier = Modifier.size(22.dp)
                         )
@@ -273,11 +346,11 @@ fun TouristPointDetailScreen(
                                 .background(GreenPrimary),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("MG", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(author.initials, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                         Column {
-                            Text("María García", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
-                            Text("• ${formatShortDate(point.createdAt)}", fontSize = 11.sp, color = TextGray)
+                            Text(author.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                            Text(stringResource(R.string.detail_date_bullet, formatShortDate(point.createdAt)), fontSize = 11.sp, color = TextGray)
                         }
                     }
 
@@ -293,7 +366,8 @@ fun TouristPointDetailScreen(
                             modifier       = Modifier.height(32.dp)
                         ) {
                             Text(
-                                if (viewModel.isFollowing) "Siguiendo" else "Seguir",
+                                if (viewModel.isFollowing) stringResource(R.string.detail_following)
+                                else stringResource(R.string.detail_follow),
                                 fontSize = 12.sp,
                                 color    = if (viewModel.isFollowing) TextDark else Color.White
                             )
@@ -367,7 +441,7 @@ fun TouristPointDetailScreen(
                                 verticalAlignment     = Alignment.CenterVertically
                             ) {
                                 Icon(Icons.Default.Person, null, tint = GreenEmerald, modifier = Modifier.size(16.dp))
-                                Text("Información del Autor", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                                Text(stringResource(R.string.detail_author_info), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                             }
                             HorizontalDivider(color = Color(0xFFF0F0F0))
                             Row(
@@ -381,14 +455,14 @@ fun TouristPointDetailScreen(
                                         .background(GreenPrimary),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text("MG", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    Text(author.initials, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                 }
                                 Column {
-                                    Text("María García", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
-                                    Text("maria@example.com", fontSize = 12.sp, color = TextGray)
+                                    Text(author.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                                    Text(author.email.ifBlank { stringResource(R.string.detail_no_email) }, fontSize = 12.sp, color = TextGray)
                                 }
                                 Spacer(Modifier.weight(1f))
-                                Text("47 publicaciones", fontSize = 11.sp, color = TextGray)
+                                Text(stringResource(R.string.detail_author_publications, author.publicationsCount), fontSize = 11.sp, color = TextGray)
                             }
                         }
                     }
@@ -404,16 +478,16 @@ fun TouristPointDetailScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                "Criterios de Revisión",
+                                stringResource(R.string.detail_review_criteria),
                                 fontSize   = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color      = TextDark
                             )
                             listOf(
-                                "El contenido es apropiado y no viola las normas",
-                                "Las imágenes son de buena calidad",
-                                "La ubicación es precisa",
-                                "La descripción es clara y útil"
+                                stringResource(R.string.detail_criteria_1),
+                                stringResource(R.string.detail_criteria_2),
+                                stringResource(R.string.detail_criteria_3),
+                                stringResource(R.string.detail_criteria_4)
                             ).forEach { label ->
                                 Row(
                                     verticalAlignment     = Alignment.Top,
@@ -436,36 +510,38 @@ fun TouristPointDetailScreen(
                 }
             }
 
-            // ── Comentarios ────────────────────────────────────────────────
-            Column(
-                modifier            = Modifier
-                    .fillMaxWidth()
-                    .background(CardWhite)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text("Comentarios", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextDark)
+             // ── Comentarios ────────────────────────────────────────────────
+             if (viewModel.comments.isNotEmpty()) {
+                 Column(
+                     modifier            = Modifier
+                         .fillMaxWidth()
+                         .background(CardWhite)
+                         .padding(16.dp),
+                     verticalArrangement = Arrangement.spacedBy(12.dp)
+                 ) {
+                     Text(stringResource(R.string.detail_comments_title), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextDark)
 
-                val visibleComments = if (showAllComments) viewModel.comments
-                else viewModel.comments.take(2)
+                     val visibleComments = if (showAllComments) viewModel.comments
+                     else viewModel.comments.take(2)
 
-                visibleComments.forEach { comment ->
-                    CommentItem(comment = comment)
-                }
+                     visibleComments.forEach { comment ->
+                         CommentItem(comment = comment)
+                     }
 
-                if (viewModel.comments.size > 2 && !showAllComments) {
-                    TextButton(
-                        onClick  = { showAllComments = true },
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    ) {
-                        Text(
-                            "Ver todos los comentarios (${viewModel.comments.size})",
-                            color    = GreenPrimary,
-                            fontSize = 13.sp
-                        )
-                    }
-                }
-            }
+                     if (viewModel.comments.size > 2 && !showAllComments) {
+                         TextButton(
+                             onClick  = { showAllComments = true },
+                             modifier = Modifier.align(Alignment.CenterHorizontally)
+                         ) {
+                             Text(
+                                  stringResource(R.string.detail_view_all_comments, viewModel.comments.size),
+                                 color    = GreenPrimary,
+                                 fontSize = 13.sp
+                             )
+                         }
+                     }
+                 }
+             }
 
             // ── Botones moderador AL FINAL del scroll ──────────────────
             if (isModerator) {
@@ -491,13 +567,13 @@ fun TouristPointDetailScreen(
                     ) {
                         Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Rechazar", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.detail_reject), fontWeight = FontWeight.SemiBold)
                     }
 
                     Button(
                         onClick  = {
-                            viewModel.approvePoint()
-                            onApproved()
+                            val approved = viewModel.approvePoint()
+                            if (approved) onApproved()
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -509,7 +585,7 @@ fun TouristPointDetailScreen(
                     ) {
                         Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Aprobar", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.detail_approve), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -535,7 +611,7 @@ private fun CommentItem(comment: Comment) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text  = comment.authorName.split(" ").take(2).joinToString("") { it.first().uppercase() },
+                text  = safeInitials(comment.authorName),
                 color = Color.White,
                 fontSize   = 11.sp,
                 fontWeight = FontWeight.Bold
@@ -583,14 +659,14 @@ private fun RejectDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
-                    Text("Motivo del Rechazo", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A1A))
+                    Text(stringResource(R.string.detail_reject_reason_title), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A1A))
                     IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
                         Icon(Icons.Default.Close, null, tint = Color(0xFF6B6B6B))
                     }
                 }
 
                 Text(
-                    "Por favor indica por qué se rechaza esta publicación. El usuario recibirá esta información.",
+                    stringResource(R.string.detail_reject_reason_message),
                     fontSize = 13.sp,
                     color    = Color(0xFF6B6B6B)
                 )
@@ -599,8 +675,8 @@ private fun RejectDialog(
                     value         = reason,
                     onValueChange = { reason = it },
                     modifier      = Modifier.fillMaxWidth(),
-                    label         = { Text("Motivo *") },
-                    placeholder   = { Text("Ej: La imagen no es clara, la ubicación es incorrecta, contenido inapropiado...", color = Color(0xFF6B6B6B)) },
+                    label         = { Text(stringResource(R.string.detail_reason_required)) },
+                    placeholder   = { Text(stringResource(R.string.detail_reason_placeholder), color = Color(0xFF6B6B6B)) },
                     shape         = RoundedCornerShape(10.dp),
                     minLines      = 2,
                     colors        = OutlinedTextFieldDefaults.colors(
@@ -610,7 +686,7 @@ private fun RejectDialog(
                 )
 
                 // Razones comunes
-                Text("Razones comunes:", fontSize = 12.sp, color = Color(0xFF6B6B6B))
+                Text(stringResource(R.string.detail_common_reasons), fontSize = 12.sp, color = Color(0xFF6B6B6B))
                 androidx.compose.foundation.layout.FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement   = Arrangement.spacedBy(6.dp)
@@ -638,7 +714,7 @@ private fun RejectDialog(
                         disabledContainerColor = DangerRed.copy(alpha = 0.35f)
                     )
                 ) {
-                    Text("Confirmar Rechazo", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.detail_confirm_rejection), fontWeight = FontWeight.SemiBold)
                 }
 
                 OutlinedButton(
@@ -646,7 +722,7 @@ private fun RejectDialog(
                     modifier = Modifier.fillMaxWidth().height(44.dp),
                     shape    = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Cancelar", color = Color(0xFF1A1A1A))
+                    Text(stringResource(R.string.common_cancel), color = Color(0xFF1A1A1A))
                 }
             }
         }

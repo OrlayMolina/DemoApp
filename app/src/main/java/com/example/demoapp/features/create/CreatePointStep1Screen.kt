@@ -6,11 +6,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,10 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPointCategory
 
 // ─── Paleta compartida (internal para el paquete publish) ────────────────────
@@ -47,12 +52,13 @@ internal fun categoryLabel(cat: TouristPointCategory) = when (cat) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreatePointStep1Screen(
-    photoUrl      : String?,
+    photoUrls     : List<String>,
     title         : String,
     category      : TouristPointCategory?,
     description   : String,
     isEditing     : Boolean = false,
-    onPhotoUrl    : (String) -> Unit,
+    onAddPhoto    : (String) -> Unit,
+    onRemovePhoto : (String) -> Unit,
     onTitle       : (String) -> Unit,
     onCategory    : (TouristPointCategory) -> Unit,
     onDescription : (String) -> Unit,
@@ -61,12 +67,12 @@ fun CreatePointStep1Screen(
 ) {
     var showCategoryMenu by remember { mutableStateOf(false) }
 
-    // Guarda la URI real seleccionada por el usuario
+    // Permite seleccionar varias fotos de una vez
     val galleryLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) {
-            onPhotoUrl(uri.toString())
+        ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        uris.forEach { uri ->
+            onAddPhoto(uri.toString())
         }
     }
 
@@ -88,13 +94,14 @@ fun CreatePointStep1Screen(
                 verticalAlignment     = Alignment.CenterVertically
             ) {
                 Text(
-                    text       = if (isEditing) "Editar Publicación" else "Nueva Publicación",
+                    text       = if (isEditing) stringResource(R.string.create_edit_publication)
+                    else stringResource(R.string.create_new_publication),
                     fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color      = TextDark
                 )
                 Text(
-                    text     = "Cancelar",
+                    text     = stringResource(R.string.common_cancel),
                     fontSize = 14.sp,
                     color    = TextGray,
                     modifier = Modifier.clickable { onCancel() }
@@ -109,8 +116,8 @@ fun CreatePointStep1Screen(
                 trackColor = DividerColor
             )
             Text(
-                text     = if (isEditing) "Paso 1 de 2: Editar información"
-                else "Paso 1 de 2: Información básica",
+                text     = if (isEditing) stringResource(R.string.create_step1_edit_info)
+                else stringResource(R.string.create_step1_basic_info),
                 fontSize = 12.sp,
                 color    = TextGray,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
@@ -135,44 +142,67 @@ fun CreatePointStep1Screen(
 
                         // Fotos
                         Text(
-                            "Fotos",
+                            stringResource(R.string.create_photos_label),
                             fontSize   = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color      = TextDark
                         )
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFFF0F0F0))
-                                .border(1.dp, DividerColor, RoundedCornerShape(10.dp))
-                                .clickable { galleryLauncher.launch("image/*") },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (photoUrl != null) {
-                                AsyncImage(
-                                    model              = photoUrl,
-                                    contentDescription = null,
-                                    contentScale       = ContentScale.Crop,
-                                    modifier           = Modifier.fillMaxSize()
-                                )
-                            } else {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFFF0F0F0))
+                                        .border(1.dp, DividerColor, RoundedCornerShape(10.dp))
+                                        .clickable { galleryLauncher.launch("image/*") },
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        Icons.Default.AddAPhoto,
-                                        null,
-                                        tint     = TextGray,
-                                        modifier = Modifier.size(24.dp)
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.AddAPhoto,
+                                            null,
+                                            tint = TextGray,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Text(stringResource(R.string.common_add), fontSize = 10.sp, color = TextGray)
+                                    }
+                                }
+                            }
+
+                            items(photoUrls, key = { it }) { photoUrl ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                ) {
+                                    AsyncImage(
+                                        model = photoUrl,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
                                     )
-                                    Text("Añadir foto", fontSize = 10.sp, color = TextGray)
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.create_remove_photo_desc),
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(4.dp)
+                                            .size(16.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.Black.copy(alpha = 0.55f))
+                                            .clickable { onRemovePhoto(photoUrl) }
+                                            .padding(1.dp)
+                                    )
                                 }
                             }
                         }
                         Text(
-                            "Puedes añadir hasta 6 fotos",
+                            stringResource(R.string.create_max_photos_hint),
                             fontSize = 12.sp,
                             color    = TextGray
                         )
@@ -182,7 +212,7 @@ fun CreatePointStep1Screen(
                         // Título
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                "Título *",
+                                stringResource(R.string.create_title_required),
                                 fontSize   = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color      = TextDark
@@ -191,7 +221,7 @@ fun CreatePointStep1Screen(
                                 value         = title,
                                 onValueChange = onTitle,
                                 modifier      = Modifier.fillMaxWidth(),
-                                placeholder   = { Text("¿Qué lugar descubriste?", color = TextGray) },
+                                placeholder   = { Text(stringResource(R.string.create_title_placeholder), color = TextGray) },
                                 shape         = RoundedCornerShape(10.dp),
                                 colors        = publishFieldColors(),
                                 singleLine    = true
@@ -201,7 +231,7 @@ fun CreatePointStep1Screen(
                         // Categoría
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                "Categoría *",
+                                stringResource(R.string.create_category_required),
                                 fontSize   = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color      = TextDark
@@ -217,7 +247,7 @@ fun CreatePointStep1Screen(
                                     modifier      = Modifier
                                         .fillMaxWidth()
                                         .menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                                    placeholder   = { Text("Selecciona una categoría", color = TextGray) },
+                                    placeholder   = { Text(stringResource(R.string.create_category_placeholder), color = TextGray) },
                                     trailingIcon  = {
                                         Icon(Icons.Default.KeyboardArrowDown, null, tint = TextGray)
                                     },
@@ -244,7 +274,7 @@ fun CreatePointStep1Screen(
                         // Descripción
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                "Descripción",
+                                stringResource(R.string.create_description_label),
                                 fontSize   = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color      = TextDark
@@ -255,7 +285,7 @@ fun CreatePointStep1Screen(
                                 modifier      = Modifier
                                     .fillMaxWidth()
                                     .height(100.dp),
-                                placeholder   = { Text("Cuéntanos más sobre este lugar", color = TextGray) },
+                                placeholder   = { Text(stringResource(R.string.create_description_placeholder), color = TextGray) },
                                 shape         = RoundedCornerShape(10.dp),
                                 colors        = publishFieldColors()
                             )
@@ -280,7 +310,7 @@ fun CreatePointStep1Screen(
                 )
             ) {
                 Text(
-                    if (isEditing) "Siguiente: Ubicación" else "Siguiente: Ubicación",
+                    stringResource(R.string.create_next_location),
                     fontSize   = 15.sp,
                     fontWeight = FontWeight.SemiBold
                 )

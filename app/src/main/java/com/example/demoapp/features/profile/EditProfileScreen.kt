@@ -27,6 +27,8 @@ import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.demoapp.R
 
 // ─── Paleta ───────────────────────────────────────────────────────────────────
 
@@ -40,12 +42,25 @@ private val DangerRedLight  = Color(0xFFFFEBEE)
 private val BluePrimary     = Color(0xFF1A73E8)
 private val GreenPrimary    = Color(0xFF2E7D5E)
 
+private fun safeInitials(value: String): String {
+    val initials = value
+        .trim()
+        .split(" ")
+        .filter { it.isNotBlank() }
+        .take(2)
+        .mapNotNull { it.firstOrNull()?.uppercaseChar()?.toString() }
+        .joinToString("")
+    return initials.ifBlank { "?" }
+}
+
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 
 @Composable
 fun EditProfileScreen(
     onNavigateBack    : () -> Unit = {},
     onAccountDeleted  : () -> Unit = {},   // navega a Login
+    onLogout          : () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
     viewModel: EditProfileViewModel = hiltViewModel()
 ) {
     var showDeleteDialog  by remember { mutableStateOf(false) }
@@ -55,6 +70,7 @@ fun EditProfileScreen(
     val email = viewModel.email
     val bio = viewModel.bio
     val profilePictureUrl = viewModel.profilePictureUrl
+    val darkModeEnabled = viewModel.darkModeEnabled
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -63,6 +79,7 @@ fun EditProfileScreen(
     }
 
     val maxBio = 150
+    val colorScheme = MaterialTheme.colorScheme
 
     // ── Diálogo Eliminar Cuenta ────────────────────────────────────────────
     if (showDeleteDialog) {
@@ -77,7 +94,7 @@ fun EditProfileScreen(
         )
     }
 
-    Scaffold(containerColor = BackgroundGray) { padding ->
+    Scaffold(containerColor = colorScheme.background) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -93,20 +110,21 @@ fun EditProfileScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.Default.ArrowBack, "Volver", tint = TextDark)
+                    Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back), tint = colorScheme.onBackground)
                 }
                 Text(
-                    text       = "Editar Perfil",
+                    text       = stringResource(R.string.profile_edit_title),
                     fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color      = TextDark
+                    color      = colorScheme.onBackground
                 )
                 Button(
                     onClick        = {
                         val ok = viewModel.saveProfile()
                         Toast.makeText(
                             context,
-                            if (ok) "Perfil guardado" else (viewModel.saveMessage ?: "No se pudo guardar"),
+                            if (ok) context.getString(R.string.profile_edit_saved)
+                            else (viewModel.saveMessage ?: context.getString(R.string.profile_edit_save_failed)),
                             Toast.LENGTH_SHORT
                         ).show()
                         if (ok) onNavigateBack()
@@ -116,7 +134,7 @@ fun EditProfileScreen(
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text       = "Guardar",
+                        text       = stringResource(R.string.profile_edit_save),
                         fontSize   = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color      = Color.White
@@ -142,7 +160,7 @@ fun EditProfileScreen(
                     if (profilePictureUrl.isNotBlank()) {
                         AsyncImage(
                             model              = profilePictureUrl,
-                            contentDescription = "Foto de perfil",
+                            contentDescription = stringResource(R.string.profile_photo_desc),
                             modifier           = Modifier
                                 .size(90.dp)
                                 .clip(CircleShape)
@@ -158,9 +176,7 @@ fun EditProfileScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text       = name.split(" ")
-                                    .take(2)
-                                    .joinToString("") { it.first().uppercase() },
+                                text       = safeInitials(name),
                                 color      = Color.White,
                                 fontSize   = 28.sp,
                                 fontWeight = FontWeight.Bold
@@ -182,7 +198,7 @@ fun EditProfileScreen(
                 }
 
                 Text(
-                    text      = "Toca el ícono para cambiar foto",
+                    text      = stringResource(R.string.profile_edit_change_photo_hint),
                     fontSize  = 12.sp,
                     color     = TextGray,
                     modifier  = Modifier.align(Alignment.CenterHorizontally),
@@ -192,13 +208,13 @@ fun EditProfileScreen(
                 // ── Campos ─────────────────────────────────────────────────
                 Card(
                     shape  = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardWhite)
+                    colors = CardDefaults.cardColors(containerColor = colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
 
                         // Nombre
                         EditField(
-                            label = "Nombre",
+                            label = stringResource(R.string.profile_edit_field_name),
                             value = name,
                             onValueChange = { viewModel.onNameChange(it) },
                             singleLine = true
@@ -211,7 +227,7 @@ fun EditProfileScreen(
 
                         // Email
                         EditField(
-                            label = "Email",
+                            label = stringResource(R.string.login_email_label),
                             value = email,
                             onValueChange = { viewModel.onEmailChange(it) },
                             singleLine = true
@@ -224,14 +240,14 @@ fun EditProfileScreen(
 
                         // Bio
                         EditField(
-                            label         = "Bio",
+                            label         = stringResource(R.string.profile_edit_field_bio),
                             value         = bio,
                             onValueChange = { if (it.length <= maxBio) viewModel.onBioChange(it) },
                             singleLine    = false,
                             minLines      = 3
                         )
                         Text(
-                            text     = "${bio.length} / $maxBio caracteres",
+                            text     = stringResource(R.string.profile_edit_bio_counter, bio.length, maxBio),
                             fontSize = 11.sp,
                             color    = if (bio.length >= maxBio) DangerRed else TextGray,
                             modifier = Modifier.padding(top = 4.dp)
@@ -239,36 +255,25 @@ fun EditProfileScreen(
                     }
                 }
 
-                OutlinedButton(
-                    onClick = { photoPicker.launch("image/*") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(46.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(Icons.Default.AddAPhoto, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Cargar foto de perfil")
-                }
 
                 // ── Privacidad y seguridad ─────────────────────────────────
                 Card(
                     shape  = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardWhite)
+                    colors = CardDefaults.cardColors(containerColor = colorScheme.surface)
                 ) {
                     Column {
                         Text(
-                            text     = "Privacidad y seguridad",
+                            text     = stringResource(R.string.profile_edit_privacy_security),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color    = TextDark,
+                            color    = colorScheme.onSurface,
                             modifier = Modifier.padding(
                                 start = 16.dp, end = 16.dp,
                                 top   = 14.dp, bottom = 4.dp
                             )
                         )
                         SettingsItem(
-                            label   = "Cambiar Contraseña",
+                            label   = stringResource(R.string.profile_edit_change_password),
                             onClick = { /* TODO */ }
                         )
                         HorizontalDivider(
@@ -276,7 +281,24 @@ fun EditProfileScreen(
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                         SettingsItem(
-                            label   = "Configuración de privacidad",
+                            label   = stringResource(R.string.profile_edit_privacy_settings),
+                            onClick = { /* TODO */ }
+                        )
+                        HorizontalDivider(
+                            color    = DividerColor,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        SettingsSwitchItem(
+                            label = stringResource(R.string.profile_edit_dark_theme),
+                            checked = darkModeEnabled,
+                            onCheckedChange = viewModel::onDarkModeEnabledChange
+                        )
+                        HorizontalDivider(
+                            color    = DividerColor,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        SettingsItem(
+                            label   = stringResource(R.string.profile_edit_notifications),
                             onClick = { /* TODO */ }
                         )
                         HorizontalDivider(
@@ -284,8 +306,8 @@ fun EditProfileScreen(
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                         SettingsItem(
-                            label   = "Notificaciones",
-                            onClick = { /* TODO */ }
+                            label   = stringResource(R.string.profile_edit_logout),
+                            onClick = onLogout
                         )
                     }
                 }
@@ -300,13 +322,13 @@ fun EditProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text       = "Zona de Peligro",
+                            text       = stringResource(R.string.profile_edit_danger_zone_title),
                             fontSize   = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color      = DangerRed
                         )
                         Text(
-                            text     = "Acciones irreversibles que afectarán permanentemente tu cuenta",
+                            text     = stringResource(R.string.profile_edit_danger_zone_desc),
                             fontSize = 12.sp,
                             color    = DangerRed.copy(alpha = 0.8f)
                         )
@@ -327,7 +349,7 @@ fun EditProfileScreen(
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                "Eliminar Cuenta",
+                                stringResource(R.string.profile_edit_delete_account),
                                 fontSize   = 14.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -353,7 +375,8 @@ private fun DeleteAccountDialog(
     var check3        by remember { mutableStateOf(false) }
     var confirmText   by remember { mutableStateOf("") }
 
-    val canDelete = check1 && check2 && check3 && confirmText == "ELIMINAR"
+    val deleteKeyword = stringResource(R.string.profile_edit_delete_keyword)
+    val canDelete = check1 && check2 && check3 && confirmText == deleteKeyword
 
     val DangerRed      = Color(0xFFD32F2F)
     val TextDark       = Color(0xFF1A1A1A)
@@ -383,7 +406,7 @@ private fun DeleteAccountDialog(
 
                 // Título
                 Text(
-                    text       = "Eliminar Cuenta",
+                    text       = stringResource(R.string.profile_edit_delete_dialog_title),
                     fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color      = DangerRed
@@ -399,17 +422,17 @@ private fun DeleteAccountDialog(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            "Se eliminará de forma permanente:",
+                            stringResource(R.string.profile_edit_delete_dialog_permanent_title),
                             fontSize   = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color      = TextDark
                         )
                         listOf(
-                            "Todas tus publicaciones y fotos (47 publicaciones)",
-                            "Todos tus comentarios e interacciones",
-                            "Tus logros y estadísticas",
-                            "Tu perfil y toda tu información personal",
-                            "Tus conexiones con otros usuarios"
+                            stringResource(R.string.profile_edit_delete_item_1),
+                            stringResource(R.string.profile_edit_delete_item_2),
+                            stringResource(R.string.profile_edit_delete_item_3),
+                            stringResource(R.string.profile_edit_delete_item_4),
+                            stringResource(R.string.profile_edit_delete_item_5)
                         ).forEach { item ->
                             Text("• $item", fontSize = 12.sp, color = TextGray)
                         }
@@ -420,7 +443,7 @@ private fun DeleteAccountDialog(
 
                 // Checkboxes confirmación
                 Text(
-                    "Antes de continuar confirma que:",
+                    stringResource(R.string.profile_edit_delete_confirm_title),
                     fontSize   = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color      = TextDark
@@ -429,22 +452,22 @@ private fun DeleteAccountDialog(
                 CheckItem(
                     checked  = check1,
                     onChange = { check1 = it },
-                    label    = "Entiendo que esta acción es permanente y no se puede deshacer"
+                    label    = stringResource(R.string.profile_edit_delete_check_1)
                 )
                 CheckItem(
                     checked  = check2,
                     onChange = { check2 = it },
-                    label    = "He guardado o respaldado toda la información que necesito"
+                    label    = stringResource(R.string.profile_edit_delete_check_2)
                 )
                 CheckItem(
                     checked  = check3,
                     onChange = { check3 = it },
-                    label    = "Acepto que todas mis publicaciones y datos serán eliminados permanentemente"
+                    label    = stringResource(R.string.profile_edit_delete_check_3)
                 )
 
                 // Campo confirmar
                 Text(
-                    text     = "Para confirmar, escribe ELIMINAR",
+                    text     = stringResource(R.string.profile_edit_delete_type_to_confirm, deleteKeyword),
                     fontSize = 13.sp,
                     color    = TextGray
                 )
@@ -452,7 +475,7 @@ private fun DeleteAccountDialog(
                     value         = confirmText,
                     onValueChange = { confirmText = it.uppercase() },
                     modifier      = Modifier.fillMaxWidth(),
-                    placeholder   = { Text("Escribe ELIMINAR", color = TextGray) },
+                    placeholder   = { Text(stringResource(R.string.profile_edit_delete_placeholder, deleteKeyword), color = TextGray) },
                     shape         = RoundedCornerShape(10.dp),
                     singleLine    = true,
                     colors        = OutlinedTextFieldDefaults.colors(
@@ -475,7 +498,7 @@ private fun DeleteAccountDialog(
                     )
                 ) {
                     Text(
-                        "Sí, eliminar mi cuenta permanentemente",
+                        stringResource(R.string.profile_edit_delete_confirm_button),
                         fontSize   = 13.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -489,7 +512,7 @@ private fun DeleteAccountDialog(
                         .height(46.dp),
                     shape  = RoundedCornerShape(12.dp)
                 ) {
-                    Text("No, mantener mi cuenta", fontSize = 13.sp, color = TextDark)
+                    Text(stringResource(R.string.profile_edit_delete_cancel_button), fontSize = 13.sp, color = TextDark)
                 }
 
                 // Contactar soporte
@@ -498,8 +521,8 @@ private fun DeleteAccountDialog(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("¿Tienes problemas con tu cuenta?", fontSize = 11.sp, color = TextGray)
-                        Text("Contactar soporte", fontSize = 12.sp, color = DangerRed)
+                        Text(stringResource(R.string.profile_edit_support_question), fontSize = 11.sp, color = TextGray)
+                        Text(stringResource(R.string.profile_edit_support_action), fontSize = 12.sp, color = DangerRed)
                     }
                 }
             }
@@ -575,14 +598,39 @@ private fun SettingsItem(
         Text(
             text     = label,
             fontSize = 14.sp,
-            color    = Color(0xFF1A1A1A),
+            color    = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
         Icon(
             Icons.Default.ChevronRight,
             null,
-            tint     = Color(0xFF6B6B6B),
+            tint     = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+@Composable
+private fun SettingsSwitchItem(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
         )
     }
 }

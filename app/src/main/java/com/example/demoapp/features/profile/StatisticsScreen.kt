@@ -22,9 +22,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
 import androidx.compose.ui.draw.clip
@@ -112,6 +114,7 @@ fun StatisticsScreen(
     publications  : List<TouristPoint> = TouristPoint.SAMPLE_LIST,
     onNavigateBack: () -> Unit         = {}
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val stats = remember(publications) { computeStats(publications) }
     val publicationsByMonth = remember(publications) { buildMonthlyPublicationSeries(publications) }
     val likesByMonth = remember(publications) { buildMonthlyLikesSeries(publications) }
@@ -123,7 +126,7 @@ fun StatisticsScreen(
             .sortedByDescending { it.second }
     }
 
-    Scaffold(containerColor = BackgroundGray) { padding ->
+    Scaffold(containerColor = colorScheme.background) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -140,14 +143,14 @@ fun StatisticsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.Default.ArrowBack, "Volver", tint = TextDark)
+                    Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back), tint = colorScheme.onBackground)
                 }
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text       = "Estadísticas",
+                    text       = stringResource(R.string.profile_button_statistics),
                     fontSize   = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color      = TextDark
+                    color      = colorScheme.onBackground
                 )
                 Spacer(Modifier.weight(1f))
                 Spacer(Modifier.width(48.dp))
@@ -163,14 +166,14 @@ fun StatisticsScreen(
                         modifier = Modifier.weight(1f),
                         icon     = Icons.Default.Favorite,
                         iconColor = PinkAccent,
-                        label    = "Total de Likes",
+                        label    = stringResource(R.string.stats_total_likes),
                         value    = formatNumber(stats.totalLikes)
                     )
                     StatCard(
                         modifier  = Modifier.weight(1f),
                         icon      = Icons.Default.Visibility,
                         iconColor = BlueAccent,
-                        label     = "Visualizaciones",
+                        label     = stringResource(R.string.stats_total_views),
                         value     = formatNumber(stats.totalViews)
                     )
                 }
@@ -179,21 +182,21 @@ fun StatisticsScreen(
                         modifier  = Modifier.weight(1f),
                         icon      = Icons.Default.ModeComment,
                         iconColor = GreenPrimary,
-                        label     = "Comentarios",
+                        label     = stringResource(R.string.stats_total_comments),
                         value     = formatNumber(stats.totalComments)
                     )
                     StatCard(
                         modifier  = Modifier.weight(1f),
                         icon      = Icons.Default.LocationOn,
                         iconColor = PurplePrimary,
-                        label     = "Lugares Únicos",
+                        label     = stringResource(R.string.stats_unique_places),
                         value     = formatNumber(stats.uniquePlaces)
                     )
                 }
             }
 
             // ── Gráfico de barras: Publicaciones por mes ───────────────────
-            ChartCard(title = "Publicaciones por mes") {
+            ChartCard(title = stringResource(R.string.stats_chart_publications_by_month)) {
                 BarChart(
                     data      = publicationsByMonth,
                     barColor  = BlueAccent,
@@ -204,7 +207,7 @@ fun StatisticsScreen(
             }
 
             // ── Gráfico de línea: Crecimiento de Likes ─────────────────────
-            ChartCard(title = "Crecimiento de Likes") {
+            ChartCard(title = stringResource(R.string.stats_chart_likes_growth)) {
                 LineChart(
                     data      = likesByMonth,
                     lineColor = PinkAccent,
@@ -215,12 +218,19 @@ fun StatisticsScreen(
             }
 
             // ── Barras horizontales: Categorías más publicadas ─────────────
-            ChartCard(title = "Categorías Más Publicadas") {
+            ChartCard(title = stringResource(R.string.stats_chart_top_categories)) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     val maxVal = categoryCount.maxOfOrNull { it.second } ?: 1
                     categoryCount.forEach { (cat, count) ->
+                        val categoryText = when (cat) {
+                            TouristPointCategory.NATURE -> stringResource(R.string.stats_category_nature)
+                            TouristPointCategory.GASTRONOMY -> stringResource(R.string.stats_category_gastronomy)
+                            TouristPointCategory.CULTURE -> stringResource(R.string.stats_category_culture)
+                            TouristPointCategory.ENTERTAINMENT -> stringResource(R.string.stats_category_urban_art)
+                            else -> stringResource(R.string.stats_category_other)
+                        }
                         CategoryBar(
-                            label    = categoryLabel(cat),
+                            label    = categoryText,
                             count    = count,
                             maxCount = maxVal,
                             color    = categoryColor(cat)
@@ -250,7 +260,7 @@ fun StatisticsScreen(
                         ) {
                             Text("🏆", fontSize = 18.sp)
                             Text(
-                                text       = "Tu Mejor Publicación",
+                                text       = stringResource(R.string.stats_best_publication),
                                 fontSize   = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color      = Color.White
@@ -260,7 +270,7 @@ fun StatisticsScreen(
                         Card(
                             shape  = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = Color.White.copy(alpha = 0.15f)
+                                containerColor = colorScheme.surface.copy(alpha = 0.15f)
                             )
                         ) {
                             Column(
@@ -275,17 +285,17 @@ fun StatisticsScreen(
                                 )
                                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     Text(
-                                        "${best.importantVotes} likes",
+                                        stringResource(R.string.profile_publication_likes, best.importantVotes),
                                         fontSize = 12.sp,
                                         color    = Color.White.copy(alpha = 0.85f)
                                     )
                                     Text(
-                                        "${best.commentCount} comentarios",
+                                        stringResource(R.string.profile_publication_comments, best.commentCount),
                                         fontSize = 12.sp,
                                         color    = Color.White.copy(alpha = 0.85f)
                                     )
                                     Text(
-                                        "${formatNumber(best.importantVotes * 6 + 100)} vistas",
+                                        stringResource(R.string.stats_views_count, formatNumber(best.importantVotes * 6 + 100)),
                                         fontSize = 12.sp,
                                         color    = Color.White.copy(alpha = 0.85f)
                                     )
@@ -311,10 +321,11 @@ private fun StatCard(
     label     : String,
     value     : String
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Card(
         modifier  = modifier,
         shape     = RoundedCornerShape(14.dp),
-        colors    = CardDefaults.cardColors(containerColor = CardWhite),
+        colors    = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(1.dp)
     ) {
         Column(
@@ -343,12 +354,13 @@ private fun ChartCard(
     title   : String,
     content : @Composable () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Card(
         modifier  = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape     = RoundedCornerShape(16.dp),
-        colors    = CardDefaults.cardColors(containerColor = CardWhite),
+        colors    = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(1.dp)
     ) {
         Column(
@@ -372,12 +384,13 @@ private fun BarChart(
     barColor : Color,
     modifier : Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     if (data.isEmpty()) {
         Box(
             modifier = modifier,
             contentAlignment = Alignment.Center
         ) {
-            Text("Sin datos para mostrar", fontSize = 12.sp, color = TextGray)
+            Text(stringResource(R.string.stats_no_data), fontSize = 12.sp, color = colorScheme.onSurfaceVariant)
         }
         return
     }
@@ -410,7 +423,7 @@ private fun BarChart(
             horizontalArrangement = Arrangement.SpaceAround
         ) {
             data.forEach { (label, _) ->
-                Text(label, fontSize = 10.sp, color = TextGray)
+                Text(label, fontSize = 10.sp, color = colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -422,12 +435,13 @@ private fun LineChart(
     lineColor : Color,
     modifier  : Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     if (data.isEmpty()) {
         Box(
             modifier = modifier,
             contentAlignment = Alignment.Center
         ) {
-            Text("Sin datos para mostrar", fontSize = 12.sp, color = TextGray)
+            Text(stringResource(R.string.stats_no_data), fontSize = 12.sp, color = colorScheme.onSurfaceVariant)
         }
         return
     }
@@ -481,7 +495,7 @@ private fun LineChart(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             data.forEach { (label, _) ->
-                Text(label, fontSize = 10.sp, color = TextGray)
+                Text(label, fontSize = 10.sp, color = colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -494,6 +508,7 @@ private fun CategoryBar(
     maxCount : Int,
     color    : Color
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val safeMax = maxCount.coerceAtLeast(1)
 
     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -501,8 +516,8 @@ private fun CategoryBar(
             modifier              = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(label, fontSize = 12.sp, color = TextDark)
-            Text("$count punto${if (count != 1) "s" else ""}", fontSize = 11.sp, color = TextGray)
+            Text(label, fontSize = 12.sp, color = colorScheme.onSurface)
+            Text(stringResource(R.string.stats_points_count, count), fontSize = 11.sp, color = colorScheme.onSurfaceVariant)
         }
         LinearProgressIndicator(
             progress   = { count.toFloat() / safeMax },
@@ -511,7 +526,7 @@ private fun CategoryBar(
                 .height(8.dp)
                 .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp)),
             color      = color,
-            trackColor = Color(0xFFF0F0F0)
+            trackColor = colorScheme.surfaceVariant
         )
     }
 }
@@ -526,13 +541,6 @@ private fun formatNumber(n: Int): String = when {
 private fun List<Pair<String, Int>>.indexOfMax(): Int =
     if (isEmpty()) -1 else indexOfFirst { it.second == maxOfOrNull { p -> p.second } }
 
-private fun categoryLabel(cat: TouristPointCategory) = when (cat) {
-    TouristPointCategory.NATURE        -> "Naturaleza"
-    TouristPointCategory.GASTRONOMY    -> "Gastronomía"
-    TouristPointCategory.CULTURE       -> "Cultura"
-    TouristPointCategory.ENTERTAINMENT -> "Arte Urbano"
-    else                               -> "Otro"
-}
 
 private fun categoryColor(cat: TouristPointCategory) = when (cat) {
     TouristPointCategory.NATURE -> Color(0xFF388E3C)

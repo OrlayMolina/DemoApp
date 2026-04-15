@@ -10,22 +10,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.demoapp.R
 import com.example.demoapp.core.utils.RequestResult
 import kotlinx.coroutines.launch
 
 @Composable
 fun PasswordResetScreen(
-    viewModel: PasswordResetViewModel = viewModel()
+    viewModel: PasswordResetViewModel = hiltViewModel()
 ) {
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val resetLoadingMessage = stringResource(R.string.reset_snackbar_loading)
 
     val focusRequesters = remember { List(5) { FocusRequester() } }
 
@@ -45,17 +47,17 @@ fun PasswordResetScreen(
             // 🔹 Logo
             Image(
                 painter = painterResource(id = R.drawable.logo_red_explora),
-                contentDescription = "App Logo",
+                contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier.size(120.dp)
             )
 
             Text(
-                "Restablecer contraseña",
+                stringResource(R.string.reset_title),
                 style = MaterialTheme.typography.headlineMedium
             )
 
             Text(
-                "Ingresa el código de 5 dígitos que recibiste.",
+                stringResource(R.string.reset_subtitle),
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -91,7 +93,7 @@ fun PasswordResetScreen(
                 modifier = Modifier.fillMaxWidth(),
                 value = viewModel.newPassword.value,
                 onValueChange = { viewModel.newPassword.onChange(it) },
-                label = { Text("Nueva contraseña") },
+                label = { Text(stringResource(R.string.reset_new_password_label)) },
                 visualTransformation = PasswordVisualTransformation(),
                 isError = viewModel.newPassword.error != null,
                 supportingText = {
@@ -105,7 +107,7 @@ fun PasswordResetScreen(
                 modifier = Modifier.fillMaxWidth(),
                 value = viewModel.confirmPassword.value,
                 onValueChange = { viewModel.confirmPassword.onChange(it) },
-                label = { Text("Confirmar contraseña") },
+                label = { Text(stringResource(R.string.register_confirm_password_label)) },
                 visualTransformation = PasswordVisualTransformation(),
                 isError = viewModel.confirmPassword.error != null,
                 supportingText = {
@@ -134,7 +136,7 @@ fun PasswordResetScreen(
 
                     scope.launch {
                         snackbarHostState.showSnackbar(
-                            message = "Procesando restablecimiento...",
+                            message = resetLoadingMessage,
                             duration = SnackbarDuration.Short
                         )
                     }
@@ -142,7 +144,7 @@ fun PasswordResetScreen(
                 enabled = viewModel.isFormValid &&
                         viewModel.resetResult !is RequestResult.Loading
             ) {
-                Text("Restablecer contraseña")
+                Text(stringResource(R.string.reset_button))
             }
         }
     }

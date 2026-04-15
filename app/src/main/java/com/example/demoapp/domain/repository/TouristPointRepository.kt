@@ -19,4 +19,8 @@ interface TouristPointRepository {
     // Borra un punto de la lista
     fun delete(id: String)
 
+    // Moderación
+    fun approvePoint(id: String): Result<Unit>
+    fun rejectPoint(id: String, reason: String): Result<Unit>
+
 }

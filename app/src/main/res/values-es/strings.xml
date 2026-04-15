@@ -1,0 +1,389 @@
+<resources>
+    <string name="app_name">DemoApp</string>
+
+    <!-- Login Screen -->
+    <string name="login_welcome_title">Bienvenido</string>
+    <string name="login_subtitle">Inicia sesión para continuar</string>
+    <string name="login_moderator_access">Acceso de moderador</string>
+    <string name="login_email_label">Correo electrónico</string>
+    <string name="login_email_placeholder">tu@email.com</string>
+    <string name="login_password_label">Contraseña</string>
+    <string name="login_forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="login_snackbar_loading">Iniciando sesión...</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="login_moderator_button">Acceso moderador</string>
+    <string name="login_no_account">¿No tienes cuenta? </string>
+    <string name="login_register">Regístrate</string>
+    <string name="role_user">Usuario</string>
+    <string name="role_moderator">Moderador</string>
+    <string name="login_icon_description">Icono de inicio de sesión</string>
+
+    <!-- Login ViewModel -->
+    <string name="error_email_empty">El correo electrónico es obligatorio</string>
+    <string name="error_email_invalid">Ingresa un correo electrónico válido</string>
+    <string name="error_password_empty">La contraseña es obligatoria</string>
+    <string name="error_password_short">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="login_success">Inicio de sesión exitoso</string>
+    <string name="login_failure">Credenciales inválidas</string>
+
+    <!-- Common -->
+    <string name="common_back">Volver</string>
+    <string name="common_middle_dot">·</string>
+
+    <!-- Register Screen + ViewModel -->
+    <string name="register_title">Crear cuenta</string>
+    <string name="register_subtitle">Únete a la comunidad</string>
+    <string name="register_name_label">Nombre completo</string>
+    <string name="register_name_placeholder">Tu nombre</string>
+    <string name="register_password_placeholder">Mínimo 8 caracteres</string>
+    <string name="register_confirm_password_label">Confirmar contraseña</string>
+    <string name="register_confirm_password_placeholder">Repite tu contraseña</string>
+    <string name="register_terms_text">Acepto los términos y condiciones y la política de privacidad</string>
+    <string name="register_snackbar_loading">Registrando usuario...</string>
+    <string name="register_button">Registrarse</string>
+    <string name="register_have_account">¿Ya tienes cuenta? </string>
+    <string name="register_login_action">Inicia sesión</string>
+    <string name="error_name_required">El nombre es obligatorio</string>
+    <string name="error_confirm_password_required">Confirma tu contraseña</string>
+    <string name="error_passwords_do_not_match">Las contraseñas no coinciden</string>
+    <string name="error_email_already_registered">Este email ya está registrado</string>
+    <string name="register_success_welcome">Registro exitoso. Bienvenido %1$s</string>
+
+    <!-- Recovery Screen + ViewModel -->
+    <string name="recovery_title">Recuperar contraseña</string>
+    <string name="recovery_subtitle">Te enviaremos un enlace de recuperación</string>
+    <string name="recovery_email_helper">Ingresa el email asociado a tu cuenta</string>
+    <string name="recovery_button">Enviar enlace de recuperación</string>
+    <string name="recovery_remembered_password">¿Recordaste tu contraseña? </string>
+    <string name="recovery_email_not_found">No existe una cuenta con este email</string>
+    <string name="recovery_success_code_sent">Se envió un código a %1$s</string>
+
+    <!-- Reset Screen + ViewModel -->
+    <string name="reset_title">Restablecer contraseña</string>
+    <string name="reset_subtitle">Ingresa el código de 5 dígitos que recibiste.</string>
+    <string name="reset_new_password_label">Nueva contraseña</string>
+    <string name="reset_snackbar_loading">Procesando restablecimiento...</string>
+    <string name="reset_button">Restablecer contraseña</string>
+    <string name="reset_error_code_invalid">Código inválido o expirado</string>
+    <string name="reset_success">Contraseña restablecida correctamente</string>
+    <string name="error_required">Requerido</string>
+    <string name="error_single_digit">Solo un dígito</string>
+    <string name="error_numbers_only">Solo números</string>
+    <string name="error_password_uppercase">Debe tener al menos una mayúscula</string>
+    <string name="error_password_number">Debe tener al menos un número</string>
+
+    <!-- Users -->
+    <string name="users_title">Usuarios</string>
+    <string name="users_available_count">%1$d usuarios disponibles</string>
+    <string name="users_profile_image_desc">Imagen de perfil de %1$s</string>
+    <string name="users_default_avatar_desc">Avatar por defecto</string>
+    <string name="users_tap_for_details">Tap para ver detalles</string>
+    <string name="users_go_to_detail_desc">Ir al detalle</string>
+    <string name="users_loading">Cargando usuario...</string>
+    <string name="profile_photo_desc">Foto de perfil</string>
+    <string name="users_info_title">Información del usuario</string>
+    <string name="users_info_id">ID: %1$s</string>
+    <string name="users_info_name">Nombre: %1$s</string>
+    <string name="users_info_email">Email: %1$s</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Perfil</string>
+    <string name="profile_settings_desc">Ajustes</string>
+    <string name="profile_default_user_name">Usuario</string>
+    <string name="profile_join_status_active">Activo</string>
+    <string name="profile_default_bio">Sin biografía</string>
+    <string name="profile_member_since">Miembro de la comunidad</string>
+    <string name="profile_stat_publications">Publicaciones</string>
+    <string name="profile_stat_followers">Seguidores</string>
+    <string name="profile_stat_following">Siguiendo</string>
+    <string name="profile_button_statistics">Estadísticas</string>
+    <string name="profile_button_achievements">Logros</string>
+    <string name="profile_tab_my_publications">Mis publicaciones</string>
+    <string name="profile_tab_saved">Guardados</string>
+    <string name="profile_empty_publications">No tienes publicaciones aún</string>
+    <string name="profile_empty_saved">No tienes guardados aún</string>
+    <string name="profile_publication_likes">%1$d likes</string>
+    <string name="profile_publication_comments">%1$d comentarios</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">Notificaciones</string>
+    <string name="notifications_delete_all_title">Eliminar notificaciones</string>
+    <string name="notifications_delete_all_message">¿Eliminar todas las notificaciones?</string>
+    <string name="notifications_delete_all_desc">Eliminar todas</string>
+    <string name="notifications_filter_all">Todas</string>
+    <string name="notifications_filter_unread">No leídas</string>
+    <string name="notifications_filter_unread_count">No leídas (%1$d)</string>
+    <string name="notifications_mark_all_read">Marcar todas como leídas</string>
+    <string name="notifications_empty">Sin notificaciones</string>
+    <string name="notifications_type_like">Nuevo like</string>
+    <string name="notifications_type_comment">Nuevo comentario</string>
+    <string name="notifications_type_follower">Nuevo seguidor</string>
+    <string name="notifications_type_verified">Publicación verificada</string>
+    <string name="notifications_body_like">A %1$s le gustó tu publicación \"%2$s\"</string>
+    <string name="notifications_body_comment">%1$s comentó en tu publicación \"%2$s\"</string>
+    <string name="notifications_body_follower">%1$s comenzó a seguirte</string>
+    <string name="notifications_body_verified">Tu publicación \"%1$s\" ha sido verificada</string>
+
+    <!-- Shared actions -->
+    <string name="common_edit">Editar</string>
+    <string name="common_delete">Eliminar</string>
+    <string name="common_cancel">Cancelar</string>
+
+    <!-- Achievements -->
+    <string name="achievements_title">Logros y badges</string>
+    <string name="achievements_unlocked_count">%1$d logros</string>
+    <string name="achievements_locked_count">%1$d más por desbloquear</string>
+    <string name="achievements_section_unlocked">Desbloqueados (%1$d)</string>
+    <string name="achievements_section_locked">Por desbloquear (%1$d)</string>
+    <string name="achievements_how_to_gain_more">Cómo ganar más logros</string>
+    <string name="achievements_tip_1">Publica lugares únicos e interesantes</string>
+    <string name="achievements_tip_2">Interactúa con la comunidad</string>
+    <string name="achievements_tip_3">Sube fotos de calidad</string>
+    <string name="achievements_tip_4">Explora diferentes categorías</string>
+    <string name="achievements_unlocked_date">Desbloqueado el %1$s</string>
+    <string name="achievements_progress">Progreso</string>
+
+    <!-- Edit Profile -->
+    <string name="profile_edit_title">Editar perfil</string>
+    <string name="profile_edit_save">Guardar</string>
+    <string name="profile_edit_saved">Perfil guardado</string>
+    <string name="profile_edit_save_failed">No se pudo guardar</string>
+    <string name="profile_edit_change_photo_hint">Toca el icono para cambiar foto</string>
+    <string name="profile_edit_field_name">Nombre</string>
+    <string name="profile_edit_field_bio">Bio</string>
+    <string name="profile_edit_bio_counter">%1$d / %2$d caracteres</string>
+    <string name="profile_edit_privacy_security">Privacidad y seguridad</string>
+    <string name="profile_edit_change_password">Cambiar contraseña</string>
+    <string name="profile_edit_privacy_settings">Configuración de privacidad</string>
+    <string name="profile_edit_dark_theme">Tema oscuro</string>
+    <string name="profile_edit_notifications">Notificaciones</string>
+    <string name="profile_edit_logout">Cerrar sesión</string>
+    <string name="profile_edit_danger_zone_title">Zona de peligro</string>
+    <string name="profile_edit_danger_zone_desc">Acciones irreversibles que afectarán permanentemente tu cuenta</string>
+    <string name="profile_edit_delete_account">Eliminar cuenta</string>
+    <string name="profile_edit_delete_keyword">ELIMINAR</string>
+    <string name="profile_edit_delete_dialog_title">Eliminar cuenta</string>
+    <string name="profile_edit_delete_dialog_permanent_title">Se eliminará de forma permanente:</string>
+    <string name="profile_edit_delete_item_1">Todas tus publicaciones y fotos (47 publicaciones)</string>
+    <string name="profile_edit_delete_item_2">Todos tus comentarios e interacciones</string>
+    <string name="profile_edit_delete_item_3">Tus logros y estadísticas</string>
+    <string name="profile_edit_delete_item_4">Tu perfil y toda tu información personal</string>
+    <string name="profile_edit_delete_item_5">Tus conexiones con otros usuarios</string>
+    <string name="profile_edit_delete_confirm_title">Antes de continuar confirma que:</string>
+    <string name="profile_edit_delete_check_1">Entiendo que esta acción es permanente y no se puede deshacer</string>
+    <string name="profile_edit_delete_check_2">He guardado o respaldado toda la información que necesito</string>
+    <string name="profile_edit_delete_check_3">Acepto que todas mis publicaciones y datos serán eliminados permanentemente</string>
+    <string name="profile_edit_delete_type_to_confirm">Para confirmar, escribe %1$s</string>
+    <string name="profile_edit_delete_placeholder">Escribe %1$s</string>
+    <string name="profile_edit_delete_confirm_button">Sí, eliminar mi cuenta permanentemente</string>
+    <string name="profile_edit_delete_cancel_button">No, mantener mi cuenta</string>
+    <string name="profile_edit_support_question">¿Tienes problemas con tu cuenta?</string>
+    <string name="profile_edit_support_action">Contactar soporte</string>
+
+    <!-- Statistics -->
+    <string name="stats_total_likes">Total de likes</string>
+    <string name="stats_total_views">Visualizaciones</string>
+    <string name="stats_total_comments">Comentarios</string>
+    <string name="stats_unique_places">Lugares únicos</string>
+    <string name="stats_chart_publications_by_month">Publicaciones por mes</string>
+    <string name="stats_chart_likes_growth">Crecimiento de likes</string>
+    <string name="stats_chart_top_categories">Categorías más publicadas</string>
+    <string name="stats_best_publication">Tu mejor publicación</string>
+    <string name="stats_views_count">%1$s vistas</string>
+    <string name="stats_points_count">%1$d puntos</string>
+    <string name="stats_no_data">Sin datos para mostrar</string>
+    <string name="stats_category_nature">Naturaleza</string>
+    <string name="stats_category_gastronomy">Gastronomía</string>
+    <string name="stats_category_culture">Cultura</string>
+    <string name="stats_category_urban_art">Arte urbano</string>
+    <string name="stats_category_other">Otro</string>
+
+    <!-- Home -->
+    <string name="home_skip">Saltar</string>
+    <string name="home_next">Siguiente</string>
+    <string name="home_create_account">Crear una cuenta</string>
+    <string name="home_feature_1_title">Descubre lugares únicos</string>
+    <string name="home_feature_1_desc">Explora puntos de interés compartidos por la comunidad</string>
+    <string name="home_feature_2_title">Comparte tus hallazgos</string>
+    <string name="home_feature_2_desc">Publica fotos y ubicaciones de lugares especiales</string>
+    <string name="home_feature_3_title">Conecta con exploradores</string>
+    <string name="home_feature_3_desc">Únete a una comunidad de amantes de la exploración</string>
+    <string name="home_feature_4_title">Gana logros</string>
+    <string name="home_feature_4_desc">Desbloquea badges y sube de nivel mientras exploras</string>
+
+    <!-- Comments -->
+    <string name="comments_loading">Cargando comentarios...</string>
+    <string name="comments_empty">Aún no hay comentarios. Sé el primero en comentar.</string>
+    <string name="comments_input_placeholder">Escribe un comentario...</string>
+    <string name="comments_send_desc">Publicar comentario</string>
+    <string name="comments_photo_of">Foto de %1$s</string>
+    <string name="comments_time_now">ahora</string>
+    <string name="comments_time_minutes">%1$d min</string>
+    <string name="comments_time_hours">%1$d h</string>
+    <string name="comments_time_days">%1$d d</string>
+
+    <!-- History -->
+    <string name="history_title">Historial</string>
+    <string name="history_filter_desc">Filtrar</string>
+    <string name="history_filter_all">Todas</string>
+    <string name="history_filter_approved">Aprobadas</string>
+    <string name="history_filter_rejected">Rechazadas</string>
+    <string name="history_tab_all_count">Todas (%1$d)</string>
+    <string name="history_tab_approved_count">Aprobadas (%1$d)</string>
+    <string name="history_tab_rejected_count">Rechazadas (%1$d)</string>
+    <string name="history_search_placeholder">Buscar en historial...</string>
+    <string name="history_no_results">Sin resultados</string>
+    <string name="history_summary_total">Total</string>
+    <string name="history_rejection_reason">Razón: %1$s</string>
+
+    <!-- Map points -->
+    <string name="map_points_dropdown_label">Mapa por puntos de interés</string>
+    <string name="map_points_title">Vista de mapa</string>
+    <string name="map_points_count_area">%1$d puntos de interés en el área</string>
+    <string name="map_points_view_all">Ver todas en el mapa</string>
+    <string name="map_points_count_on_map">%1$d puntos en el mapa</string>
+    <string name="map_points_publications_count">%1$d publicaciones</string>
+    <string name="map_points_all">Todas</string>
+    <string name="map_points_all_categories">Todas las categorías</string>
+    <string name="map_points_cat_gastronomy">Gastronomía</string>
+    <string name="map_points_cat_culture">Cultura</string>
+    <string name="map_points_cat_nature">Naturaleza</string>
+    <string name="map_points_cat_entertainment">Entretenimiento</string>
+    <string name="map_points_cat_history">Historia</string>
+    <string name="map_points_cat_other">Otro</string>
+
+    <!-- Create publication -->
+    <string name="create_new_publication">Nueva publicación</string>
+    <string name="create_edit_publication">Editar publicación</string>
+    <string name="create_step1_edit_info">Paso 1 de 2: Editar información</string>
+    <string name="create_step1_basic_info">Paso 1 de 2: Información básica</string>
+    <string name="create_photos_label">Fotos</string>
+    <string name="create_remove_photo_desc">Eliminar foto</string>
+    <string name="create_max_photos_hint">Puedes añadir hasta 5 fotos</string>
+    <string name="create_title_required">Título *</string>
+    <string name="create_title_placeholder">¿Qué lugar descubriste?</string>
+    <string name="create_category_required">Categoría *</string>
+    <string name="create_category_placeholder">Selecciona una categoría</string>
+    <string name="create_description_label">Descripción</string>
+    <string name="create_description_placeholder">Cuéntanos más sobre este lugar</string>
+    <string name="create_next_location">Siguiente: Ubicación</string>
+    <string name="common_add">Añadir</string>
+
+    <!-- Explore -->
+    <string name="explore_title">Explorar</string>
+    <string name="explore_open_map_desc">Ver mapa</string>
+    <string name="explore_search_placeholder">Buscar lugares ...</string>
+    <string name="explore_filters_desc">Filtros</string>
+    <string name="explore_results_count">%1$d resultados</string>
+    <string name="explore_clear_filters">Limpiar filtros</string>
+    <string name="explore_filters_title">Filtros</string>
+    <string name="common_close">Cerrar</string>
+    <string name="explore_nearby_places">Lugares cercanos a ti</string>
+    <string name="explore_verification_status">Estado de verificación</string>
+    <string name="explore_apply_filters">Aplicar filtros</string>
+    <string name="explore_user_date">Usuario • %1$s</string>
+    <string name="explore_like_desc">Me importa</string>
+    <string name="common_share">Compartir</string>
+
+    <!-- Moderator -->
+    <string name="moderator_reports">Reportes</string>
+    <string name="moderator_no_reports">No hay reportes pendientes</string>
+    <string name="moderator_report_reason">Razón: %1$s</string>
+    <string name="common_not_specified">No especificada</string>
+    <string name="moderator_review">Revisar</string>
+    <string name="moderator_discard">Descartar</string>
+    <string name="moderator_user_management">Gestión de usuarios</string>
+    <string name="moderator_no_users">Aún no hay usuarios registrados</string>
+    <string name="moderator_followers_count">%1$d seguidores</string>
+    <string name="moderator_following_count">%1$d seguidos</string>
+    <string name="moderator_block_user_desc">Bloquear</string>
+    <string name="moderator_nav_dashboard">Panel</string>
+    <string name="moderator_nav_review">Revisión</string>
+    <string name="moderator_nav_history">Historial</string>
+    <string name="moderator_nav_reports">Reportes</string>
+    <string name="moderator_nav_users">Usuarios</string>
+
+    <!-- Detail -->
+    <string name="detail_zoomed_photo_desc">Foto ampliada</string>
+    <string name="detail_thumbnail_desc">Miniatura %1$d</string>
+    <string name="detail_verified_desc">Verificado</string>
+    <string name="detail_date_bullet">• %1$s</string>
+    <string name="detail_follow">Seguir</string>
+    <string name="detail_following">Siguiendo</string>
+    <string name="detail_author_info">Información del autor</string>
+    <string name="detail_no_email">Sin email</string>
+    <string name="detail_author_publications">%1$d publicaciones</string>
+    <string name="detail_review_criteria">Criterios de revisión</string>
+    <string name="detail_criteria_1">El contenido es apropiado y no viola las normas</string>
+    <string name="detail_criteria_2">Las imágenes son de buena calidad</string>
+    <string name="detail_criteria_3">La ubicación es precisa</string>
+    <string name="detail_criteria_4">La descripción es clara y útil</string>
+    <string name="detail_view_all_comments">Ver todos los comentarios (%1$d)</string>
+    <string name="detail_reject">Rechazar</string>
+    <string name="detail_approve">Aprobar</string>
+    <string name="detail_reject_reason_title">Motivo del rechazo</string>
+    <string name="detail_reject_reason_message">Por favor indica por qué se rechaza esta publicación. El usuario recibirá esta información.</string>
+    <string name="detail_reason_required">Motivo *</string>
+    <string name="detail_reason_placeholder">Ej: La imagen no es clara, la ubicación es incorrecta, contenido inapropiado...</string>
+    <string name="detail_common_reasons">Razones comunes:</string>
+    <string name="detail_confirm_rejection">Confirmar rechazo</string>
+    <string name="detail_category_history">Historia</string>
+
+    <!-- Create Step 2 -->
+    <string name="create_save_draft">Guardar como borrador</string>
+    <string name="create_saved_draft">Guardado como borrador</string>
+    <string name="create_step2_edit_location">Paso 2 de 2: Editar ubicación</string>
+    <string name="create_step2_location">Paso 2 de 2: Ubicación</string>
+    <string name="create_coordinates">Coordenadas</string>
+    <string name="create_latitude">Latitud</string>
+    <string name="create_longitude">Longitud</string>
+    <string name="create_address_optional">Dirección (opcional)</string>
+    <string name="create_address_placeholder">Calle, colonia, ciudad ...</string>
+    <string name="create_location_tip">Arrastra el mapa o ingresa las coordenadas manualmente para marcar la ubicación exacta del lugar</string>
+    <string name="create_update_success">¡Publicación actualizada con éxito!</string>
+    <string name="create_publish_success">¡Publicación realizada con éxito!</string>
+    <string name="create_invalid_coordinates">Completa coordenadas válidas para publicar</string>
+    <string name="common_save_changes">Guardar cambios</string>
+    <string name="create_publish">Publicar</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_panel_title">Panel de moderador</string>
+    <string name="dashboard_greeting">¡Hola, Carlos Admin!</string>
+    <string name="dashboard_pending">Pendientes</string>
+    <string name="dashboard_approved_today">Aprobadas hoy</string>
+    <string name="dashboard_rejected_today">Rechazadas hoy</string>
+    <string name="dashboard_active_users">Usuarios activos</string>
+    <string name="dashboard_recent_activity">Actividad reciente</string>
+    <string name="dashboard_performance">Tu rendimiento</string>
+    <string name="dashboard_reviews_today">Revisiones hoy</string>
+    <string name="dashboard_precision">Precisión</string>
+    <string name="dashboard_min_per_review">Min/Revisión</string>
+    <string name="dashboard_activity_title_approved">Publicación aprobada</string>
+    <string name="dashboard_activity_title_rejected">Publicación rechazada</string>
+    <string name="dashboard_activity_title_reported">Reporte recibido</string>
+    <string name="dashboard_activity_time_5m">hace 5 min</string>
+    <string name="dashboard_activity_time_12m">hace 12 min</string>
+    <string name="dashboard_activity_time_30m">hace 30 min</string>
+    <string name="dashboard_activity_time_1h">hace 1 hora</string>
+    <string name="dashboard_activity_subtitle">%1$s · %2$s</string>
+    <string name="dashboard_unknown_user">Usuario desconocido</string>
+    <string name="dashboard_reports_coming_soon">Reportes - proximamente</string>
+    <string name="dashboard_users_coming_soon">Usuarios - proximamente</string>
+
+    <!-- Review Queue -->
+    <string name="review_queue_title">Cola de revisión</string>
+    <string name="review_tab_new_count">Nuevas (%1$d)</string>
+    <string name="review_tab_reported_count">Reportadas (%1$d)</string>
+    <string name="review_all_caught_up">Todo al día</string>
+    <string name="review_no_pending">No hay publicaciones pendientes</string>
+    <string name="review_badge_new">Nuevo</string>
+    <string name="review_badge_reported">Reportado</string>
+    <string name="review_date_filter_all">Todas</string>
+    <string name="review_date_filter_day_1">Hace 1 día</string>
+    <string name="review_date_filter_day_2">Hace 2 días</string>
+    <string name="review_date_filter_day_5_plus">Más de 5 días</string>
+
+    <!-- Detail shared -->
+    <string name="detail_comments_title">Comentarios</string>
+</resources>
+

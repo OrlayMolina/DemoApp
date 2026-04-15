@@ -30,6 +30,12 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
         return user
     }
 
+    override fun restoreCurrentUser(userId: String): Boolean {
+        val user = findById(userId)
+        _currentUser.value = user
+        return user != null
+    }
+
     override fun logout() {
         _currentUser.value = null
     }
@@ -145,6 +151,17 @@ class UserRepositoryImpl @Inject constructor() : UserRepository {
                 profilePictureUrl = "https://picsum.photos/200?random=3",
                 bio = "Fan de la fotografia y los espacios culturales",
                 role = UserRole.USER
+            ),
+            User(
+                id = "admin_1",
+                name = "Carlos Admin",
+                city = "Armenia",
+                address = "Calle Central",
+                email = "admin@redexplora.com",
+                password = "admin123456",
+                profilePictureUrl = "https://picsum.photos/200?random=99",
+                bio = "Moderador de la plataforma Red Explora",
+                role = UserRole.ADMIN
             )
         )
     }

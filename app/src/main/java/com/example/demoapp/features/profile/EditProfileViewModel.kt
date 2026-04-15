@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.demoapp.data.datastore.UiPreferencesDataStore
 import com.example.demoapp.domain.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -13,7 +14,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val uiPreferencesDataStore: UiPreferencesDataStore
 ) : ViewModel() {
 
     var name by mutableStateOf("")
@@ -23,6 +25,9 @@ class EditProfileViewModel @Inject constructor(
     var bio by mutableStateOf("")
         private set
     var profilePictureUrl by mutableStateOf("")
+        private set
+
+    var darkModeEnabled by mutableStateOf(false)
         private set
 
     var saveMessage by mutableStateOf<String?>(null)
@@ -37,6 +42,12 @@ class EditProfileViewModel @Inject constructor(
                     bio = user.bio
                     profilePictureUrl = user.profilePictureUrl
                 }
+            }
+        }
+
+        viewModelScope.launch {
+            uiPreferencesDataStore.darkModeEnabledFlow.collectLatest { enabled ->
+                darkModeEnabled = enabled
             }
         }
     }
@@ -55,6 +66,13 @@ class EditProfileViewModel @Inject constructor(
 
     fun onProfilePictureChange(value: String) {
         profilePictureUrl = value
+    }
+
+    fun onDarkModeEnabledChange(enabled: Boolean) {
+        darkModeEnabled = enabled
+        viewModelScope.launch {
+            uiPreferencesDataStore.setDarkModeEnabled(enabled)
+        }
     }
 
     fun saveProfile(): Boolean {

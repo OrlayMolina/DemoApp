@@ -19,12 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPoint
 import coil3.compose.AsyncImage
 
@@ -34,6 +36,17 @@ private val BackgroundGray = Color(0xFFF0F4F2)
 private val CardWhite      = Color(0xFFFFFFFF)
 private val TextGray       = Color(0xFF6B6B6B)
 private val DividerColor   = Color(0xFFE0E0E0)
+
+private fun safeInitials(value: String): String {
+    val initials = value
+        .trim()
+        .split(" ")
+        .filter { it.isNotBlank() }
+        .take(2)
+        .mapNotNull { it.firstOrNull()?.uppercaseChar()?.toString() }
+        .joinToString("")
+    return initials.ifBlank { "?" }
+}
 
 data class ProfileUser(
     val name        : String,
@@ -55,24 +68,32 @@ fun ProfileScreen(
     onNavigateToSettings: (() -> Unit)? = null,
     onNavigateToAchievements : (() -> Unit)? = null,
     onNavigateToStatistics   : (() -> Unit)? = null,
+    onLogout: (() -> Unit)? = null,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val currentUser by viewModel.user.collectAsStateWithLifecycle()
     val myPointsFromRepo by viewModel.myPublications.collectAsStateWithLifecycle()
+    val followers by viewModel.followers.collectAsStateWithLifecycle(0)
+    val following by viewModel.following.collectAsStateWithLifecycle(0)
+    val colorScheme = MaterialTheme.colorScheme
+    val defaultUserName = stringResource(R.string.profile_default_user_name)
+    val joinDateText = stringResource(R.string.profile_join_status_active)
+    val defaultBio = stringResource(R.string.profile_default_bio)
+    val memberSinceText = stringResource(R.string.profile_member_since)
 
     val profileUser = ProfileUser(
-        name = currentUser?.name ?: "Usuario",
-        joinDate = "Activo",
-        bio = currentUser?.bio?.ifBlank { "Sin biografia" } ?: "Sin biografia",
-        memberSince = "Miembro de la comunidad",
-        publications = myPointsFromRepo.size,
-        followers = 0,
-        following = 0
+        name = currentUser?.name ?: defaultUserName,
+        joinDate = joinDateText,
+        bio = currentUser?.bio?.ifBlank { defaultBio } ?: defaultBio,
+        memberSince = memberSinceText,
+        publications = myPointsFromRepo.filter { it.isVerified }.size,
+        followers = followers,
+        following = following
     )
 
     Scaffold(
-        containerColor = BackgroundGray
+        containerColor = colorScheme.background
     ) { padding ->
 
         LazyColumn(
@@ -93,16 +114,16 @@ fun ProfileScreen(
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
                     Text(
-                        text       = "Perfil",
+                        text       = stringResource(R.string.profile_title),
                         fontSize   = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color      = Color(0xFF1A1A1A)
+                        color      = colorScheme.onBackground
                     )
                     IconButton(onClick = { onNavigateToSettings?.invoke() }) {
                         Icon(
                             imageVector        = Icons.Outlined.Settings,
-                            contentDescription = "Ajustes",
-                            tint               = Color(0xFF1A1A1A)
+                            contentDescription = stringResource(R.string.profile_settings_desc),
+                            tint               = colorScheme.onBackground
                         )
                     }
                 }
@@ -115,7 +136,7 @@ fun ProfileScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     shape     = RoundedCornerShape(20.dp),
-                    colors    = CardDefaults.cardColors(containerColor = CardWhite),
+                    colors    = CardDefaults.cardColors(containerColor = colorScheme.surface),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
                     Column(
@@ -131,7 +152,7 @@ fun ProfileScreen(
                             if (!currentUser?.profilePictureUrl.isNullOrBlank()) {
                                 AsyncImage(
                                     model              = currentUser?.profilePictureUrl,
-                                    contentDescription = "Foto de perfil",
+                                    contentDescription = stringResource(R.string.profile_photo_desc),
                                     contentScale       = ContentScale.Crop,
                                     modifier           = Modifier
                                         .size(64.dp)
@@ -148,10 +169,7 @@ fun ProfileScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text       = profileUser.name
-                                            .split(" ")
-                                            .take(2)
-                                            .joinToString("") { it.first().uppercase() },
+                                        text       = safeInitials(profileUser.name),
                                         color      = Color.White,
                                         fontSize   = 22.sp,
                                         fontWeight = FontWeight.Bold
@@ -198,17 +216,17 @@ fun ProfileScreen(
                             modifier              = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            StatItem(value = profileUser.publications.toString(), label = "Publicaciones")
+                            StatItem(value = profileUser.publications.toString(), label = stringResource(R.string.profile_stat_publications))
                             VerticalDivider(
                                 modifier = Modifier.height(36.dp),
                                 color    = DividerColor
                             )
-                            StatItem(value = profileUser.followers.toString(), label = "Seguidores")
+                            StatItem(value = profileUser.followers.toString(), label = stringResource(R.string.profile_stat_followers))
                             VerticalDivider(
                                 modifier = Modifier.height(36.dp),
                                 color    = DividerColor
                             )
-                            StatItem(value = profileUser.following.toString(), label = "Siguiendo")
+                            StatItem(value = profileUser.following.toString(), label = stringResource(R.string.profile_stat_following))
                         }
 
                         HorizontalDivider(color = DividerColor)
@@ -228,7 +246,7 @@ fun ProfileScreen(
                                 colors   = ButtonDefaults.outlinedButtonColors(
                                     contentColor = Color(0xFF1A1A1A)
                                 )
-                            ) { Text("Estadísticas", fontSize = 13.sp) }
+                            ) { Text(stringResource(R.string.profile_button_statistics), fontSize = 13.sp) }
 
                             OutlinedButton(
                                 onClick  = { onNavigateToAchievements?.invoke() },
@@ -237,7 +255,7 @@ fun ProfileScreen(
                                 colors   = ButtonDefaults.outlinedButtonColors(
                                     contentColor = Color(0xFF1A1A1A)
                                 )
-                            ) { Text("Logros", fontSize = 13.sp) }
+                            ) { Text(stringResource(R.string.profile_button_achievements), fontSize = 13.sp) }
                         }
                     }
                 }
@@ -253,7 +271,10 @@ fun ProfileScreen(
                         .clip(RoundedCornerShape(12.dp))
                         .background(CardWhite),
                 ) {
-                    listOf("Mis publicaciones", "Guardados").forEachIndexed { index, title ->
+                    listOf(
+                        stringResource(R.string.profile_tab_my_publications),
+                        stringResource(R.string.profile_tab_saved)
+                    ).forEachIndexed { index, title ->
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -308,11 +329,12 @@ fun ProfileScreen(
                 Spacer(Modifier.height(8.dp))
             }
 
-            // ── Lista de publicaciones ─────────────────────────────────────
-            val sourceList = if (myPointsFromRepo.isNotEmpty()) myPointsFromRepo else myPublications
-            val list = if (selectedTab == 0) sourceList else emptyList()
+             // ── Lista de publicaciones ─────────────────────────────────────
+             val sourceList = if (myPointsFromRepo.isNotEmpty()) myPointsFromRepo else myPublications
+             val verifiedList = sourceList.filter { it.isVerified }
+             val list = if (selectedTab == 0) verifiedList else emptyList()
 
-            if (list.isEmpty()) {
+             if (list.isEmpty()) {
                 item {
                     Box(
                         modifier         = Modifier
@@ -321,8 +343,8 @@ fun ProfileScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text     = if (selectedTab == 0) "No tienes publicaciones aún"
-                            else "No tienes guardados aún",
+                            text     = if (selectedTab == 0) stringResource(R.string.profile_empty_publications)
+                            else stringResource(R.string.profile_empty_saved),
                             color    = TextGray,
                             fontSize = 14.sp
                         )
@@ -417,7 +439,7 @@ private fun PublicationItem(
                         contentPadding = PaddingValues(horizontal = 4.dp),
                     ) {
                         Text(
-                            text     = "Editar",
+                            text     = stringResource(R.string.common_edit),
                             fontSize = 12.sp,
                             color    = GreenPrimary,
                             fontWeight = FontWeight.Medium
@@ -448,7 +470,11 @@ private fun PublicationItem(
                             tint               = GreenPrimary.copy(alpha = 0.7f),
                             modifier           = Modifier.size(12.dp)
                         )
-                        Text("${point.importantVotes} likes", fontSize = 11.sp, color = TextGray)
+                        Text(
+                            stringResource(R.string.profile_publication_likes, point.importantVotes),
+                            fontSize = 11.sp,
+                            color = TextGray
+                        )
                     }
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -460,7 +486,11 @@ private fun PublicationItem(
                             tint               = TextGray,
                             modifier           = Modifier.size(12.dp)
                         )
-                        Text("${point.commentCount} comentarios", fontSize = 11.sp, color = TextGray)
+                        Text(
+                            stringResource(R.string.profile_publication_comments, point.commentCount),
+                            fontSize = 11.sp,
+                            color = TextGray
+                        )
                     }
                 }
             }

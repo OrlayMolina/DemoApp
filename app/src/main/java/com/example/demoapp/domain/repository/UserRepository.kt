@@ -13,6 +13,7 @@ interface UserRepository {
 
     // --- Auth ---
     fun login(email: String, password: String): User?
+    fun restoreCurrentUser(userId: String): Boolean
     fun logout()
     suspend fun sendPasswordResetEmail(email: String): Result<Unit>
 

@@ -35,14 +35,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.example.demoapp.R
 import com.example.demoapp.domain.model.User
 
 @Composable
@@ -61,7 +62,7 @@ fun UserListScreen(
                 .padding(horizontal = 16.dp, vertical = 20.dp)
         ) {
             Text(
-                text = "Usuarios",
+                text = stringResource(R.string.users_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -69,7 +70,7 @@ fun UserListScreen(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "${users.size} usuarios disponibles",
+                text = stringResource(R.string.users_available_count, users.size),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -97,6 +98,7 @@ fun ItemUser(
     onNavigateToUserDetail: (String) -> Unit,
     user: User
 ) {
+    val profileImageDescription = stringResource(R.string.users_profile_image_desc, user.name)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -119,7 +121,7 @@ fun ItemUser(
                         .data(user.profilePictureUrl)
                         .crossfade(true)
                         .build(),
-                    contentDescription = "Imagen de perfil de ${user.name}",
+                    contentDescription = profileImageDescription,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(64.dp)
@@ -135,7 +137,7 @@ fun ItemUser(
                 ) {
                     Icon(
                         imageVector = Icons.Default.AccountCircle,
-                        contentDescription = "Avatar por defecto",
+                        contentDescription = stringResource(R.string.users_default_avatar_desc),
                         modifier = Modifier.size(40.dp),
                         tint = MaterialTheme.colorScheme.onSecondaryContainer
                     )
@@ -175,7 +177,7 @@ fun ItemUser(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Tap para ver detalles",
+                    text = stringResource(R.string.users_tap_for_details),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -183,7 +185,7 @@ fun ItemUser(
 
             Icon(
                 imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Ir al detalle",
+                contentDescription = stringResource(R.string.users_go_to_detail_desc),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
