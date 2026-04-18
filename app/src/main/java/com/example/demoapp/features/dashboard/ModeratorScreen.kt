@@ -29,6 +29,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.demoapp.features.users.list.UserListViewModel
 
+private val GreenEmerald    = Color(0xFF00897B)
+
 @Composable
 fun ModeratorScreen(
     onLogout: () -> Unit = {}
@@ -215,7 +217,7 @@ fun UsersScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF1A73E8))
+                .background(GreenEmerald)
                 .padding(16.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
