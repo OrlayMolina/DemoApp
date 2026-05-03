@@ -385,5 +385,40 @@
 
     <!-- Detail shared -->
     <string name="detail_comments_title">Comentarios</string>
+
+    <!-- Social: seguir / dejar de seguir -->
+    <string name="user_detail_follow">Seguir</string>
+    <string name="user_detail_unfollow">Dejar de seguir</string>
+
+    <!-- Reporte de publicaciones -->
+    <string name="report_more_options_desc">Más opciones</string>
+    <string name="report_post_action">Reportar publicación</string>
+    <string name="report_dialog_title">Reportar esta publicación</string>
+    <string name="report_dialog_subtitle">Cuéntanos por qué estás reportando esta publicación. Tu reporte es confidencial.</string>
+    <string name="report_dialog_details_label">Detalles adicionales (opcional)</string>
+    <string name="report_dialog_details_placeholder">Añade cualquier contexto adicional para ayudar a los moderadores…</string>
+    <string name="report_dialog_submit">Enviar reporte</string>
+    <string name="report_reason_inappropriate">Contenido inapropiado</string>
+    <string name="report_reason_false_info">Información falsa o engañosa</string>
+    <string name="report_reason_spam">Spam</string>
+    <string name="report_reason_harassment">Acoso</string>
+    <string name="report_reason_other">Otro</string>
+    <string name="report_error_no_reason">Selecciona un motivo</string>
+    <string name="report_error_not_logged_in">Debes iniciar sesión para reportar publicaciones</string>
+    <string name="report_error_submit_failed">No se pudo enviar el reporte. Inténtalo de nuevo.</string>
+
+    <!-- Títulos y descripciones de logros -->
+    <string name="achievement_novice_explorer_title">Explorador Novato</string>
+    <string name="achievement_novice_explorer_desc">Crea tu primera publicación</string>
+    <string name="achievement_urban_photographer_title">Fotógrafo Urbano</string>
+    <string name="achievement_urban_photographer_desc">Crea 10 publicaciones, cada una con foto</string>
+    <string name="achievement_local_influencer_title">Influencer Local</string>
+    <string name="achievement_local_influencer_desc">Alcanza 100 likes en total entre todas tus publicaciones</string>
+    <string name="achievement_master_explorer_title">Maestro Explorador</string>
+    <string name="achievement_master_explorer_desc">Crea 50 publicaciones</string>
+    <string name="achievement_active_community_member_title">Miembro Activo de la Comunidad</string>
+    <string name="achievement_active_community_member_desc">Recibe 500 likes en total entre todas tus publicaciones</string>
+    <string name="achievement_verified_user_title">Usuario Verificado</string>
+    <string name="achievement_verified_user_desc">Consigue que 5 de tus publicaciones sean verificadas por un moderador</string>
 </resources>
 

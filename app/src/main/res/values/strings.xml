@@ -385,4 +385,39 @@
 
     <!-- Detail shared -->
     <string name="detail_comments_title">Comments</string>
+
+    <!-- Social: follow / unfollow -->
+    <string name="user_detail_follow">Follow</string>
+    <string name="user_detail_unfollow">Unfollow</string>
+
+    <!-- Post reporting -->
+    <string name="report_more_options_desc">More options</string>
+    <string name="report_post_action">Report post</string>
+    <string name="report_dialog_title">Report this post</string>
+    <string name="report_dialog_subtitle">Tell us why you are reporting this post. Your report is confidential.</string>
+    <string name="report_dialog_details_label">Additional details (optional)</string>
+    <string name="report_dialog_details_placeholder">Add any extra context to help moderators…</string>
+    <string name="report_dialog_submit">Submit report</string>
+    <string name="report_reason_inappropriate">Inappropriate content</string>
+    <string name="report_reason_false_info">False or misleading information</string>
+    <string name="report_reason_spam">Spam</string>
+    <string name="report_reason_harassment">Harassment</string>
+    <string name="report_reason_other">Other</string>
+    <string name="report_error_no_reason">Please select a reason</string>
+    <string name="report_error_not_logged_in">You need to be signed in to report posts</string>
+    <string name="report_error_submit_failed">Could not submit the report. Try again.</string>
+
+    <!-- Achievement titles and descriptions -->
+    <string name="achievement_novice_explorer_title">Novice Explorer</string>
+    <string name="achievement_novice_explorer_desc">Create your first post</string>
+    <string name="achievement_urban_photographer_title">Urban Photographer</string>
+    <string name="achievement_urban_photographer_desc">Create 10 posts, each with a photo</string>
+    <string name="achievement_local_influencer_title">Local Influencer</string>
+    <string name="achievement_local_influencer_desc">Reach 100 total likes across all your posts</string>
+    <string name="achievement_master_explorer_title">Master Explorer</string>
+    <string name="achievement_master_explorer_desc">Create 50 posts</string>
+    <string name="achievement_active_community_member_title">Active Community Member</string>
+    <string name="achievement_active_community_member_desc">Receive 500 total likes across all your posts</string>
+    <string name="achievement_verified_user_title">Verified User</string>
+    <string name="achievement_verified_user_desc">Get 5 of your posts verified by a moderator</string>
 </resources>

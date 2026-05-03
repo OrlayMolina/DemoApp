@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.demoapp.domain.model.Comment
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.repository.CommentRepository
+import com.example.demoapp.domain.repository.FollowRepository
+import com.example.demoapp.domain.repository.LikeRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AuthorUiState(
+    val id: String = "",
     val name: String = "Autor",
     val email: String = "",
     val initials: String = "AU",
@@ -27,10 +30,10 @@ data class AuthorUiState(
 class TouristPointDetailViewModel @Inject constructor(
     private val touristPointRepository: TouristPointRepository,
     private val commentRepository: CommentRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val followRepository: FollowRepository,
+    private val likeRepository: LikeRepository
 ) : ViewModel() {
-
-    private val followedAuthorIds = mutableSetOf<String>()
 
     var point by mutableStateOf<TouristPoint?>(null)
         private set
@@ -54,13 +57,55 @@ class TouristPointDetailViewModel @Inject constructor(
         private set
 
     private var commentsJob: Job? = null
+    private var followJob: Job? = null
+    private var likeJob: Job? = null
+    private var pointJob: Job? = null
     private var currentPointId: String? = null
 
     fun loadPoint(touristPoint: TouristPoint) {
         point = touristPoint
         observeComments(touristPoint.id)
+        observePoint(touristPoint.id)
         resolveAuthor(touristPoint)
-        isFollowing = followedAuthorIds.contains(normalizeUserId(touristPoint.authorId))
+        observeFollowState(touristPoint)
+        observeLikeState(touristPoint)
+    }
+
+    private fun observePoint(pointId: String) {
+        pointJob?.cancel()
+        pointJob = viewModelScope.launch {
+            touristPointRepository.touristPoints.collectLatest { list ->
+                list.firstOrNull { it.id == pointId }?.let { point = it }
+            }
+        }
+    }
+
+    private fun observeLikeState(touristPoint: TouristPoint) {
+        likeJob?.cancel()
+        val currentUserId = userRepository.currentUser.value?.id ?: run {
+            isLiked = false
+            return
+        }
+        likeJob = viewModelScope.launch {
+            likeRepository.observeIsLiked(touristPoint.id, currentUserId).collectLatest { value ->
+                isLiked = value
+            }
+        }
+    }
+
+    private fun observeFollowState(touristPoint: TouristPoint) {
+        followJob?.cancel()
+        val authorId = normalizeUserId(touristPoint.authorId)
+        val currentUserId = userRepository.currentUser.value?.id
+        if (currentUserId == null || currentUserId == authorId) {
+            isFollowing = false
+            return
+        }
+        followJob = viewModelScope.launch {
+            followRepository.observeIsFollowing(currentUserId, authorId).collectLatest { value ->
+                isFollowing = value
+            }
+        }
     }
 
     private fun resolveAuthor(touristPoint: TouristPoint) {
@@ -83,6 +128,7 @@ class TouristPointDetailViewModel @Inject constructor(
         }
 
         authorUiState = AuthorUiState(
+            id = author?.id ?: normalizeUserId(touristPoint.authorId),
             name = authorName,
             email = author?.email.orEmpty(),
             initials = initials,
@@ -105,49 +151,26 @@ class TouristPointDetailViewModel @Inject constructor(
         val currentPoint = point ?: return
         val currentUser = userRepository.currentUser.value ?: return
         val authorId = normalizeUserId(currentPoint.authorId)
-        val currentUserId = normalizeUserId(currentUser.id)
+        val currentUserId = currentUser.id
 
         // Evita autoseguirse
         if (authorId == currentUserId) return
 
-        val targetUser = userRepository.findById(authorId)
-            ?: userRepository.findById(currentPoint.authorId)
-
-        val willFollow = !isFollowing
-        val newFollowingCount = if (willFollow) {
-            currentUser.following + 1
+        if (followRepository.isFollowing(currentUserId, authorId)) {
+            followRepository.unfollow(currentUserId, authorId)
         } else {
-            (currentUser.following - 1).coerceAtLeast(0)
+            followRepository.follow(currentUserId, authorId)
         }
-
-        val currentUpdate = userRepository.update(
-            currentUser.copy(following = newFollowingCount)
-        )
-
-        if (currentUpdate.isFailure) return
-
-        // Actualiza también seguidores del autor cuando exista en repositorio
-        targetUser?.let { author ->
-            val newFollowersCount = if (willFollow) {
-                author.followers + 1
-            } else {
-                (author.followers - 1).coerceAtLeast(0)
-            }
-            userRepository.update(author.copy(followers = newFollowersCount))
-        }
-
-        if (willFollow) {
-            followedAuthorIds.add(authorId)
-        } else {
-            followedAuthorIds.remove(authorId)
-        }
-        isFollowing = willFollow
     }
 
     private fun normalizeUserId(rawId: String): String {
         return rawId.removePrefix("user_")
     }
-    fun toggleLike()   { isLiked    = !isLiked }
+    fun toggleLike() {
+        val currentPoint = point ?: return
+        val currentUserId = userRepository.currentUser.value?.id ?: return
+        likeRepository.toggle(currentPoint.id, currentUserId)
+    }
 
     fun approvePoint(): Boolean {
         val currentPoint = point ?: return false

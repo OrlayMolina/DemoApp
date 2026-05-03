@@ -11,6 +11,7 @@ import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.features.create.CreatePointViewModel
 import com.example.demoapp.features.detail.TouristPointDetailScreen
 import com.example.demoapp.features.explore.ExploreScreen
+import com.example.demoapp.features.explore.FeedViewModel
 import com.example.demoapp.features.map.MapPointsScreen
 import com.example.demoapp.features.notifications.NotificationsScreen
 import com.example.demoapp.features.profile.AchievementScreen
@@ -19,6 +20,7 @@ import com.example.demoapp.features.profile.ProfileScreen
 import com.example.demoapp.features.profile.StatisticsScreen
 import com.example.demoapp.features.publish.CreatePointStep1Screen
 import com.example.demoapp.features.publish.CreatePointStep2Screen
+import com.example.demoapp.features.profile.VisitedProfileScreen
 
 @Composable
 fun MainScreen(
@@ -33,11 +35,16 @@ fun MainScreen(
     var showEditProfile  by remember { mutableStateOf(false) }
     var selectedPoint by remember { mutableStateOf<TouristPoint?>(null) }
     var pointToEdit  by remember { mutableStateOf<TouristPoint?>(null) }
+    var selectedUserId by remember { mutableStateOf<String?>(null) }
 
     // --- NUEVAS VARIABLES PARA EL FLUJO DE PASOS ---
     var currentPublishStep by remember { mutableStateOf(1) }
     val createViewModel: CreatePointViewModel = hiltViewModel()
     val publishedPoints by createViewModel.touristPoints.collectAsState()
+    val feedViewModel: FeedViewModel = hiltViewModel()
+    // El feed solo muestra publicaciones verificadas de usuarios que sigues (o tuyas).
+    val verifiedFeedPoints by feedViewModel.feed.collectAsState()
+    val likedPostIds by feedViewModel.likedIds.collectAsState()
     // -----------------------------------------------
 
     LaunchedEffect(pointToEdit?.id) {
@@ -47,11 +54,27 @@ fun MainScreen(
         }
     }
 
+    selectedUserId?.let { userId ->
+        VisitedProfileScreen(
+            userId = userId,
+            onNavigateBack = { selectedUserId = null },
+            onOpenPublication = { point ->
+                selectedUserId = null
+                selectedPoint = point
+            }
+        )
+        return
+    }
+
     if (selectedPoint != null) {
         TouristPointDetailScreen(
             point          = selectedPoint!!,
             isModerator    = false,
-            onNavigateBack = { selectedPoint = null }
+            onNavigateBack = { selectedPoint = null },
+            onOpenAuthor   = { authorId ->
+                selectedPoint = null
+                selectedUserId = authorId
+            }
         )
         return
     }
@@ -87,14 +110,16 @@ fun MainScreen(
                 BottomNavTab.HOME -> {
                     if (showMap) {
                         MapPointsScreen(
-                            points = publishedPoints,
+                            points = verifiedFeedPoints,
                             onNavigateBack = { showMap = false }
                         )
                     } else {
                         ExploreScreen(
-                            points = publishedPoints,
+                            points = verifiedFeedPoints,
+                            likedIds = likedPostIds,
                             onOpenMap = { showMap = true },
-                            onOpenDetail = { point -> selectedPoint = point }
+                            onOpenDetail = { point -> selectedPoint = point },
+                            onToggleLike = { point -> feedViewModel.toggleLike(point.id) }
                         )
                     }
                 }

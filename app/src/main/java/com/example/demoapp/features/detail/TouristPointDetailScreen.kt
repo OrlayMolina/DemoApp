@@ -95,6 +95,7 @@ fun TouristPointDetailScreen(
     onNavigateBack : () -> Unit    = {},
     onApproved     : () -> Unit    = {},
     onRejected     : () -> Unit    = {},
+    onOpenAuthor   : (String) -> Unit = {},
     viewModel      : TouristPointDetailViewModel = hiltViewModel()
 ) {
     LaunchedEffect(point) { viewModel.loadPoint(point) }
@@ -337,7 +338,11 @@ fun TouristPointDetailScreen(
                 ) {
                     Row(
                         verticalAlignment     = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier              = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable(enabled = author.id.isNotBlank()) { onOpenAuthor(author.id) }
+                            .padding(vertical = 4.dp, horizontal = 4.dp)
                     ) {
                         Box(
                             modifier         = Modifier
@@ -398,8 +403,9 @@ fun TouristPointDetailScreen(
                             tint     = likeColor,
                             modifier = Modifier.size(20.dp)
                         )
+                        val displayedPoint = viewModel.point ?: point
                         Text(
-                            "${point.importantVotes + if (viewModel.isLiked) 1 else 0}",
+                            "${displayedPoint.importantVotes}",
                             fontSize = 14.sp,
                             color    = TextGray
                         )
@@ -446,7 +452,12 @@ fun TouristPointDetailScreen(
                             HorizontalDivider(color = Color(0xFFF0F0F0))
                             Row(
                                 verticalAlignment     = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier              = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable(enabled = author.id.isNotBlank()) { onOpenAuthor(author.id) }
+                                    .padding(vertical = 4.dp)
                             ) {
                                 Box(
                                     modifier         = Modifier

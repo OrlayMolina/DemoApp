@@ -27,6 +27,7 @@ import coil3.compose.AsyncImage
 import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
+import com.example.demoapp.features.report.ReportPostDialog
 import com.example.demoapp.ui.theme.DemoAppTheme
 
 // ─── Paleta ───────────────────────────────────────────────────────────────────
@@ -108,12 +109,15 @@ private fun List<TouristPoint>.applyFilters(
 @Composable
 fun ExploreScreen(
     points              : List<TouristPoint> = TouristPoint.SAMPLE_LIST,
+    likedIds            : Set<String> = emptySet(),
     onOpenMap           : () -> Unit         = {},
-    onOpenDetail        : (TouristPoint) -> Unit = {}
+    onOpenDetail        : (TouristPoint) -> Unit = {},
+    onToggleLike        : (TouristPoint) -> Unit = {}
 ) {
     var searchQuery      by remember { mutableStateOf("") }
     var selectedTab      by remember { mutableStateOf(0) }
     var showFilterSheet  by remember { mutableStateOf(false) }
+    var reportingPoint   by remember { mutableStateOf<TouristPoint?>(null) }
 
     // Estado "en edición" dentro del sheet (se aplica solo al pulsar el botón)
     var appliedFilters   by remember { mutableStateOf(FilterState()) }
@@ -288,7 +292,10 @@ fun ExploreScreen(
                 items(filtered) { point ->
                     TouristPointCard(
                         point    = point,
+                        liked = point.id in likedIds,
                         onOpenDetail = { onOpenDetail(point) },
+                        onToggleLike = { onToggleLike(point) },
+                        onReport = { reportingPoint = point },
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
@@ -324,6 +331,15 @@ fun ExploreScreen(
                 onClose  = { showFilterSheet = false }
             )
         }
+    }
+
+    // ── Diálogo de reporte de publicación ──────────────────────────────────────
+    reportingPoint?.let { point ->
+        ReportPostDialog(
+            postId = point.id,
+            onDismiss = { reportingPoint = null },
+            onReported = { reportingPoint = null }
+        )
     }
 }
 
@@ -512,10 +528,13 @@ private fun navBarColors() = NavigationBarItemDefaults.colors(
 @Composable
 fun TouristPointCard(
     point    : TouristPoint,
+    liked    : Boolean = false,
     onOpenDetail : () -> Unit = {},
+    onToggleLike : () -> Unit = {},
+    onReport : () -> Unit = {},
     modifier : Modifier = Modifier
 ) {
-    var liked by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier  = modifier
@@ -600,15 +619,37 @@ fun TouristPointCard(
                                 if (liked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                                 stringResource(R.string.explore_like_desc),
                                 tint     = if (liked) Color(0xFFE91E63) else TextGray,
-                                modifier = Modifier.size(16.dp).clickable { liked = !liked }
+                                modifier = Modifier.size(16.dp).clickable { onToggleLike() }
                             )
-                            Text("${point.importantVotes + if (liked) 1 else 0}", fontSize = 11.sp, color = TextGray)
+                            Text("${point.importantVotes}", fontSize = 11.sp, color = TextGray)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                             Icon(Icons.Outlined.PhotoLibrary, stringResource(R.string.create_photos_label), tint = TextGray, modifier = Modifier.size(16.dp))
                             Text("${point.photoUrls.size}", fontSize = 11.sp, color = TextGray)
                         }
                         Icon(Icons.Outlined.Share, stringResource(R.string.common_share), tint = TextGray, modifier = Modifier.size(16.dp))
+                        Box {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = stringResource(R.string.report_more_options_desc),
+                                tint = TextGray,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .clickable { showMenu = true }
+                            )
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.report_post_action)) },
+                                    onClick = {
+                                        showMenu = false
+                                        onReport()
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
