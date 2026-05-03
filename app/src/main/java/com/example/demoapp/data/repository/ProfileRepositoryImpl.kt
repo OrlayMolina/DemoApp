@@ -2,11 +2,13 @@ package com.example.demoapp.data.repository
 
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.User
+import com.example.demoapp.domain.repository.FollowRepository
 import com.example.demoapp.domain.repository.ProfileRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
@@ -15,7 +17,8 @@ import javax.inject.Singleton
 @Singleton
 class ProfileRepositoryImpl @Inject constructor(
     private val userRepository: UserRepository,
-    private val touristPointRepository: TouristPointRepository
+    private val touristPointRepository: TouristPointRepository,
+    private val followRepository: FollowRepository
 ) : ProfileRepository {
 
     override fun observeCurrentUser(): Flow<User?> {
@@ -32,15 +35,17 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     override fun observeFollowers(): Flow<Int> {
-        return userRepository.currentUser.map { user ->
-            user?.followers ?: 0
+        return userRepository.currentUser.flatMapLatest { user ->
+            if (user == null) flowOf(0) else followRepository.observeFollowersCount(user.id)
         }
     }
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     override fun observeFollowing(): Flow<Int> {
-        return userRepository.currentUser.map { user ->
-            user?.following ?: 0
+        return userRepository.currentUser.flatMapLatest { user ->
+            if (user == null) flowOf(0) else followRepository.observeFollowingCount(user.id)
         }
     }
 

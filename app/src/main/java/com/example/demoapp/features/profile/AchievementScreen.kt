@@ -10,6 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,9 +22,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.demoapp.R
 import com.example.demoapp.domain.model.Achievement
 import com.example.demoapp.domain.model.AchievementIcon
+import com.example.demoapp.domain.model.AchievementType
 
 // ─── Paleta ───────────────────────────────────────────────────────────────────
 
@@ -37,8 +41,20 @@ private val GoldColor      = Color(0xFFFF9800)
 
 @Composable
 fun AchievementScreen(
-    achievements : List<Achievement> = Achievement.SAMPLE_LIST,
-    onNavigateBack: () -> Unit       = {}
+    onNavigateBack: () -> Unit = {},
+    viewModel: AchievementViewModel = hiltViewModel()
+) {
+    val achievements by viewModel.achievements.collectAsState()
+    AchievementContent(
+        achievements = achievements,
+        onNavigateBack = onNavigateBack
+    )
+}
+
+@Composable
+fun AchievementContent(
+    achievements: List<Achievement>,
+    onNavigateBack: () -> Unit = {}
 ) {
     val unlocked = achievements.filter { it.isUnlocked }
     val locked   = achievements.filter { !it.isUnlocked }
@@ -204,6 +220,8 @@ private fun AchievementItem(
     modifier    : Modifier = Modifier
 ) {
     val isUnlocked = achievement.isUnlocked
+    val title = achievementTitle(achievement)
+    val description = achievementDescription(achievement)
 
     Card(
         modifier  = modifier.fillMaxWidth(),
@@ -244,13 +262,13 @@ private fun AchievementItem(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text       = achievement.title,
+                    text       = title,
                     fontSize   = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color      = TextDark
                 )
                 Text(
-                    text     = achievement.description,
+                    text     = description,
                     fontSize = 12.sp,
                     color    = TextGray
                 )
@@ -283,8 +301,10 @@ private fun AchievementItem(
                             fontWeight = FontWeight.Medium
                         )
                     }
+                    val ratio = if (achievement.goal == 0) 0f
+                                else achievement.progress.toFloat() / achievement.goal
                     LinearProgressIndicator(
-                        progress   = { achievement.progress.toFloat() / achievement.goal },
+                        progress   = { ratio },
                         modifier   = Modifier
                             .fillMaxWidth()
                             .height(6.dp)
@@ -295,6 +315,36 @@ private fun AchievementItem(
                 }
             }
         }
+    }
+}
+
+// ─── Resolución de strings ───────────────────────────────────────────────────
+
+@Composable
+private fun achievementTitle(achievement: Achievement): String {
+    val type = AchievementType.values().firstOrNull { it.id == achievement.id }
+    return when (type) {
+        AchievementType.NOVICE_EXPLORER -> stringResource(R.string.achievement_novice_explorer_title)
+        AchievementType.URBAN_PHOTOGRAPHER -> stringResource(R.string.achievement_urban_photographer_title)
+        AchievementType.LOCAL_INFLUENCER -> stringResource(R.string.achievement_local_influencer_title)
+        AchievementType.MASTER_EXPLORER -> stringResource(R.string.achievement_master_explorer_title)
+        AchievementType.ACTIVE_COMMUNITY_MEMBER -> stringResource(R.string.achievement_active_community_member_title)
+        AchievementType.VERIFIED_USER -> stringResource(R.string.achievement_verified_user_title)
+        null -> achievement.title
+    }
+}
+
+@Composable
+private fun achievementDescription(achievement: Achievement): String {
+    val type = AchievementType.values().firstOrNull { it.id == achievement.id }
+    return when (type) {
+        AchievementType.NOVICE_EXPLORER -> stringResource(R.string.achievement_novice_explorer_desc)
+        AchievementType.URBAN_PHOTOGRAPHER -> stringResource(R.string.achievement_urban_photographer_desc)
+        AchievementType.LOCAL_INFLUENCER -> stringResource(R.string.achievement_local_influencer_desc)
+        AchievementType.MASTER_EXPLORER -> stringResource(R.string.achievement_master_explorer_desc)
+        AchievementType.ACTIVE_COMMUNITY_MEMBER -> stringResource(R.string.achievement_active_community_member_desc)
+        AchievementType.VERIFIED_USER -> stringResource(R.string.achievement_verified_user_desc)
+        null -> achievement.description
     }
 }
 

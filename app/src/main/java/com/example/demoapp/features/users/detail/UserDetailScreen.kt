@@ -3,18 +3,22 @@ package com.example.demoapp.features.users.detail
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +46,10 @@ fun UserDetailScreen(
     viewModel: UserDetailViewModel = hiltViewModel()
 ) {
     val user by viewModel.user.collectAsState()
+    val isOwnProfile by viewModel.isOwnProfile.collectAsState()
+    val isFollowing by viewModel.isFollowing.collectAsState()
+    val followersCount by viewModel.followersCount.collectAsState()
+    val followingCount by viewModel.followingCount.collectAsState()
 
     LaunchedEffect(userId) {
         viewModel.loadUserById(userId)
@@ -68,6 +76,7 @@ fun UserDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(padding)
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -89,6 +98,40 @@ fun UserDetailScreen(
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FollowStat(
+                count = followersCount,
+                label = stringResource(R.string.profile_stat_followers)
+            )
+            FollowStat(
+                count = followingCount,
+                label = stringResource(R.string.profile_stat_following)
+            )
+        }
+
+        if (!isOwnProfile) {
+            if (isFollowing) {
+                OutlinedButton(
+                    onClick = { viewModel.toggleFollow() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.user_detail_unfollow))
+                }
+            } else {
+                Button(
+                    onClick = { viewModel.toggleFollow() },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors()
+                ) {
+                    Text(stringResource(R.string.user_detail_follow))
+                }
+            }
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -127,4 +170,21 @@ fun UserDetailScreen(
     }
 }
 
-
+@Composable
+private fun FollowStat(count: Int, label: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+    Spacer(modifier = Modifier.width(0.dp))
+}
