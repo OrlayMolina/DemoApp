@@ -1,0 +1,14 @@
+// REGLAS DE DESARROLLO - Permitir lectura y escritura autenticada o temporal
+// ⚠️ IMPORTANTE: Cambiar estas reglas antes de ir a producción
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Colección de usuarios: acceso abierto temporalmente para desarrollo
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+  }
+}
