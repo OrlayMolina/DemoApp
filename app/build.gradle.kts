@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.devtools.ksp)
-
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -91,5 +91,8 @@ dependencies {
 
     implementation(libs.data.store)
 
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+    implementation(libs.kotlinx.coroutines.play.services)
 
 }
