@@ -1,5 +1,6 @@
 package com.example.demoapp.features.create
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -7,15 +8,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.demoapp.core.utils.ImageLabeler
 import com.example.demoapp.core.utils.RequestResult
 import com.example.demoapp.core.utils.ValidatedField
+import com.example.demoapp.domain.model.AiEnrichment
 import com.example.demoapp.domain.model.PriceRange
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.TouristPointCategory
+import com.example.demoapp.domain.repository.AiRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
 
@@ -26,7 +31,9 @@ import javax.inject.Inject
 @HiltViewModel
 class CreatePointViewModel @Inject constructor(
     private val repository: TouristPointRepository, // <── INYECCIÓN DEL REPO
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val aiRepository: AiRepository,
+    private val imageLabeler: ImageLabeler
 ) : ViewModel() {
 
     private var editingPoint: TouristPoint? = null
@@ -170,6 +177,70 @@ class CreatePointViewModel @Inject constructor(
         return isStep2Valid
     }
 
+    // ── Asistente IA (auto-tagging + descripcion) ────────────────────────────
+    sealed interface AiSuggestionState {
+        data object Idle : AiSuggestionState
+        data object Loading : AiSuggestionState
+        data class Ready(val enrichment: AiEnrichment) : AiSuggestionState
+        data class Error(val message: String) : AiSuggestionState
+    }
+
+    var aiSuggestion by mutableStateOf<AiSuggestionState>(AiSuggestionState.Idle)
+        private set
+
+    val acceptedAiTags = mutableStateListOf<String>()
+
+    private var lastEmbedding: List<Double> = emptyList()
+
+    fun runAiAssist() {
+        val cat = selectedCategory ?: run {
+            aiSuggestion = AiSuggestionState.Error("Selecciona una categoria primero")
+            return
+        }
+        if (title.value.isBlank()) {
+            aiSuggestion = AiSuggestionState.Error("Escribe un titulo primero")
+            return
+        }
+        aiSuggestion = AiSuggestionState.Loading
+        viewModelScope.launch {
+            val labels = selectedPhotoUrls.firstOrNull()
+                ?.let { runCatching { imageLabeler.label(Uri.parse(it)) }.getOrDefault(emptyList()) }
+                ?: emptyList()
+
+            aiRepository.enrichPoint(
+                title = title.value,
+                description = description.value,
+                category = cat,
+                imageLabels = labels
+            ).fold(
+                onSuccess = { enrichment ->
+                    lastEmbedding = enrichment.embedding
+                    aiSuggestion = AiSuggestionState.Ready(enrichment)
+                },
+                onFailure = { e ->
+                    aiSuggestion = AiSuggestionState.Error(e.message ?: "Error de IA")
+                }
+            )
+        }
+    }
+
+    fun toggleAiTag(tag: String) {
+        if (acceptedAiTags.contains(tag)) acceptedAiTags.remove(tag)
+        else acceptedAiTags.add(tag)
+    }
+
+    fun applyAiDescription() {
+        val current = aiSuggestion
+        if (current is AiSuggestionState.Ready) {
+            current.enrichment.improvedDescription?.let { description.onChange(it) }
+        }
+    }
+
+    fun dismissAiSuggestion() {
+        aiSuggestion = AiSuggestionState.Idle
+        acceptedAiTags.clear()
+    }
+
     // ── Envío final ───────────────────────────────────────────────────────────
     var createResult by mutableStateOf<RequestResult<TouristPoint>?>(null)
         private set
@@ -183,6 +254,8 @@ class CreatePointViewModel @Inject constructor(
         createResult = RequestResult.Loading
 
         val basePoint = editingPoint
+        val finalTags = acceptedAiTags.toList()
+        val finalEmbedding = lastEmbedding
         val pointToPersist = if (basePoint != null) {
             basePoint.copy(
                 title = title.value,
@@ -193,7 +266,9 @@ class CreatePointViewModel @Inject constructor(
                 address = address,
                 schedule = schedule.value.ifBlank { "No especificado" },
                 priceRange = selectedPriceRange ?: PriceRange.FREE,
-                photoUrls = selectedPhotoUrls.toList()
+                photoUrls = selectedPhotoUrls.toList(),
+                aiTags = if (finalTags.isNotEmpty()) finalTags else basePoint.aiTags,
+                embedding = if (finalEmbedding.isNotEmpty()) finalEmbedding else basePoint.embedding
             )
         } else {
             val authorId = userRepository.currentUser.value?.id
@@ -213,28 +288,30 @@ class CreatePointViewModel @Inject constructor(
                 schedule = schedule.value.ifBlank { "No especificado" },
                 priceRange = selectedPriceRange ?: PriceRange.FREE,
                 photoUrls = selectedPhotoUrls.toList(),
-                isVerified = false
+                isVerified = false,
+                aiTags = finalTags,
+                embedding = finalEmbedding
             )
         }
 
-        val persistResult = if (basePoint != null) {
-            repository.update(pointToPersist)
-        } else {
-            repository.save(pointToPersist)
-            Result.success(Unit)
-        }
-
-        return persistResult.fold(
-            onSuccess = {
-                Log.d("CreatePoint", "Punto persistido en el repo: ${pointToPersist.title}")
-                createResult = RequestResult.Success(pointToPersist)
-                true
-            },
-            onFailure = { error ->
-                createResult = RequestResult.Error(error.message ?: "No se pudo guardar la publicacion")
-                false
+        viewModelScope.launch {
+            val persistResult = if (basePoint != null) {
+                repository.update(pointToPersist)
+            } else {
+                repository.save(pointToPersist)
             }
-        )
+
+            persistResult.fold(
+                onSuccess = {
+                    Log.d("CreatePoint", "Punto persistido en el repo: ${pointToPersist.title}")
+                    createResult = RequestResult.Success(pointToPersist)
+                },
+                onFailure = { error ->
+                    createResult = RequestResult.Error(error.message ?: "No se pudo guardar la publicacion")
+                }
+            )
+        }
+        return true
     }
 
     fun startEditing(point: TouristPoint) {
@@ -255,6 +332,10 @@ class CreatePointViewModel @Inject constructor(
         address = point.address
         locationError = null
         createResult = null
+        aiSuggestion = AiSuggestionState.Idle
+        acceptedAiTags.clear()
+        acceptedAiTags.addAll(point.aiTags)
+        lastEmbedding = point.embedding
     }
 
     fun reset() {
@@ -275,5 +356,8 @@ class CreatePointViewModel @Inject constructor(
         address = ""
         locationError = null
         createResult = null
+        aiSuggestion = AiSuggestionState.Idle
+        acceptedAiTags.clear()
+        lastEmbedding = emptyList()
     }
 }

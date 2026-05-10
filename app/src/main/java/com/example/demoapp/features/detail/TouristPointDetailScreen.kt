@@ -203,11 +203,7 @@ fun TouristPointDetailScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back), tint = Color.White)
                     }
-                    if (!isModerator) {
-                        IconButton(onClick = { /* TODO: compartir */ }) {
-                            Icon(Icons.Default.Share, stringResource(R.string.common_share), tint = Color.White)
-                        }
-                    }
+
                 }
 
                 // Badge categoría

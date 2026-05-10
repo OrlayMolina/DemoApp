@@ -21,7 +21,10 @@ data class TouristPoint(
     val importantVotes: Int = 0,
     val visitedByUserIds: List<String> = emptyList(),
     val commentCount: Int = 0,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val embedding: List<Double> = emptyList(),
+    val aiTags: List<String> = emptyList(),
+    val isSaved: Boolean = false
 ) {
     companion object {
         // ── Datos quemados – reemplazar por llamadas a Firestore ──────────────

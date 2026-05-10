@@ -13,6 +13,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
@@ -29,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPointCategory
+import com.example.demoapp.features.create.CreatePointViewModel
 
 // ─── Paleta compartida (internal para el paquete publish) ────────────────────
 
@@ -57,11 +60,17 @@ fun CreatePointStep1Screen(
     category      : TouristPointCategory?,
     description   : String,
     isEditing     : Boolean = false,
+    aiSuggestion  : CreatePointViewModel.AiSuggestionState = CreatePointViewModel.AiSuggestionState.Idle,
+    acceptedTags  : List<String> = emptyList(),
     onAddPhoto    : (String) -> Unit,
     onRemovePhoto : (String) -> Unit,
     onTitle       : (String) -> Unit,
     onCategory    : (TouristPointCategory) -> Unit,
     onDescription : (String) -> Unit,
+    onAiAssist    : () -> Unit = {},
+    onToggleTag   : (String) -> Unit = {},
+    onApplyAiDescription: () -> Unit = {},
+    onDismissAi   : () -> Unit = {},
     onNext        : () -> Unit,
     onCancel      : () -> Unit
 ) {
@@ -289,6 +298,15 @@ fun CreatePointStep1Screen(
                                 shape         = RoundedCornerShape(10.dp),
                                 colors        = publishFieldColors()
                             )
+
+                            AiAssistSection(
+                                state               = aiSuggestion,
+                                acceptedTags        = acceptedTags,
+                                onAssist            = onAiAssist,
+                                onToggleTag         = onToggleTag,
+                                onApplyDescription  = onApplyAiDescription,
+                                onDismiss           = onDismissAi
+                            )
                         }
                     }
                 }
@@ -326,3 +344,135 @@ internal fun publishFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedContainerColor = Color(0xFFF8F8F8),
     focusedContainerColor   = CardWhite
 )
+
+// ─── Asistente IA ────────────────────────────────────────────────────────────
+
+@Composable
+private fun AiAssistSection(
+    state              : CreatePointViewModel.AiSuggestionState,
+    acceptedTags       : List<String>,
+    onAssist           : () -> Unit,
+    onToggleTag        : (String) -> Unit,
+    onApplyDescription : () -> Unit,
+    onDismiss          : () -> Unit
+) {
+    val accent = Color(0xFF2E7D5E)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(
+            onClick = onAssist,
+            shape   = RoundedCornerShape(10.dp),
+            modifier = Modifier.fillMaxWidth(),
+            colors  = ButtonDefaults.outlinedButtonColors(contentColor = accent)
+        ) {
+            Icon(Icons.Default.AutoAwesome, null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+            Text("Mejorar con IA", fontSize = 13.sp)
+        }
+
+        when (state) {
+            CreatePointViewModel.AiSuggestionState.Idle -> Unit
+            CreatePointViewModel.AiSuggestionState.Loading -> {
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator(
+                        modifier    = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color       = accent
+                    )
+                    Text("Analizando con IA...", fontSize = 12.sp, color = TextGray)
+                }
+            }
+            is CreatePointViewModel.AiSuggestionState.Error -> {
+                Text(
+                    text     = "IA: ${state.message}",
+                    fontSize = 12.sp,
+                    color    = Color(0xFFB00020)
+                )
+            }
+            is CreatePointViewModel.AiSuggestionState.Ready -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFEAF4EE))
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(Icons.Default.AutoAwesome, null, tint = accent, modifier = Modifier.size(16.dp))
+                        Text("Sugerencias IA", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = onDismiss, modifier = Modifier.size(20.dp)) {
+                            Icon(Icons.Default.Close, null, tint = TextGray, modifier = Modifier.size(14.dp))
+                        }
+                    }
+
+                    if (state.enrichment.tags.isNotEmpty()) {
+                        Text("Tags sugeridos:", fontSize = 12.sp, color = TextGray)
+                        FlowRowTags(
+                            tags         = state.enrichment.tags,
+                            acceptedTags = acceptedTags,
+                            onToggle     = onToggleTag,
+                            accent       = accent
+                        )
+                    }
+
+                    state.enrichment.improvedDescription?.let { suggested ->
+                        Text("Descripcion sugerida:", fontSize = 12.sp, color = TextGray)
+                        Text(
+                            text     = suggested,
+                            fontSize = 12.sp,
+                            color    = TextDark
+                        )
+                        TextButton(
+                            onClick = onApplyDescription,
+                            colors  = ButtonDefaults.textButtonColors(contentColor = accent)
+                        ) {
+                            Icon(Icons.Default.Check, null, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Usar esta descripcion", fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun FlowRowTags(
+    tags         : List<String>,
+    acceptedTags : List<String>,
+    onToggle     : (String) -> Unit,
+    accent       : Color
+) {
+    androidx.compose.foundation.layout.FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement   = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        tags.forEach { tag ->
+            val accepted = acceptedTags.contains(tag)
+            val bg = if (accepted) accent else Color(0xFFE0E7E3)
+            val fg = if (accepted) Color.White else TextDark
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(bg)
+                    .clickable { onToggle(tag) }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                if (accepted) Icon(Icons.Default.Check, null, tint = fg, modifier = Modifier.size(12.dp))
+                Text(tag, fontSize = 12.sp, color = fg)
+            }
+        }
+    }
+}

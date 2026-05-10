@@ -1,26 +1,61 @@
 package com.example.demoapp.data.repository
 
+import android.util.Log
+import com.example.demoapp.data.model.PostReportDto
 import com.example.demoapp.domain.model.PostReport
 import com.example.demoapp.domain.model.ReportReason
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.repository.PostReportRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val TAG = "PostReportRepoImpl"
+private const val COLLECTION = "reports"
+
 @Singleton
 class PostReportRepositoryImpl @Inject constructor(
+    private val firestore: FirebaseFirestore,
     private val touristPointRepository: TouristPointRepository
 ) : PostReportRepository {
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _reports = MutableStateFlow<List<PostReport>>(emptyList())
     override val reports: StateFlow<List<PostReport>> = _reports.asStateFlow()
+
+    init {
+        observeReports()
+    }
+
+    private fun observeReports() {
+        firestore.collection(COLLECTION)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e(TAG, "Error listening to reports: ${error.message}", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val list = snapshot.documents.mapNotNull { doc ->
+                        runCatching {
+                            doc.toObject(PostReportDto::class.java)?.toDomain()
+                        }.getOrNull()
+                    }
+                    _reports.value = list
+                }
+            }
+    }
 
     override fun reportPost(
         postId: String,
@@ -42,14 +77,18 @@ class PostReportRepositoryImpl @Inject constructor(
             reason = reason,
             details = details?.takeIf { it.isNotBlank() }
         )
-        _reports.value = _reports.value + report
 
-        touristPointRepository.update(
-            point.copy(
-                isReported = true,
-                reportReason = reportReasonText(reason, details)
-            )
-        )
+        scope.launch {
+            runCatching {
+                firestore.collection(COLLECTION).document(report.id).set(PostReportDto.fromDomain(report)).await()
+                touristPointRepository.update(
+                    point.copy(
+                        isReported = true,
+                        reportReason = reportReasonText(reason, details)
+                    )
+                )
+            }.onFailure { Log.e(TAG, "Error reporting post: ${it.message}", it) }
+        }
 
         return Result.success(report)
     }

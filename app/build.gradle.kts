@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,6 +8,20 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.devtools.ksp)
     alias(libs.plugins.google.services)
+}
+
+val geminiApiKey: String = run {
+    val fromProp = project.findProperty("GEMINI_API_KEY") as String?
+    val fromEnv = System.getenv("GEMINI_API_KEY")
+    val fromLocal = run {
+        val f = rootProject.file("local.properties")
+        if (f.exists()) {
+            val props = Properties()
+            f.inputStream().use { props.load(it) }
+            props.getProperty("GEMINI_API_KEY")
+        } else null
+    }
+    fromProp ?: fromEnv ?: fromLocal ?: ""
 }
 
 android {
@@ -20,6 +36,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildTypes {
@@ -42,6 +60,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -94,5 +113,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.play.services)
+
+    implementation(libs.mlkit.image.labeling)
+    implementation(libs.okhttp)
 
 }

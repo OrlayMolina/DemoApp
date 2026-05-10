@@ -8,7 +8,7 @@ interface TouristPointRepository {
     val touristPoints: StateFlow<List<TouristPoint>>
 
     // El método que llamarás al dar clic en "Publicar"
-    fun save(point: TouristPoint)
+    suspend fun save(point: TouristPoint): Result<Unit>
 
     // Para cuando quieras implementar la edición (findById)
     fun findById(id: String): TouristPoint?

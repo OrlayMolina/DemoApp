@@ -133,6 +133,8 @@ fun MainScreen(
                             category = createViewModel.selectedCategory,
                             description = createViewModel.description.value,
                             isEditing = pointToEdit != null,
+                            aiSuggestion = createViewModel.aiSuggestion,
+                            acceptedTags = createViewModel.acceptedAiTags,
                             onAddPhoto = { url -> createViewModel.addPhoto(url) },
                             onRemovePhoto = { url -> createViewModel.removePhoto(url) },
                             onTitle = { createViewModel.title.onChange(it) },
@@ -140,6 +142,10 @@ fun MainScreen(
                                 createViewModel.onCategoryChange(categoryEnum)
                             },
                             onDescription = { createViewModel.description.onChange(it) },
+                            onAiAssist = { createViewModel.runAiAssist() },
+                            onToggleTag = { tag -> createViewModel.toggleAiTag(tag) },
+                            onApplyAiDescription = { createViewModel.applyAiDescription() },
+                            onDismissAi = { createViewModel.dismissAiSuggestion() },
                             onNext = {
                                 if (createViewModel.validateStep1()) {
                                     currentPublishStep = 2

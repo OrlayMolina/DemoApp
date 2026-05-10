@@ -1,123 +1,214 @@
 package com.example.demoapp.data.repository
 
 import android.util.Log
+import com.example.demoapp.data.model.TouristPointDto
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.repository.ReviewHistoryRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Implementación del repositorio siguiendo el patrón de diseño del profesor.
- * El uso de @Singleton asegura que los puntos publicados no se borren al navegar.
- */
+private const val TAG = "TouristPointRepoImpl"
+private const val COLLECTION = "tourist_points"
+
 @Singleton
 class TouristPointRepositoryImpl @Inject constructor(
+    private val firestore: FirebaseFirestore,
     private val reviewHistoryRepository: ReviewHistoryRepository,
     private val userRepository: UserRepository
 ) : TouristPointRepository {
 
-    // 1. Lista interna reactiva que inicia con tus datos quemados (SAMPLE_LIST)
-    private val _touristPoints = MutableStateFlow<List<TouristPoint>>(TouristPoint.SAMPLE_LIST)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // 2. Propiedad pública que el Feed (Inicio) observará para actualizarse solo
+    private val _touristPoints = MutableStateFlow<List<TouristPoint>>(emptyList())
     override val touristPoints: StateFlow<List<TouristPoint>> = _touristPoints.asStateFlow()
 
     init {
-        reviewHistoryRepository.seedFromPoints(_touristPoints.value)
+        observeTouristPoints()
     }
 
-    /**
-     * Guarda un nuevo punto turístico.
-     * Al usar +=, notificamos el cambio a toda la app de forma inmediata.
-     */
-    override fun save(point: TouristPoint) {
-        try {
-            // Agregamos el punto a la lista (se añade al final o al principio según prefieras)
-            // Para que aparezca de primero en el Feed:
-            _touristPoints.value = listOf(point) + _touristPoints.value
+    private fun observeTouristPoints() {
+        firestore.collection(COLLECTION)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e(TAG, "Error listening to tourist points: ${error.message}", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val list = snapshot.documents.mapNotNull { doc ->
+                        runCatching {
+                            val id = doc.id
+                            val authorId = doc.getString("authorId") ?: ""
+                            val title = doc.getString("title") ?: ""
+                            val categoryName = doc.getString("categoryName") ?: "NATURE"
+                            val description = doc.getString("description") ?: ""
+                            val latitude = doc.getDouble("latitude") ?: 0.0
+                            val longitude = doc.getDouble("longitude") ?: 0.0
+                            val address = doc.getString("address") ?: ""
+                            val schedule = doc.getString("schedule") ?: ""
+                            val priceRangeName = doc.getString("priceRangeName") ?: "FREE"
+                            val photoUrls = doc.get("photoUrls") as? List<*>
+                            val parsedPhotoUrls = photoUrls?.filterIsInstance<String>() ?: emptyList()
+                            val isVerified = doc.getBoolean("isVerified") ?: doc.getBoolean("verified") ?: false
+                            val isRejected = doc.getBoolean("isRejected") ?: doc.getBoolean("rejected") ?: false
+                            val rejectionReason = doc.getString("rejectionReason")
+                            val isResolved = doc.getBoolean("isResolved") ?: doc.getBoolean("resolved") ?: false
+                            val isReported = doc.getBoolean("isReported") ?: doc.getBoolean("reported") ?: false
+                            val reportReason = doc.getString("reportReason")
+                            val importantVotes = doc.getLong("importantVotes")?.toInt() ?: 0
+                            val visitedRaw = doc.get("visitedByUserIds") as? List<*>
+                            val visitedByUserIds = visitedRaw?.filterIsInstance<String>() ?: emptyList()
+                            val commentCount = doc.getLong("commentCount")?.toInt() ?: 0
+                            val createdAt = doc.getLong("createdAt") ?: 0L
+                            val embeddingRaw = doc.get("embedding") as? List<*>
+                            val embedding = embeddingRaw?.mapNotNull { (it as? Number)?.toDouble() } ?: emptyList()
+                            val aiTagsRaw = doc.get("aiTags") as? List<*>
+                            val aiTags = aiTagsRaw?.filterIsInstance<String>() ?: emptyList()
+                            val isSaved = doc.getBoolean("isSaved") ?: doc.getBoolean("saved") ?: false
 
-            Log.d("Repository", "Punto '${point.title}' guardado con éxito. Total: ${_touristPoints.value.size}")
-        } catch (e: Exception) {
-            Log.e("Repository", "Error al guardar el punto: ${e.message}")
-        }
+                            TouristPoint(
+                                id = id,
+                                authorId = authorId,
+                                title = title,
+                                category = try { com.example.demoapp.domain.model.TouristPointCategory.valueOf(categoryName) } catch(e: Exception) { com.example.demoapp.domain.model.TouristPointCategory.NATURE },
+                                description = description,
+                                latitude = latitude,
+                                longitude = longitude,
+                                address = address,
+                                schedule = schedule,
+                                priceRange = try { com.example.demoapp.domain.model.PriceRange.valueOf(priceRangeName) } catch(e: Exception) { com.example.demoapp.domain.model.PriceRange.FREE },
+                                photoUrls = parsedPhotoUrls,
+                                isVerified = isVerified,
+                                isRejected = isRejected,
+                                rejectionReason = rejectionReason,
+                                isResolved = isResolved,
+                                isReported = isReported,
+                                reportReason = reportReason,
+                                importantVotes = importantVotes,
+                                visitedByUserIds = visitedByUserIds,
+                                commentCount = commentCount,
+                                createdAt = createdAt,
+                                embedding = embedding,
+                                aiTags = aiTags,
+                                isSaved = isSaved
+                            )
+                        }.onFailure { Log.e(TAG, "Error mapping doc", it) }.getOrNull()
+                    }.sortedByDescending { it.createdAt }
+                    
+                    _touristPoints.value = list
+
+                    // Forzar la migración de los datos de prueba (incluyendo los verificados con imágenes aleatorias)
+                    if (list.none { it.id == "point_1" }) {
+                        scope.launch { seedInitialData() }
+                    } else {
+                        reviewHistoryRepository.seedFromPoints(list)
+                    }
+                }
+            }
     }
 
-    /**
-     * Busca un punto por su ID único.
-     * Útil para cargar los datos en la pantalla de edición que vimos antes.
-     */
+    override suspend fun save(point: TouristPoint): Result<Unit> {
+        return runCatching {
+            val data = TouristPointDto.fromDomain(point)
+            if (point.id.isBlank() || point.id.toLongOrNull() != null) {
+                val docRef = firestore.collection(COLLECTION).document()
+                firestore.collection(COLLECTION).document(docRef.id).set(data.copy(id = docRef.id)).await()
+            } else {
+                firestore.collection(COLLECTION).document(point.id).set(data).await()
+            }
+            Log.d(TAG, "Point '${point.title}' saved to Firebase.")
+            Unit
+        }.onFailure { Log.e(TAG, "Error saving point: ${it.message}", it) }
+    }
+
     override fun findById(id: String): TouristPoint? {
         return _touristPoints.value.find { it.id == id }
     }
 
     override fun update(point: TouristPoint): Result<Unit> {
-        val index = _touristPoints.value.indexOfFirst { it.id == point.id }
-        if (index == -1) {
-            return Result.failure(NoSuchElementException("Punto no encontrado: ${point.id}"))
-        }
+        val exists = _touristPoints.value.any { it.id == point.id }
+        if (!exists) return Result.failure(NoSuchElementException("Punto no encontrado: ${point.id}"))
 
-        val updated = _touristPoints.value.toMutableList()
-        updated[index] = point
-        _touristPoints.value = updated
-        Log.d("Repository", "Punto '${point.title}' actualizado con exito.")
+        scope.launch {
+            runCatching {
+                firestore.collection(COLLECTION)
+                    .document(point.id)
+                    .set(TouristPointDto.fromDomain(point))
+                    .await()
+                Log.d(TAG, "Point '${point.title}' updated successfully.")
+            }.onFailure { Log.e(TAG, "Error updating point: ${it.message}", it) }
+        }
         return Result.success(Unit)
     }
 
-    /**
-     * Elimina un punto de la lista (opcional, para completar el CRUD)
-     */
     override fun delete(id: String) {
-        _touristPoints.value = _touristPoints.value.filterNot { it.id == id }
-        Log.d("Repository", "Punto con ID $id eliminado.")
+        scope.launch {
+            runCatching {
+                firestore.collection(COLLECTION).document(id).delete().await()
+                Log.d(TAG, "Point with ID $id deleted.")
+            }.onFailure { Log.e(TAG, "Error deleting point: ${it.message}", it) }
+        }
     }
 
     override fun approvePoint(id: String): Result<Unit> {
-        val index = _touristPoints.value.indexOfFirst { it.id == id }
-        if (index == -1) {
-            return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
-        }
-
-        val updated = _touristPoints.value.toMutableList()
-        val current = updated[index]
-        updated[index] = current.copy(
+        val current = findById(id) ?: return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
+        
+        val updated = current.copy(
             isVerified = true,
             isRejected = false,
             rejectionReason = null
         )
-        _touristPoints.value = updated
-        reviewHistoryRepository.recordApproval(updated[index], currentReviewerName())
-        Log.d("Repository", "Punto '$id' aprobado por moderacion.")
-        return Result.success(Unit)
+        val result = update(updated)
+        if (result.isSuccess) {
+            reviewHistoryRepository.recordApproval(updated, currentReviewerName())
+            Log.d(TAG, "Punto '$id' aprobado por moderacion.")
+        }
+        return result
     }
 
     override fun rejectPoint(id: String, reason: String): Result<Unit> {
-        val index = _touristPoints.value.indexOfFirst { it.id == id }
-        if (index == -1) {
-            return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
-        }
-        if (reason.isBlank()) {
-            return Result.failure(IllegalArgumentException("El motivo de rechazo es obligatorio"))
-        }
+        val current = findById(id) ?: return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
+        if (reason.isBlank()) return Result.failure(IllegalArgumentException("El motivo de rechazo es obligatorio"))
 
-        val updated = _touristPoints.value.toMutableList()
-        val current = updated[index]
-        updated[index] = current.copy(
+        val updated = current.copy(
             isVerified = false,
             isRejected = true,
             rejectionReason = reason.trim()
         )
-        _touristPoints.value = updated
-        reviewHistoryRepository.recordRejection(updated[index], currentReviewerName(), reason)
-        Log.d("Repository", "Punto '$id' rechazado por moderacion.")
-        return Result.success(Unit)
+        val result = update(updated)
+        if (result.isSuccess) {
+            reviewHistoryRepository.recordRejection(updated, currentReviewerName(), reason)
+            Log.d(TAG, "Punto '$id' rechazado por moderacion.")
+        }
+        return result
     }
 
     private fun currentReviewerName(): String {
         return userRepository.currentUser.value?.name?.takeIf { it.isNotBlank() } ?: "Moderador"
+    }
+
+    private suspend fun seedInitialData() {
+        Log.d(TAG, "Collection empty. Seeding initial tourist points...")
+        val seedPoints = TouristPoint.SAMPLE_LIST
+        val batch = firestore.batch()
+        seedPoints.forEach { point ->
+            val idToUse = if (point.id.toLongOrNull() != null) "point_${point.id}" else point.id
+            val ref = firestore.collection(COLLECTION).document(idToUse)
+            val updatedPoint = point.copy(id = idToUse)
+            batch.set(ref, TouristPointDto.fromDomain(updatedPoint))
+        }
+        runCatching { batch.commit().await() }
+            .onSuccess { Log.d(TAG, "Seed completed: ${seedPoints.size} points created.") }
+            .onFailure { Log.e(TAG, "Error seeding points: ${it.message}", it) }
     }
 }
