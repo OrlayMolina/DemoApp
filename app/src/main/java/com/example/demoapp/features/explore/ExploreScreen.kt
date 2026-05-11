@@ -624,8 +624,8 @@ fun TouristPointCard(
                             Text("${point.importantVotes}", fontSize = 11.sp, color = TextGray)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Icon(Icons.Outlined.PhotoLibrary, stringResource(R.string.create_photos_label), tint = TextGray, modifier = Modifier.size(16.dp))
-                            Text("${point.photoUrls.size}", fontSize = 11.sp, color = TextGray)
+                            Icon(Icons.Outlined.ModeComment, stringResource(R.string.profile_publication_comments, point.commentCount), tint = TextGray, modifier = Modifier.size(16.dp))
+                            Text("${point.commentCount}", fontSize = 11.sp, color = TextGray)
                         }
                         Icon(Icons.Outlined.Share, stringResource(R.string.common_share), tint = TextGray, modifier = Modifier.size(16.dp))
                         Box {

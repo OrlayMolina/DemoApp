@@ -1,26 +1,60 @@
 package com.example.demoapp.data.repository
 
+import android.util.Log
+import com.example.demoapp.data.model.AchievementUnlockDto
 import com.example.demoapp.domain.model.Achievement
 import com.example.demoapp.domain.model.AchievementType
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.repository.AchievementRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val TAG = "AchievementRepoImpl"
+private const val COLLECTION = "achievements"
+
 @Singleton
 class AchievementRepositoryImpl @Inject constructor(
+    private val firestore: FirebaseFirestore,
     private val touristPointRepository: TouristPointRepository
 ) : AchievementRepository {
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val unlockDates = MutableStateFlow<Map<String, Long>>(emptyMap())
+
+    init {
+        observeAchievements()
+    }
+
+    private fun observeAchievements() {
+        firestore.collection(COLLECTION)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e(TAG, "Error listening to achievements: ${error.message}", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val map = snapshot.documents.mapNotNull { doc ->
+                        runCatching {
+                            doc.toObject(AchievementUnlockDto::class.java)
+                        }.getOrNull()
+                    }.associate { "${it.userId}__${it.achievementId}" to it.unlockedAt }
+                    unlockDates.value = map
+                }
+            }
+    }
 
     override fun observeAchievements(userId: String): Flow<List<Achievement>> {
         return combine(
@@ -35,16 +69,29 @@ class AchievementRepositoryImpl @Inject constructor(
                 val key = unlockKey(userId, type)
 
                 if (isUnlocked && dates[key] == null) {
-                    unlockDates.value = unlockDates.value + (key to System.currentTimeMillis())
+                    val now = System.currentTimeMillis()
+                    unlockDates.value = unlockDates.value + (key to now)
+                    scope.launch {
+                        runCatching {
+                            val dto = AchievementUnlockDto(
+                                id = key,
+                                userId = userId,
+                                achievementId = type.id,
+                                unlockedAt = now
+                            )
+                            firestore.collection(COLLECTION).document(key).set(dto).await()
+                        }.onFailure { Log.e(TAG, "Error saving achievement: ${it.message}", it) }
+                    }
                 }
 
+                val currentDates = unlockDates.value
                 Achievement(
                     id = type.id,
-                    title = "",
+                    title = "", // Replaced by UI resources
                     description = "",
                     icon = type.icon,
                     isUnlocked = isUnlocked,
-                    unlockedDate = if (isUnlocked) formatDate(unlockDates.value[key]) else null,
+                    unlockedDate = if (isUnlocked) formatDate(currentDates[key]) else null,
                     progress = progress,
                     goal = type.goal
                 )

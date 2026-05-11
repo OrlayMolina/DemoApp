@@ -332,7 +332,7 @@ fun ProfileScreen(
              // ── Lista de publicaciones ─────────────────────────────────────
              val sourceList = if (myPointsFromRepo.isNotEmpty()) myPointsFromRepo else myPublications
              val verifiedList = sourceList.filter { it.isVerified }
-             val list = if (selectedTab == 0) verifiedList else emptyList()
+             val list = if (selectedTab == 0) verifiedList.filter { !it.isSaved } else verifiedList.filter { it.isSaved }
 
              if (list.isEmpty()) {
                 item {

@@ -25,7 +25,7 @@ class FeedViewModel @Inject constructor(
 ) : ViewModel() {
 
     val feed: StateFlow<List<TouristPoint>> = touristPointRepository.touristPoints
-        .map { points -> points.filter { it.isVerified && !it.isRejected } }
+        .map { points -> points.filter { it.isVerified && !it.isRejected && !it.isSaved } }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
