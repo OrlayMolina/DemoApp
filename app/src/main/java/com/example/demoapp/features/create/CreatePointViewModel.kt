@@ -277,7 +277,7 @@ class CreatePointViewModel @Inject constructor(
                 return false
             }
             TouristPoint(
-                id = System.currentTimeMillis().toString(),
+                id = "", // ID vacío para que el repo genere uno nuevo en Firestore
                 authorId = authorId,
                 title = title.value,
                 category = selectedCategory!!,

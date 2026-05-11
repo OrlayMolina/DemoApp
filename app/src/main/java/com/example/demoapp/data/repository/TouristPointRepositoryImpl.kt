@@ -119,16 +119,23 @@ class TouristPointRepositoryImpl @Inject constructor(
 
     override suspend fun save(point: TouristPoint): Result<Unit> {
         return runCatching {
-            val data = TouristPointDto.fromDomain(point)
-            if (point.id.isBlank() || point.id.toLongOrNull() != null) {
+            // Aseguramos que el createdAt sea el actual al momento de guardar
+            val pointWithDate = point.copy(createdAt = System.currentTimeMillis())
+            val data = TouristPointDto.fromDomain(pointWithDate)
+            
+            if (point.id.isBlank() || point.id.toLongOrNull() != null || point.id.length < 5) {
+                // Dejamos que Firestore genere el ID automáticamente si el ID es blanco, 
+                // puramente numérico (como los antiguos) o muy corto.
                 val docRef = firestore.collection(COLLECTION).document()
-                firestore.collection(COLLECTION).document(docRef.id).set(data.copy(id = docRef.id)).await()
+                val finalData = data.copy(id = docRef.id)
+                firestore.collection(COLLECTION).document(docRef.id).set(finalData).await()
+                Log.d(TAG, "Point '${point.title}' saved to Firebase with generated ID: ${docRef.id}")
             } else {
                 firestore.collection(COLLECTION).document(point.id).set(data).await()
+                Log.d(TAG, "Point '${point.title}' updated in Firebase with existing ID: ${point.id}")
             }
-            Log.d(TAG, "Point '${point.title}' saved to Firebase.")
             Unit
-        }.onFailure { Log.e(TAG, "Error saving point: ${it.message}", it) }
+        }.onFailure { Log.e(TAG, "Error saving point to Firebase: ${it.message}", it) }
     }
 
     override fun findById(id: String): TouristPoint? {

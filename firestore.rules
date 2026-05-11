@@ -1,14 +1,25 @@
-// REGLAS DE DESARROLLO - Permitir lectura y escritura autenticada o temporal
-// ⚠️ IMPORTANTE: Cambiar estas reglas antes de ir a producción
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Colección de usuarios: acceso abierto temporalmente para desarrollo
-    match /users/{userId} {
+    // Regla general para todas las colecciones durante desarrollo
+    // ya que la app usa un sistema de login propio y no Firebase Auth directamente.
+    match /{collectionName}/{docId} {
       allow read, write: if true;
     }
 
+    // O si prefieres ser específico:
+    /*
+    match /users/{userId} { allow read, write: if true; }
+    match /tourist_points/{pointId} { allow read, write: if true; }
+    match /follows/{followId} { allow read, write: if true; }
+    match /likes/{likeId} { allow read, write: if true; }
+    match /comments/{commentId} { allow read, write: if true; }
+    match /notifications/{notifId} { allow read, write: if true; }
+    match /reviews/{reviewId} { allow read, write: if true; }
+    match /reports/{reportId} { allow read, write: if true; }
+    match /achievements/{achievId} { allow read, write: if true; }
+    */
   }
 }
