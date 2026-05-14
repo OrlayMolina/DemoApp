@@ -3,17 +3,35 @@ package com.example.demoapp.features.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ModeComment
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,17 +43,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPoint
-import coil3.compose.AsyncImage
 
-
-private val GreenPrimary   = Color(0xFF2E7D5E)
-private val BackgroundGray = Color(0xFFF0F4F2)
-private val CardWhite      = Color(0xFFFFFFFF)
-private val TextGray       = Color(0xFF6B6B6B)
-private val DividerColor   = Color(0xFFE0E0E0)
+private val GreenPrimary = Color(0xFF2E7D5E)
+private val CardWhite = Color(0xFFFFFFFF)
+private val TextGray = Color(0xFF6B6B6B)
+private val DividerColor = Color(0xFFE0E0E0)
 
 private fun safeInitials(value: String): String {
     val initials = value
@@ -48,219 +63,198 @@ private fun safeInitials(value: String): String {
     return initials.ifBlank { "?" }
 }
 
-data class ProfileUser(
-    val name        : String,
-    val joinDate    : String,
-    val bio         : String,
-    val memberSince : String,
-    val publications: Int,
-    val followers   : Int,
-    val following   : Int
-)
-
-// ─── Pantalla ─────────────────────────────────────────────────────────────────
-
 @Composable
 fun ProfileScreen(
-    myPublications: List<TouristPoint> = emptyList(),
-    onEditPublication: ((TouristPoint) -> Unit)? = null,
-    onOpenPublication: ((TouristPoint) -> Unit)? = null,
     onNavigateToSettings: (() -> Unit)? = null,
-    onNavigateToAchievements : (() -> Unit)? = null,
-    onNavigateToStatistics   : (() -> Unit)? = null,
+    onNavigateToAchievements: (() -> Unit)? = null,
+    onNavigateToStatistics: (() -> Unit)? = null,
+    onOpenPublication: ((TouristPoint) -> Unit)? = null,
+    onEditPublication: ((TouristPoint) -> Unit)? = null,
     onLogout: (() -> Unit)? = null,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
-    val currentUser by viewModel.user.collectAsStateWithLifecycle()
-    val myPointsFromRepo by viewModel.myPublications.collectAsStateWithLifecycle()
-    val followers by viewModel.followers.collectAsStateWithLifecycle(0)
-    val following by viewModel.following.collectAsStateWithLifecycle(0)
-    val colorScheme = MaterialTheme.colorScheme
-    val defaultUserName = stringResource(R.string.profile_default_user_name)
-    val joinDateText = stringResource(R.string.profile_join_status_active)
-    val defaultBio = stringResource(R.string.profile_default_bio)
-    val memberSinceText = stringResource(R.string.profile_member_since)
+    val user by viewModel.user.collectAsState()
+    val myPublications by viewModel.myPublications.collectAsState()
+    val followers by viewModel.followers.collectAsState()
+    val following by viewModel.following.collectAsState()
 
-    val profileUser = ProfileUser(
-        name = currentUser?.name ?: defaultUserName,
-        joinDate = joinDateText,
-        bio = currentUser?.bio?.ifBlank { defaultBio } ?: defaultBio,
-        memberSince = memberSinceText,
-        publications = myPointsFromRepo.filter { it.isVerified }.size,
-        followers = followers,
-        following = following
-    )
+    val profileName = user?.name ?: stringResource(R.string.profile_default_user_name)
+    val profileBio = user?.bio?.ifBlank { stringResource(R.string.profile_default_bio) }
+        ?: stringResource(R.string.profile_default_bio)
+    val publicCount = myPublications.filter { it.isVerified }.size
+    val savedCount = user?.savedPublications?.size ?: 0
 
     Scaffold(
-        containerColor = colorScheme.background
-    ) { padding ->
-
-        LazyColumn(
-            modifier            = Modifier
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding      = PaddingValues(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp)
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-            // ── Top bar ────────────────────────────────────────────────────
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment     = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text       = stringResource(R.string.profile_title),
-                        fontSize   = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color      = colorScheme.onBackground
-                    )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.profile_title),
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Row {
                     IconButton(onClick = { onNavigateToSettings?.invoke() }) {
                         Icon(
-                            imageVector        = Icons.Outlined.Settings,
+                            imageVector = Icons.Outlined.Settings,
                             contentDescription = stringResource(R.string.profile_settings_desc),
-                            tint               = colorScheme.onBackground
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    IconButton(onClick = { onLogout?.invoke() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = stringResource(R.string.common_back),
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
             }
 
-            // ── Info usuario ───────────────────────────────────────────────
-            item {
-                Card(
-                    modifier  = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    shape     = RoundedCornerShape(20.dp),
-                    colors    = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(2.dp)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-
-                        // Avatar + nombre
-                        Row(
-                            verticalAlignment   = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            if (!currentUser?.profilePictureUrl.isNullOrBlank()) {
-                                AsyncImage(
-                                    model              = currentUser?.profilePictureUrl,
-                                    contentDescription = stringResource(R.string.profile_photo_desc),
-                                    contentScale       = ContentScale.Crop,
-                                    modifier           = Modifier
-                                        .size(64.dp)
-                                        .clip(CircleShape)
-                                        .border(2.dp, GreenPrimary, CircleShape)
-                                )
-                            } else {
-                                Box(
-                                    modifier         = Modifier
-                                        .size(64.dp)
-                                        .clip(CircleShape)
-                                        .background(GreenPrimary)
-                                        .border(2.dp, GreenPrimary, CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text       = safeInitials(profileUser.name),
-                                        color      = Color.White,
-                                        fontSize   = 22.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                    verticalAlignment     = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text       = profileUser.name,
-                                        fontSize   = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color      = Color(0xFF1A1A1A)
-                                    )
-                                    Text(
-                                        text     = profileUser.joinDate,
-                                        fontSize = 11.sp,
-                                        color    = TextGray
-                                    )
-                                }
+                        if (!user?.profilePictureUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = user?.profilePictureUrl,
+                                contentDescription = stringResource(R.string.profile_photo_desc),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, GreenPrimary, CircleShape)
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .background(GreenPrimary)
+                                    .border(2.dp, GreenPrimary, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Text(
-                                    text     = profileUser.bio,
-                                    fontSize = 13.sp,
-                                    color    = TextGray,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    text     = profileUser.memberSince,
-                                    fontSize = 12.sp,
-                                    color    = GreenPrimary,
-                                    fontWeight = FontWeight.Medium
+                                    text = safeInitials(profileName),
+                                    color = Color.White,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
                         }
 
-                        HorizontalDivider(color = DividerColor)
-
-                        // Estadísticas
-                        Row(
-                            modifier              = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            StatItem(value = profileUser.publications.toString(), label = stringResource(R.string.profile_stat_publications))
-                            VerticalDivider(
-                                modifier = Modifier.height(36.dp),
-                                color    = DividerColor
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = profileName,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                            StatItem(value = profileUser.followers.toString(), label = stringResource(R.string.profile_stat_followers))
-                            VerticalDivider(
-                                modifier = Modifier.height(36.dp),
-                                color    = DividerColor
+                            Text(
+                                text = profileBio,
+                                fontSize = 13.sp,
+                                color = TextGray,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
-                            StatItem(value = profileUser.following.toString(), label = stringResource(R.string.profile_stat_following))
+                            Text(
+                                text = listOfNotNull(user?.city, user?.address).joinToString(" · "),
+                                fontSize = 12.sp,
+                                color = GreenPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
+                    }
 
-                        HorizontalDivider(color = DividerColor)
+                    HorizontalDivider(color = DividerColor)
 
-                        // Botones
-                        Row(
-                            modifier              = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem(
+                            value = publicCount.toString(),
+                            label = stringResource(R.string.profile_stat_publications)
+                        )
+                        StatItem(
+                            value = followers.toString(),
+                            label = stringResource(R.string.profile_stat_followers)
+                        )
+                        StatItem(
+                            value = following.toString(),
+                            label = stringResource(R.string.profile_stat_following)
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = { onNavigateToStatistics?.invoke() },
+                            modifier = Modifier.weight(1f)
                         ) {
-                            OutlinedButton(
-                                onClick  = { onNavigateToStatistics?.invoke() },
-                                modifier = Modifier.weight(1f),
-                                shape    = RoundedCornerShape(10.dp),
-                                border   = ButtonDefaults.outlinedButtonBorder.copy(
-                                    // usa el color del borde
-                                ),
-                                colors   = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFF1A1A1A)
-                                )
-                            ) { Text(stringResource(R.string.profile_button_statistics), fontSize = 13.sp) }
-
-                            OutlinedButton(
-                                onClick  = { onNavigateToAchievements?.invoke() },
-                                modifier = Modifier.weight(1f),
-                                shape    = RoundedCornerShape(10.dp),
-                                colors   = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFF1A1A1A)
-                                )
-                            ) { Text(stringResource(R.string.profile_button_achievements), fontSize = 13.sp) }
+                            Text(text = stringResource(R.string.profile_button_statistics), fontSize = 13.sp)
+                        }
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = { onNavigateToAchievements?.invoke() },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(text = stringResource(R.string.profile_button_achievements), fontSize = 13.sp)
                         }
                     }
                 }
             }
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(CardWhite)
+            ) {
+                TextButton(onClick = { }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.profile_tab_my_publications))
+                }
+                TextButton(onClick = { }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.profile_tab_saved))
+                }
+            }
+
+            if (myPublications.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.profile_empty_publications),
+                        color = TextGray,
+                        fontSize = 14.sp
+                    )
             // ── Tabs ───────────────────────────────────────────────────────
             item {
                 Spacer(Modifier.height(16.dp))
@@ -351,143 +345,144 @@ fun ProfileScreen(
                     }
                 }
             } else {
-                items(list) { point ->
-                    PublicationItem(
-                        point    = point,
-                        onOpen   = { onOpenPublication?.invoke(point) },
-                        onEdit   = { onEditPublication?.invoke(point) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    myPublications.filter { it.isVerified }.forEach { point ->
+                        PublicationItem(
+                            point = point,
+                            onOpen = { onOpenPublication?.invoke(point) },
+                            onEdit = { onEditPublication?.invoke(point) }
+                        )
+                    }
                 }
+            }
+
+            if (savedCount > 0) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.profile_tab_saved) + ": $savedCount",
+                    color = TextGray,
+                    fontSize = 12.sp
+                )
             }
         }
     }
 }
 
-// ─── Composables auxiliares ───────────────────────────────────────────────────
-
 @Composable
 private fun StatItem(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text       = value,
-            fontSize   = 18.sp,
+            text = value,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color      = Color(0xFF1A1A1A)
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            text     = label,
+            text = label,
             fontSize = 11.sp,
-            color    = TextGray
+            color = TextGray
         )
     }
 }
 
 @Composable
 private fun PublicationItem(
-    point    : TouristPoint,
-    onOpen   : () -> Unit,
-    onEdit   : () -> Unit,
-    modifier : Modifier = Modifier
+    point: TouristPoint,
+    onOpen: () -> Unit,
+    onEdit: () -> Unit
 ) {
     Card(
-        modifier  = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .clickable { onOpen() },
-        shape     = RoundedCornerShape(14.dp),
-        colors    = CardDefaults.cardColors(containerColor = CardWhite),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = CardWhite),
         elevation = CardDefaults.cardElevation(1.dp)
     ) {
         Row(
-            modifier            = Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment   = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Imagen
             AsyncImage(
-                model              = point.photoUrls.firstOrNull(),
+                model = point.photoUrls.firstOrNull(),
                 contentDescription = point.title,
-                contentScale       = ContentScale.Crop,
-                modifier           = Modifier
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
                     .size(72.dp)
                     .clip(RoundedCornerShape(10.dp))
             )
 
-            // Contenido
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Row(
-                    modifier              = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment     = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text       = point.title,
-                        fontSize   = 14.sp,
+                        text = point.title,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color      = Color(0xFF1A1A1A),
-                        maxLines   = 1,
-                        overflow   = TextOverflow.Ellipsis,
-                        modifier   = Modifier.weight(1f)
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
-                    TextButton(
-                        onClick      = onEdit,
-                        contentPadding = PaddingValues(horizontal = 4.dp),
-                    ) {
+                    TextButton(onClick = onEdit) {
                         Text(
-                            text     = stringResource(R.string.common_edit),
+                            text = stringResource(R.string.common_edit),
                             fontSize = 12.sp,
-                            color    = GreenPrimary,
+                            color = GreenPrimary,
                             fontWeight = FontWeight.Medium
                         )
                     }
                 }
 
                 Text(
-                    text     = point.description,
+                    text = point.description,
                     fontSize = 12.sp,
-                    color    = TextGray,
+                    color = TextGray,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // Likes y comentarios
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment     = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(3.dp),
-                        verticalAlignment     = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector        = Icons.Default.Favorite,
+                            imageVector = Icons.Filled.Favorite,
                             contentDescription = null,
-                            tint               = GreenPrimary.copy(alpha = 0.7f),
-                            modifier           = Modifier.size(12.dp)
+                            tint = GreenPrimary.copy(alpha = 0.7f),
+                            modifier = Modifier.size(12.dp)
                         )
                         Text(
-                            stringResource(R.string.profile_publication_likes, point.importantVotes),
+                            text = stringResource(R.string.profile_publication_likes, point.importantVotes),
                             fontSize = 11.sp,
                             color = TextGray
                         )
                     }
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(3.dp),
-                        verticalAlignment     = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector        = Icons.Default.ModeComment,
+                            imageVector = Icons.Filled.ModeComment,
                             contentDescription = null,
-                            tint               = TextGray,
-                            modifier           = Modifier.size(12.dp)
+                            tint = TextGray,
+                            modifier = Modifier.size(12.dp)
                         )
                         Text(
-                            stringResource(R.string.profile_publication_comments, point.commentCount),
+                            text = stringResource(R.string.profile_publication_comments, point.commentCount),
                             fontSize = 11.sp,
                             color = TextGray
                         )
@@ -497,3 +492,4 @@ private fun PublicationItem(
         }
     }
 }
+

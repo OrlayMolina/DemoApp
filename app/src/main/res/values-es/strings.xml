@@ -105,6 +105,21 @@
     <string name="profile_publication_likes">%1$d likes</string>
     <string name="profile_publication_comments">%1$d comentarios</string>
 
+    <!-- Profile Screen actions -->
+    <string name="txt_name">Nombre</string>
+    <string name="txt_bio">Biografía</string>
+    <string name="txt_city">Ciudad</string>
+    <string name="txt_address">Dirección</string>
+    <string name="txt_phone">Teléfono</string>
+    <string name="txt_edit">Editar</string>
+    <string name="txt_save">Guardar</string>
+    <string name="txt_cancel">Cancelar</string>
+    <string name="txt_back">Volver</string>
+    <string name="profile_edit_photo">Editar foto</string>
+    <string name="profile_take_photo">Tomar foto</string>
+    <string name="profile_choose_from_gallery">Elegir de la galería</string>
+    <string name="permission_camera_denied">Permiso de cámara denegado</string>
+
     <!-- Notifications -->
     <string name="notifications_title">Notificaciones</string>
     <string name="notifications_delete_all_title">Eliminar notificaciones</string>

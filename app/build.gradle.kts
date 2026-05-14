@@ -87,6 +87,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.ui)
+    implementation(libs.androidx.foundation)
     testImplementation(libs.junit)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
