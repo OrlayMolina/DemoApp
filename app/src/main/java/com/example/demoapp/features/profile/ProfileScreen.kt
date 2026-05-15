@@ -32,6 +32,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,12 +78,17 @@ fun ProfileScreen(
 ) {
     val user by viewModel.user.collectAsState()
     val myPublications by viewModel.myPublications.collectAsState()
-    val followers by viewModel.followers.collectAsState()
-    val following by viewModel.following.collectAsState()
+
+    // Si el ViewModel no expone followers/following, usamos valores por defecto (0)
+    // Puedes conectar esto luego con las propiedades reales del ViewModel/Modelo.
+    val followers = 0
+    val following = 0
+
+    // Estado local para las tabs (0 = Mis publicaciones, 1 = Guardados)
+    var selectedTab by remember { mutableStateOf(0) }
 
     val profileName = user?.name ?: stringResource(R.string.profile_default_user_name)
-    val profileBio = user?.bio?.ifBlank { stringResource(R.string.profile_default_bio) }
-        ?: stringResource(R.string.profile_default_bio)
+    val profileBio = user?.bio?.takeIf { !it.isNullOrBlank() } ?: stringResource(R.string.profile_default_bio)
     val publicCount = myPublications.filter { it.isVerified }.size
     val savedCount = user?.savedPublications?.size ?: 0
 
@@ -229,21 +237,61 @@ fun ProfileScreen(
                 }
             }
 
+            // ── Tabs simples ─────────────────────────────────────────────────
+            Spacer(Modifier.height(16.dp))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .background(CardWhite)
+                    .padding(4.dp),
             ) {
-                TextButton(onClick = { }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.profile_tab_my_publications))
-                }
-                TextButton(onClick = { }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.profile_tab_saved))
+                listOf(
+                    stringResource(R.string.profile_tab_my_publications),
+                    stringResource(R.string.profile_tab_saved)
+                ).forEachIndexed { index, title ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { selectedTab = index }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = title,
+                            fontSize = 13.sp,
+                            fontWeight = if (selectedTab == index) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (selectedTab == index) GreenPrimary else TextGray
+                        )
+                    }
                 }
             }
 
-            if (myPublications.isEmpty()) {
+            // Indicador tab activo
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(3.dp)
+                        .clip(RoundedCornerShape(bottomStart = 3.dp, bottomEnd = 3.dp))
+                        .background(if (selectedTab == 0) GreenPrimary else Color.Transparent)
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(3.dp)
+                        .clip(RoundedCornerShape(bottomStart = 3.dp, bottomEnd = 3.dp))
+                        .background(if (selectedTab == 1) GreenPrimary else Color.Transparent)
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // ── Lista de publicaciones ─────────────────────────────────────
+            val verifiedList = myPublications.filter { it.isVerified }
+            val displayedList = if (selectedTab == 0) verifiedList.filter { !it.isSaved } else verifiedList.filter { it.isSaved }
+
+            if (displayedList.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -251,102 +299,14 @@ fun ProfileScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = stringResource(R.string.profile_empty_publications),
+                        text = if (selectedTab == 0) stringResource(R.string.profile_empty_publications) else stringResource(R.string.profile_empty_saved),
                         color = TextGray,
                         fontSize = 14.sp
                     )
-            // ── Tabs ───────────────────────────────────────────────────────
-            item {
-                Spacer(Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(CardWhite),
-                ) {
-                    listOf(
-                        stringResource(R.string.profile_tab_my_publications),
-                        stringResource(R.string.profile_tab_saved)
-                    ).forEachIndexed { index, title ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { selectedTab = index }
-                                .padding(vertical = 12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text       = title,
-                                fontSize   = 13.sp,
-                                fontWeight = if (selectedTab == index) FontWeight.SemiBold
-                                else FontWeight.Normal,
-                                color      = if (selectedTab == index) GreenPrimary else TextGray
-                            )
-                        }
-                        if (index == 0) {
-                            Box(
-                                modifier = Modifier
-                                    .width(1.dp)
-                                    .height(40.dp)
-                                    .align(Alignment.CenterVertically)
-                                    .background(DividerColor)
-                            )
-                        }
-                    }
-                }
-                // Indicador tab activo
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(bottomStart = 3.dp, bottomEnd = 3.dp))
-                            .background(
-                                if (selectedTab == 0) GreenPrimary else Color.Transparent
-                            )
-                    )
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(bottomStart = 3.dp, bottomEnd = 3.dp))
-                            .background(
-                                if (selectedTab == 1) GreenPrimary else Color.Transparent
-                            )
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-            }
-
-             // ── Lista de publicaciones ─────────────────────────────────────
-             val sourceList = if (myPointsFromRepo.isNotEmpty()) myPointsFromRepo else myPublications
-             val verifiedList = sourceList.filter { it.isVerified }
-             val list = if (selectedTab == 0) verifiedList.filter { !it.isSaved } else verifiedList.filter { it.isSaved }
-
-             if (list.isEmpty()) {
-                item {
-                    Box(
-                        modifier         = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text     = if (selectedTab == 0) stringResource(R.string.profile_empty_publications)
-                            else stringResource(R.string.profile_empty_saved),
-                            color    = TextGray,
-                            fontSize = 14.sp
-                        )
-                    }
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    myPublications.filter { it.isVerified }.forEach { point ->
+                    displayedList.forEach { point ->
                         PublicationItem(
                             point = point,
                             onOpen = { onOpenPublication?.invoke(point) },
