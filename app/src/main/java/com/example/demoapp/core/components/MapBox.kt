@@ -40,10 +40,11 @@ import kotlin.math.roundToInt
 
 class LocationPermissionState(
     hasPermission: Boolean = false,
-    val requestPermission: () -> Unit = {}
+    requestPermission: () -> Unit = {}
 ) {
     var hasPermission by mutableStateOf(hasPermission)
         internal set
+    var requestPermission by mutableStateOf(requestPermission)
     var wasJustGranted by mutableStateOf(false)
         internal set
 }
@@ -67,12 +68,8 @@ fun rememberLocationPermissionState(
         state.hasPermission  = granted
     }
 
-    return remember(state, launcher) {
-        LocationPermissionState(
-            hasPermission     = state.hasPermission,
-            requestPermission = { launcher.launch(permission) }
-        ).also { it.wasJustGranted = state.wasJustGranted }
-    }
+    state.requestPermission = { launcher.launch(permission) }
+    return state
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -84,9 +81,10 @@ fun MapBox(
     showMyLocationButton : Boolean            = true,
     activateClick        : Boolean            = false,
     clickedPoint         : Point?             = null,
-    onMapClickListener   : (Point) -> Unit    = {}
+    onMapClickListener   : (Point) -> Unit    = {},
+    locationPermissionState: LocationPermissionState? = null
 ) {
-    val permissionState  = rememberLocationPermissionState()
+    val permissionState  = locationPermissionState ?: rememberLocationPermissionState()
     var shouldFollowUser by remember { mutableStateOf(false) }
     var internalClicked  by remember { mutableStateOf<Point?>(null) }
 
