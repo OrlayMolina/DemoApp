@@ -44,10 +44,19 @@
     <string name="register_have_account">Already have an account? </string>
     <string name="register_login_action">Sign in</string>
     <string name="error_name_required">Name is required</string>
+    <string name="error_name_length">Name must be 30 characters or less</string>
+    <string name="error_city_required">City is required</string>
+    <string name="error_address_required">Address is required</string>
+    <string name="error_phone_required">Phone number is required</string>
+    <string name="error_phone_invalid">Phone number must have 10 digits</string>
     <string name="error_confirm_password_required">Please confirm your password</string>
     <string name="error_passwords_do_not_match">Passwords do not match</string>
     <string name="error_email_already_registered">This email is already registered</string>
     <string name="register_success_welcome">Registration successful. Welcome %1$s</string>
+    <string name="profile_updated_successfully">Profile updated successfully</string>
+    <string name="profile_update_invalid_form">Please complete the required fields</string>
+    <string name="profile_update_no_user">No current user found</string>
+    <string name="profile_update_failed">Could not save profile changes</string>
 
     <!-- Recovery Screen + ViewModel -->
     <string name="recovery_title">Recover password</string>

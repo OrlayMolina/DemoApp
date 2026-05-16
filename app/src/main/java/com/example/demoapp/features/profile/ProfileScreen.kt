@@ -45,7 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPoint
@@ -78,17 +78,14 @@ fun ProfileScreen(
 ) {
     val user by viewModel.user.collectAsState()
     val myPublications by viewModel.myPublications.collectAsState()
-
-    // Si el ViewModel no expone followers/following, usamos valores por defecto (0)
-    // Puedes conectar esto luego con las propiedades reales del ViewModel/Modelo.
-    val followers = 0
-    val following = 0
+    val followers by viewModel.followers.collectAsState()
+    val following by viewModel.following.collectAsState()
 
     // Estado local para las tabs (0 = Mis publicaciones, 1 = Guardados)
     var selectedTab by remember { mutableStateOf(0) }
 
     val profileName = user?.name ?: stringResource(R.string.profile_default_user_name)
-    val profileBio = user?.bio?.takeIf { !it.isNullOrBlank() } ?: stringResource(R.string.profile_default_bio)
+    val profileBio = user?.bio?.takeIf { it.isNotBlank() } ?: stringResource(R.string.profile_default_bio)
     val publicCount = myPublications.filter { it.isVerified }.size
     val savedCount = user?.savedPublications?.size ?: 0
 
@@ -344,6 +341,7 @@ private fun StatItem(value: String, label: String) {
         )
     }
 }
+
 
 @Composable
 private fun PublicationItem(
