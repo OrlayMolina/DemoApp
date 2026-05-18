@@ -11,6 +11,9 @@ import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import androidx.lifecycle.viewModelScope
 import javax.inject.Inject
 
 @HiltViewModel
@@ -59,11 +62,13 @@ class LoginViewModel @Inject constructor(
     fun login() {
         _loginResult.value = RequestResult.Loading
 
-        val user = repository.login(email.value.trim(), password.value.trim())
-        _loginResult.value = if (user != null){
-            RequestResult.Success(user)
-        } else {
-            RequestResult.Error(resourceProvider.getString(R.string.login_failure))
+        viewModelScope.launch(Dispatchers.IO) {
+            val user = repository.login(email.value.trim(), password.value.trim())
+            _loginResult.value = if (user != null){
+                RequestResult.Success(user)
+            } else {
+                RequestResult.Error(resourceProvider.getString(R.string.login_failure))
+            }
         }
     }
 

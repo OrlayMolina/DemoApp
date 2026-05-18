@@ -13,6 +13,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.demoapp.data.model.UserSession
 import com.example.demoapp.domain.model.UserRole
 import com.example.demoapp.features.dashboard.ModeratorScreen
@@ -86,6 +87,21 @@ private fun AuthNavigation(
         composable<MainRoutes.PasswordRecovery> {
             PasswordRecoveryScreen(
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateToLogin = {
+                    navController.navigate(MainRoutes.Login) {
+                        popUpTo(MainRoutes.Login) { inclusive = true }
+                    }
+                },
+                onNavigateToReset = { email ->
+                    navController.navigate(MainRoutes.PasswordReset(email))
+                }
+            )
+        }
+
+        composable<MainRoutes.PasswordReset> { backStackEntry ->
+            val args = backStackEntry.toRoute<MainRoutes.PasswordReset>()
+            com.example.demoapp.features.reset.PasswordResetScreen(
+                email = args.email,
                 onNavigateToLogin = {
                     navController.navigate(MainRoutes.Login) {
                         popUpTo(MainRoutes.Login) { inclusive = true }

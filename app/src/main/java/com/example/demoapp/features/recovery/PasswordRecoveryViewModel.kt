@@ -15,9 +15,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.example.demoapp.domain.repository.UserRepository
+
 @HiltViewModel
 class PasswordRecoveryViewModel @Inject constructor(
-    private val resourceProvider: ResourceProvider
+    private val resourceProvider: ResourceProvider,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     val email = ValidatedField(initialValue = "", validate = {
@@ -34,14 +37,19 @@ class PasswordRecoveryViewModel @Inject constructor(
     fun sendRecoveryEmail() {
         viewModelScope.launch {
             recoveryResult = RequestResult.Loading
-            delay(1500)
-            recoveryResult = if (email.value == "noexiste@test.com") {
-                RequestResult.Error(resourceProvider.getString(R.string.recovery_email_not_found))
-            } else {
-                RequestResult.Success(
+            val result = userRepository.sendPasswordResetEmail(email.value)
+            if (result.isSuccess) {
+                recoveryResult = RequestResult.Success(
                     resourceProvider.getString(R.string.recovery_success_code_sent, email.value)
                 )
+            } else {
+                val errorMsg = result.exceptionOrNull()?.localizedMessage ?: "Error al enviar correo"
+                recoveryResult = RequestResult.Error(errorMsg)
             }
         }
+    }
+
+    fun resetResult() {
+        recoveryResult = null
     }
 }

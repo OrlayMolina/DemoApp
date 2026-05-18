@@ -22,8 +22,14 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun PasswordResetScreen(
-    viewModel: PasswordResetViewModel = hiltViewModel()
+    email: String,
+    viewModel: PasswordResetViewModel = hiltViewModel(),
+    onNavigateToLogin: (() -> Unit)? = null,
+    onNavigateBack: (() -> Unit)? = null
 ) {
+    LaunchedEffect(email) {
+        viewModel.setEmail(email)
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -121,8 +127,13 @@ fun PasswordResetScreen(
                 is RequestResult.Error ->
                     Text(result.message, color = MaterialTheme.colorScheme.error)
 
-                is RequestResult.Success ->
+                is RequestResult.Success -> {
                     Text(result.data, color = MaterialTheme.colorScheme.primary)
+                    LaunchedEffect(Unit) {
+                        kotlinx.coroutines.delay(1500)
+                        onNavigateToLogin?.invoke()
+                    }
+                }
 
                 null -> {}
             }
@@ -142,7 +153,7 @@ fun PasswordResetScreen(
                     }
                 },
                 enabled = viewModel.isFormValid &&
-                        viewModel.resetResult !is RequestResult.Loading
+                        viewModel.resetResult !is RequestResult.Loading && viewModel.resetResult !is RequestResult.Success
             ) {
                 Text(stringResource(R.string.reset_button))
             }

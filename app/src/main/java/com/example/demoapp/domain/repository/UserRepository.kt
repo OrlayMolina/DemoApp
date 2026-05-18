@@ -16,6 +16,7 @@ interface UserRepository {
     fun restoreCurrentUser(userId: String): Boolean
     fun logout()
     suspend fun sendPasswordResetEmail(email: String): Result<Unit>
+    suspend fun updatePassword(email: String, newPassword: String): Result<Unit>
 
     // --- Queries ---
     fun findById(id: String): User?
