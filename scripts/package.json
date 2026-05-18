@@ -1,0 +1,12 @@
+{
+  "name": "demoapp-fcm-scripts",
+  "version": "1.0.0",
+  "description": "Scripts to manually send FCM notifications for DemoApp during demos",
+  "private": true,
+  "scripts": {
+    "send": "node send-fcm.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

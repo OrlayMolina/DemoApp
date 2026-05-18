@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.demoapp.core.notifications.FcmTopicManager
 import com.example.demoapp.domain.model.Comment
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.repository.CommentRepository
@@ -158,8 +159,10 @@ class TouristPointDetailViewModel @Inject constructor(
 
         if (followRepository.isFollowing(currentUserId, authorId)) {
             followRepository.unfollow(currentUserId, authorId)
+            FcmTopicManager.unsubscribeFromUserPublications(authorId)
         } else {
             followRepository.follow(currentUserId, authorId)
+            FcmTopicManager.subscribeToUserPublications(authorId)
         }
     }
 

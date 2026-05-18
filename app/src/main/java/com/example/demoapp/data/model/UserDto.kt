@@ -27,7 +27,8 @@ data class UserDto(
     val level: String = UserLevel.NOVATO.name,
     val followers: Int = 0,
     val following: Int = 0,
-    val savedPublications: List<String> = emptyList()
+    val savedPublications: List<String> = emptyList(),
+    val fcmToken: String = ""
 ) {
     /** Convierte el DTO al modelo de dominio. */
     fun toDomain(): User = User(
@@ -57,7 +58,8 @@ data class UserDto(
         level = runCatching { UserLevel.valueOf(level) }.getOrDefault(UserLevel.NOVATO),
         followers = followers,
         following = following,
-        savedPublications = savedPublications
+        savedPublications = savedPublications,
+        fcmToken = fcmToken
     )
 
     companion object {
@@ -87,7 +89,8 @@ data class UserDto(
             "level" to user.level.name,
             "followers" to user.followers,
             "following" to user.following,
-            "savedPublications" to user.savedPublications
+            "savedPublications" to user.savedPublications,
+            "fcmToken" to user.fcmToken
         )
     }
 }

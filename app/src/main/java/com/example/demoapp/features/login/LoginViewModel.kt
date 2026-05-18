@@ -3,11 +3,14 @@ package com.example.demoapp.features.login
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import com.example.demoapp.R
+import com.example.demoapp.core.notifications.FcmTopicManager
 import com.example.demoapp.core.utils.RequestResult
 import com.example.demoapp.core.utils.ResourceProvider
 import com.example.demoapp.core.utils.ValidatedField
 import com.example.demoapp.domain.model.User
+import com.example.demoapp.domain.model.UserRole
 import com.example.demoapp.domain.repository.UserRepository
+import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,9 +64,20 @@ class LoginViewModel @Inject constructor(
 
         val user = repository.login(email.value.trim(), password.value.trim())
         _loginResult.value = if (user != null){
+            registerForPushNotifications(user)
             RequestResult.Success(user)
         } else {
             RequestResult.Error(resourceProvider.getString(R.string.login_failure))
+        }
+    }
+
+    private fun registerForPushNotifications(user: User) {
+        FcmTopicManager.subscribeToUserInbox(user.id)
+        if (user.role == UserRole.ADMIN) {
+            FcmTopicManager.subscribeToModerators()
+        }
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            repository.updateFcmToken(user.id, token)
         }
     }
 

@@ -1,5 +1,6 @@
 package com.example.demoapp.data.repository
 
+import android.util.Log
 import com.example.demoapp.BuildConfig
 import com.example.demoapp.domain.model.AiEnrichment
 import com.example.demoapp.domain.model.TouristPointCategory
@@ -21,8 +22,10 @@ class AiRepositoryImpl @Inject constructor() : AiRepository {
 
     private val apiKey = BuildConfig.GEMINI_API_KEY
     private val baseUrl = "https://generativelanguage.googleapis.com/v1beta"
-    private val genModel = "gemini-1.5-flash"
-    private val embedModel = "text-embedding-004"
+    // gemini-1.5-flash y text-embedding-004 quedaron deprecados (404 en v1beta).
+    private val genModel = "gemini-2.5-flash-lite"
+    private val embedModel = "gemini-embedding-001"
+    private val tag = "AiRepository"
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -43,7 +46,7 @@ class AiRepositoryImpl @Inject constructor() : AiRepository {
             ensureApiKey()
             val prompt = buildEnrichmentPrompt(title, description, category, imageLabels)
             val rawJson = generateJson(prompt)
-            val cleanJson = rawJson.replace("```json", "").replace("```", "").trim()
+            val cleanJson = rawJson.replace("json", "").replace("", "").trim()
             val parsed = json.decodeFromString(EnrichmentJson.serializer(), cleanJson)
 
             val embedSource = listOf(
@@ -86,18 +89,27 @@ class AiRepositoryImpl @Inject constructor() : AiRepository {
     ): String {
         val labelsJoined = if (imageLabels.isEmpty()) "(sin etiquetas de imagen)"
         else imageLabels.joinToString(", ")
+        val categoryHuman = when (category) {
+            TouristPointCategory.NATURE        -> "Naturaleza (paisajes, montanas, rios, parques)"
+            TouristPointCategory.GASTRONOMY    -> "Gastronomia (comida tipica, restaurantes, sabores)"
+            TouristPointCategory.CULTURE       -> "Cultura (historia, museos, tradiciones)"
+            TouristPointCategory.ENTERTAINMENT -> "Arte urbano y entretenimiento"
+            else                               -> "Otro"
+        }
         return """
-            Eres un asistente para una app de turismo. Devuelve SOLO JSON valido (sin markdown ni texto extra) con esta forma exacta:
+            Eres un copywriter de una app de turismo. Devuelve SOLO JSON valido (sin markdown ni texto extra) con esta forma exacta:
             {"tags":["..."],"improvedDescription":"..."}
 
             Reglas:
             - 3 a 5 tags cortos en espanol (1 a 2 palabras, minusculas, sin emojis)
-            - improvedDescription: maximo 200 caracteres, en espanol, mejora la del usuario sin inventar datos
-            - si la descripcion del usuario esta vacia, redacta una breve a partir de las etiquetas de imagen y la categoria
+            - improvedDescription: maximo 200 caracteres, en espanol, en tono INVITANTE que motive a visitar el lugar.
+            - Usa adjetivos atractivos segun lo que muestre la imagen: "hermoso paisaje", "rica comida tipica", "vista impresionante", "ambiente acogedor", etc.
+            - Apoyate en las etiquetas de la imagen y la categoria para describir el lugar; no inventes nombres de personas ni datos especificos.
+            - Si la descripcion del usuario esta vacia, redactala desde cero a partir de las etiquetas de imagen y la categoria.
 
             Datos del lugar:
             - titulo: $title
-            - categoria: ${category.name}
+            - categoria: $categoryHuman
             - descripcion del usuario: ${description.ifBlank { "(vacia)" }}
             - etiquetas detectadas en la imagen (ML Kit): $labelsJoined
         """.trimIndent()
@@ -113,13 +125,22 @@ class AiRepositoryImpl @Inject constructor() : AiRepository {
         )
         val body = json.encodeToString(GenerateRequest.serializer(), req).toRequestBody(mediaType)
         val url = "$baseUrl/models/$genModel:generateContent?key=$apiKey"
+        Log.d(tag, "generateContent -> $genModel")
         client.newCall(Request.Builder().url(url).post(body).build()).execute().use { resp ->
             val raw = resp.body?.string().orEmpty()
-            if (!resp.isSuccessful) error("Gemini generate ${resp.code}: $raw")
+            if (!resp.isSuccessful) {
+                Log.e(tag, "generateContent ${resp.code}: $raw")
+                error("Gemini generate ${resp.code}: $raw")
+            }
             val parsed = json.decodeFromString(GenerateResponse.serializer(), raw)
-            return parsed.candidates.firstOrNull()
+            val text = parsed.candidates.firstOrNull()
                 ?.content?.parts?.firstOrNull()?.text
-                ?: error("Respuesta vacia de Gemini")
+                ?: run {
+                    Log.e(tag, "generateContent vacio: $raw")
+                    error("Respuesta vacia de Gemini")
+                }
+            Log.d(tag, "generateContent OK (${text.length} chars)")
+            return text
         }
     }
 
@@ -130,10 +151,15 @@ class AiRepositoryImpl @Inject constructor() : AiRepository {
         )
         val body = json.encodeToString(EmbedRequest.serializer(), req).toRequestBody(mediaType)
         val url = "$baseUrl/models/$embedModel:embedContent?key=$apiKey"
+        Log.d(tag, "embedContent -> $embedModel")
         client.newCall(Request.Builder().url(url).post(body).build()).execute().use { resp ->
             val raw = resp.body?.string().orEmpty()
-            if (!resp.isSuccessful) error("Gemini embed ${resp.code}: $raw")
+            if (!resp.isSuccessful) {
+                Log.e(tag, "embedContent ${resp.code}: $raw")
+                error("Gemini embed ${resp.code}: $raw")
+            }
             val parsed = json.decodeFromString(EmbedResponse.serializer(), raw)
+            Log.d(tag, "embedContent OK (dim=${parsed.embedding.values.size})")
             return parsed.embedding.values
         }
     }

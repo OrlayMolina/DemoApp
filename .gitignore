@@ -10,6 +10,7 @@
 local.properties
 gradle.properties
 google-services.json
+app/google-services.json
 
 # Mapbox token
 app/src/main/res/values/mapbox_access_token.xml
@@ -18,3 +19,8 @@ app/src/main/res/values/mapbox_access_token.xml
 # Firebase Console → Project Settings → Tu app Android → Descargar google-services.json
 # y colocarlo en /app/google-services.json
 # app/google-services.json  ← descomenta esta línea si decides excluirlo del repo
+
+# FCM sender script
+scripts/service-account.json
+scripts/node_modules/
+scripts/package-lock.json

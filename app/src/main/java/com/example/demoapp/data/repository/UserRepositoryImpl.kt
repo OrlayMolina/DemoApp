@@ -161,6 +161,12 @@ class UserRepositoryImpl @Inject constructor(
         return update(user.copy(profilePictureUrl = pictureUrl))
     }
 
+    override fun updateFcmToken(userId: String, token: String): Result<Unit> {
+        val user = findById(userId) ?: return Result.failure(Exception("Usuario no encontrado"))
+        if (user.fcmToken == token) return Result.success(Unit)
+        return update(user.copy(fcmToken = token))
+    }
+
     // -------------------------------------------------------------------------
     // Reputación
     // -------------------------------------------------------------------------

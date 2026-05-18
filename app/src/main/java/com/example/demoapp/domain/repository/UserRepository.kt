@@ -29,6 +29,9 @@ interface UserRepository {
     // --- Perfil ---
     fun updateProfilePicture(id: String, pictureUrl: String): Result<Unit>
 
+    // --- Notificaciones push ---
+    fun updateFcmToken(userId: String, token: String): Result<Unit>
+
     // --- Reputación (puntos e insignias) ---
     fun addPoints(userId: String, points: Int): Result<Unit>
     fun awardBadge(userId: String, badge: Badge): Result<Unit>

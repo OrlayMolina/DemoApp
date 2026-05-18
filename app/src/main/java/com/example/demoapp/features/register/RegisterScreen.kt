@@ -52,6 +52,7 @@ fun RegisterScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope             = rememberCoroutineScope()
     var termsAccepted by remember { mutableStateOf(false) }
+    var showTermsDialog by remember { mutableStateOf(false) }
     val registerLoadingMessage = stringResource(R.string.register_snackbar_loading)
 
     LaunchedEffect(viewModel.registerResult) {
@@ -201,10 +202,21 @@ fun RegisterScreen(
                             )
                         )
                         Text(
-                            text     = stringResource(R.string.register_terms_text),
-                            fontSize = 13.sp,
-                            color    = TextGray,
-                            modifier = Modifier.clickable { termsAccepted = !termsAccepted }
+                            text = buildAnnotatedString {
+                                withStyle(SpanStyle(color = TextGray, fontSize = 13.sp)) {
+                                    append(stringResource(R.string.register_terms_prefix))
+                                }
+                                withStyle(
+                                    SpanStyle(
+                                        color      = GreenPrimary,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize   = 13.sp
+                                    )
+                                ) {
+                                    append(stringResource(R.string.register_terms_link))
+                                }
+                            },
+                            modifier = Modifier.clickable { showTermsDialog = true }
                         )
                     }
 
@@ -273,6 +285,54 @@ fun RegisterScreen(
                         modifier = Modifier.clickable { onNavigateToLogin?.invoke() }
                     )
                 }
+            }
+
+            if (showTermsDialog) {
+                AlertDialog(
+                    onDismissRequest = { showTermsDialog = false },
+                    title = {
+                        Text(
+                            text       = stringResource(R.string.register_terms_dialog_title),
+                            fontWeight = FontWeight.Bold,
+                            color      = Color(0xFF1A1A1A)
+                        )
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier
+                                .heightIn(max = 400.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            Text(
+                                text       = stringResource(R.string.register_terms_dialog_body),
+                                fontSize   = 13.sp,
+                                color      = TextGray,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            termsAccepted   = true
+                            showTermsDialog = false
+                        }) {
+                            Text(
+                                text       = stringResource(R.string.register_terms_dialog_accept),
+                                color      = GreenPrimary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showTermsDialog = false }) {
+                            Text(
+                                text  = stringResource(R.string.register_terms_dialog_close),
+                                color = TextGray
+                            )
+                        }
+                    },
+                    containerColor = CardWhite
+                )
             }
         }
     }

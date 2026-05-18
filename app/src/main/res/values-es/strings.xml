@@ -26,6 +26,11 @@
     <string name="login_success">Inicio de sesión exitoso</string>
     <string name="login_failure">Credenciales inválidas</string>
 
+    <!-- Push Notifications (FCM) -->
+    <string name="fcm_channel_default_name">Notificaciones generales</string>
+    <string name="fcm_channel_default_description">Avisos de actividad, moderación y novedades de la comunidad</string>
+    <string name="fcm_default_title">DemoApp</string>
+
     <!-- Common -->
     <string name="common_back">Volver</string>
     <string name="common_middle_dot">·</string>
@@ -38,7 +43,12 @@
     <string name="register_password_placeholder">Mínimo 8 caracteres</string>
     <string name="register_confirm_password_label">Confirmar contraseña</string>
     <string name="register_confirm_password_placeholder">Repite tu contraseña</string>
-    <string name="register_terms_text">Acepto los términos y condiciones y la política de privacidad</string>
+    <string name="register_terms_prefix">Acepto </string>
+    <string name="register_terms_link">los términos y condiciones y la política de privacidad</string>
+    <string name="register_terms_dialog_title">Términos y Condiciones</string>
+    <string name="register_terms_dialog_accept">Aceptar</string>
+    <string name="register_terms_dialog_close">Cerrar</string>
+    <string name="register_terms_dialog_body">Bienvenido a DemoApp. Estos términos y condiciones rigen el uso de nuestra aplicación. Te pedimos que los leas con atención antes de continuar con el registro.\n\n1. Aceptación de los términos\nAl registrarte aceptas cumplir con estos términos y condiciones en su totalidad. Si no estás de acuerdo con alguna parte, no podrás utilizar el servicio.\n\n2. Uso del servicio\nDemoApp es una plataforma educativa de demostración. El contenido publicado es responsabilidad exclusiva del usuario que lo genera.\n\n3. Cuenta de usuario\nDebes proporcionar información veraz al crear tu cuenta. Eres responsable de mantener la confidencialidad de tu contraseña y de toda actividad realizada bajo tu cuenta.\n\n4. Privacidad de tus datos\nLos datos que nos proporciones serán usados únicamente para los fines del servicio. No compartiremos tu información personal con terceros sin tu consentimiento, salvo cuando la ley lo requiera.\n\n5. Contenido del usuario\nAl publicar contenido otorgas a DemoApp una licencia no exclusiva para mostrarlo dentro de la plataforma. Garantizas que cuentas con los derechos sobre lo que publicas.\n\n6. Conducta prohibida\nNo está permitido publicar contenido ofensivo, ilegal, difamatorio o que infrinja derechos de terceros. Nos reservamos el derecho de eliminar contenido o suspender cuentas que incumplan estas normas.\n\n7. Propiedad intelectual\nTodos los derechos sobre el software, diseño y contenido oficial de DemoApp pertenecen a sus desarrolladores. Queda prohibida su reproducción sin autorización previa.\n\n8. Limitación de responsabilidad\nDemoApp se ofrece \"tal cual\", sin garantías de ningún tipo. No nos hacemos responsables por daños derivados del uso de la aplicación ni por la indisponibilidad temporal del servicio.\n\n9. Modificaciones\nNos reservamos el derecho de modificar estos términos en cualquier momento. Las modificaciones entrarán en vigor desde su publicación en la aplicación.\n\n10. Contacto\nPara cualquier consulta puedes escribirnos a soporte@demoapp.com.\n\nÚltima actualización: 18 de mayo de 2026.</string>
     <string name="register_snackbar_loading">Registrando usuario...</string>
     <string name="register_button">Registrarse</string>
     <string name="register_have_account">¿Ya tienes cuenta? </string>
@@ -123,6 +133,12 @@
     <string name="notifications_body_comment">%1$s comentó en tu publicación \"%2$s\"</string>
     <string name="notifications_body_follower">%1$s comenzó a seguirte</string>
     <string name="notifications_body_verified">Tu publicación \"%1$s\" ha sido verificada</string>
+    <string name="notifications_type_new_publication">Nueva publicación</string>
+    <string name="notifications_type_rejected">Publicación rechazada</string>
+    <string name="notifications_type_review_reminder">Recordatorio de revisión</string>
+    <string name="notifications_body_new_publication">%1$s compartió: %2$s</string>
+    <string name="notifications_body_rejected">Tu publicación \"%1$s\" fue rechazada</string>
+    <string name="notifications_body_review_reminder">Tienes publicaciones pendientes de revisión</string>
 
     <!-- Shared actions -->
     <string name="common_edit">Editar</string>
