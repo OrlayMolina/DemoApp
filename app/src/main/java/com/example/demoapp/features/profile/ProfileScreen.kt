@@ -261,30 +261,6 @@ fun ProfileScreen(
                 }
             }
 
-            // ── Borradores (si hay) ────────────────────────────────────────
-            val drafts = myPointsFromRepo.filter { it.isDraft }
-            if (drafts.isNotEmpty()) {
-                item {
-                    Spacer(Modifier.height(16.dp))
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text(
-                            text       = stringResource(R.string.profile_drafts_title, drafts.size),
-                            fontSize   = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color      = Color(0xFF1A1A1A)
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
-                }
-                items(drafts) { draft ->
-                    DraftItem(
-                        point     = draft,
-                        onPublish = { viewModel.publishDraft(draft.id) },
-                        modifier  = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                    )
-                }
-            }
-
             // ── Tabs ───────────────────────────────────────────────────────
             item {
                 Spacer(Modifier.height(16.dp))
@@ -356,34 +332,80 @@ fun ProfileScreen(
              // ── Lista de publicaciones ─────────────────────────────────────
              val sourceList = if (myPointsFromRepo.isNotEmpty()) myPointsFromRepo else myPublications
              val verifiedList = sourceList.filter { it.isVerified }
-             val list = if (selectedTab == 0) verifiedList.filter { !it.isSaved } else verifiedList.filter { it.isSaved }
+             val drafts       = sourceList.filter { it.isDraft }
+             val savedList    = verifiedList.filter { it.isSaved }
+             val pubsList     = verifiedList.filter { !it.isSaved }
 
-             if (list.isEmpty()) {
-                item {
-                    Box(
-                        modifier         = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text     = if (selectedTab == 0) stringResource(R.string.profile_empty_publications)
-                            else stringResource(R.string.profile_empty_saved),
-                            color    = TextGray,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-            } else {
-                items(list) { point ->
-                    PublicationItem(
-                        point    = point,
-                        onOpen   = { onOpenPublication?.invoke(point) },
-                        onEdit   = { onEditPublication?.invoke(point) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                    )
-                }
-            }
+             if (selectedTab == 0) {
+                 if (pubsList.isEmpty()) {
+                     item {
+                         Box(
+                             modifier         = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                             contentAlignment = Alignment.Center
+                         ) {
+                             Text(
+                                 text     = stringResource(R.string.profile_empty_publications),
+                                 color    = TextGray,
+                                 fontSize = 14.sp
+                             )
+                         }
+                     }
+                 } else {
+                     items(pubsList) { point ->
+                         PublicationItem(
+                             point    = point,
+                             onOpen   = { onOpenPublication?.invoke(point) },
+                             onEdit   = { onEditPublication?.invoke(point) },
+                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                         )
+                     }
+                 }
+             } else {
+                 // Tab "Guardados": muestra borradores (con botón Publicar) + publicaciones bookmarkeadas
+                 if (drafts.isEmpty() && savedList.isEmpty()) {
+                     item {
+                         Box(
+                             modifier         = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                             contentAlignment = Alignment.Center
+                         ) {
+                             Text(
+                                 text     = stringResource(R.string.profile_empty_saved),
+                                 color    = TextGray,
+                                 fontSize = 14.sp
+                             )
+                         }
+                     }
+                 }
+                 if (drafts.isNotEmpty()) {
+                     item {
+                         Spacer(Modifier.height(8.dp))
+                         Text(
+                             text       = stringResource(R.string.profile_drafts_title, drafts.size),
+                             fontSize   = 13.sp,
+                             fontWeight = FontWeight.SemiBold,
+                             color      = TextGray,
+                             modifier   = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                         )
+                     }
+                     items(drafts) { draft ->
+                         DraftItem(
+                             point     = draft,
+                             onPublish = { viewModel.publishDraft(draft.id) },
+                             modifier  = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                         )
+                     }
+                 }
+                 if (savedList.isNotEmpty()) {
+                     items(savedList) { point ->
+                         PublicationItem(
+                             point    = point,
+                             onOpen   = { onOpenPublication?.invoke(point) },
+                             onEdit   = { onEditPublication?.invoke(point) },
+                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                         )
+                     }
+                 }
+             }
         }
     }
 }

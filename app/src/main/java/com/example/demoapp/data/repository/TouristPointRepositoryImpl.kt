@@ -2,7 +2,10 @@ package com.example.demoapp.data.repository
 
 import android.util.Log
 import com.example.demoapp.data.model.TouristPointDto
+import com.example.demoapp.domain.model.Notification
+import com.example.demoapp.domain.model.NotificationType
 import com.example.demoapp.domain.model.TouristPoint
+import com.example.demoapp.domain.repository.NotificationRepository
 import com.example.demoapp.domain.repository.ReviewHistoryRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
@@ -15,6 +18,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,7 +31,8 @@ private const val COLLECTION = "tourist_points"
 class TouristPointRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val reviewHistoryRepository: ReviewHistoryRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val notificationRepository: NotificationRepository
 ) : TouristPointRepository {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -75,6 +82,7 @@ class TouristPointRepositoryImpl @Inject constructor(
                             val aiTagsRaw = doc.get("aiTags") as? List<*>
                             val aiTags = aiTagsRaw?.filterIsInstance<String>() ?: emptyList()
                             val isSaved = doc.getBoolean("isSaved") ?: doc.getBoolean("saved") ?: false
+                            val isDraft = doc.getBoolean("isDraft") ?: doc.getBoolean("draft") ?: false
 
                             TouristPoint(
                                 id = id,
@@ -100,7 +108,8 @@ class TouristPointRepositoryImpl @Inject constructor(
                                 createdAt = createdAt,
                                 embedding = embedding,
                                 aiTags = aiTags,
-                                isSaved = isSaved
+                                isSaved = isSaved,
+                                isDraft = isDraft
                             )
                         }.onFailure { Log.e(TAG, "Error mapping doc", it) }.getOrNull()
                     }.sortedByDescending { it.createdAt }
@@ -169,7 +178,7 @@ class TouristPointRepositoryImpl @Inject constructor(
 
     override fun approvePoint(id: String): Result<Unit> {
         val current = findById(id) ?: return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
-        
+
         val updated = current.copy(
             isVerified = true,
             isRejected = false,
@@ -178,6 +187,7 @@ class TouristPointRepositoryImpl @Inject constructor(
         val result = update(updated)
         if (result.isSuccess) {
             reviewHistoryRepository.recordApproval(updated, currentReviewerName())
+            writeModerationNotification(NotificationType.VERIFIED, updated)
             Log.d(TAG, "Punto '$id' aprobado por moderacion.")
         }
         return result
@@ -195,9 +205,25 @@ class TouristPointRepositoryImpl @Inject constructor(
         val result = update(updated)
         if (result.isSuccess) {
             reviewHistoryRepository.recordRejection(updated, currentReviewerName(), reason)
+            writeModerationNotification(NotificationType.REJECTED, updated)
             Log.d(TAG, "Punto '$id' rechazado por moderacion.")
         }
         return result
+    }
+
+    private fun writeModerationNotification(type: NotificationType, point: TouristPoint) {
+        val now = System.currentTimeMillis()
+        val notification = Notification(
+            id              = "",
+            type            = type,
+            userName        = "",
+            publicationTitle = point.title,
+            date            = SimpleDateFormat("dd MMM, HH:mm", Locale("es")).format(Date(now)),
+            createdAt       = now,
+            isRead          = false,
+            relatedEntityId = point.id
+        )
+        notificationRepository.add(notification)
     }
 
     override fun publishDraft(id: String): Result<Unit> {
