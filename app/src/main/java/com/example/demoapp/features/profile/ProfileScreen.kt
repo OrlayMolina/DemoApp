@@ -261,6 +261,30 @@ fun ProfileScreen(
                 }
             }
 
+            // ── Borradores (si hay) ────────────────────────────────────────
+            val drafts = myPointsFromRepo.filter { it.isDraft }
+            if (drafts.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.height(16.dp))
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        Text(
+                            text       = stringResource(R.string.profile_drafts_title, drafts.size),
+                            fontSize   = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color      = Color(0xFF1A1A1A)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+                items(drafts) { draft ->
+                    DraftItem(
+                        point     = draft,
+                        onPublish = { viewModel.publishDraft(draft.id) },
+                        modifier  = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
             // ── Tabs ───────────────────────────────────────────────────────
             item {
                 Spacer(Modifier.height(16.dp))
@@ -493,6 +517,58 @@ private fun PublicationItem(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DraftItem(
+    point     : TouristPoint,
+    onPublish : () -> Unit,
+    modifier  : Modifier = Modifier
+) {
+    val draftOrange = Color(0xFFF57C00)
+    Card(
+        modifier  = modifier.fillMaxWidth(),
+        shape     = RoundedCornerShape(14.dp),
+        colors    = CardDefaults.cardColors(containerColor = CardWhite),
+        elevation = CardDefaults.cardElevation(1.dp)
+    ) {
+        Row(
+            modifier              = Modifier.fillMaxWidth().padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment     = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model              = point.photoUrls.firstOrNull(),
+                contentDescription = point.title,
+                contentScale       = ContentScale.Crop,
+                modifier           = Modifier.size(60.dp).clip(RoundedCornerShape(10.dp))
+            )
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text       = point.title,
+                    fontSize   = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color      = Color(0xFF1A1A1A),
+                    maxLines   = 1,
+                    overflow   = TextOverflow.Ellipsis
+                )
+                Text(
+                    text       = stringResource(R.string.profile_drafts_badge),
+                    fontSize   = 11.sp,
+                    color      = draftOrange,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Button(
+                onClick        = onPublish,
+                shape          = RoundedCornerShape(8.dp),
+                colors         = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(stringResource(R.string.profile_drafts_publish), fontSize = 12.sp)
             }
         }
     }

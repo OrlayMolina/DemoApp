@@ -6,6 +6,7 @@ import com.example.demoapp.data.datastore.SessionDataStore
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.User
 import com.example.demoapp.domain.repository.ProfileRepository
+import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -21,9 +22,13 @@ import kotlinx.coroutines.launch
 class ProfileViewModel @Inject constructor(
     private val repository: UserRepository,
     private val profileRepository: ProfileRepository,
-    private val sessionDataStore: SessionDataStore
-
+    private val sessionDataStore: SessionDataStore,
+    private val touristPointRepository: TouristPointRepository
 ) : ViewModel() {
+
+    fun publishDraft(pointId: String) {
+        touristPointRepository.publishDraft(pointId)
+    }
 
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user.asStateFlow()

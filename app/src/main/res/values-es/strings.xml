@@ -112,6 +112,9 @@
     <string name="profile_tab_saved">Guardados</string>
     <string name="profile_empty_publications">No tienes publicaciones aún</string>
     <string name="profile_empty_saved">No tienes guardados aún</string>
+    <string name="profile_drafts_title">Borradores (%1$d)</string>
+    <string name="profile_drafts_badge">Borrador</string>
+    <string name="profile_drafts_publish">Publicar</string>
     <string name="profile_publication_likes">%1$d likes</string>
     <string name="profile_publication_comments">%1$d comentarios</string>
 
@@ -139,6 +142,8 @@
     <string name="notifications_body_new_publication">%1$s compartió: %2$s</string>
     <string name="notifications_body_rejected">Tu publicación \"%1$s\" fue rechazada</string>
     <string name="notifications_body_review_reminder">Tienes publicaciones pendientes de revisión</string>
+    <string name="notifications_type_achievement">Logro desbloqueado</string>
+    <string name="notifications_body_achievement">¡Has desbloqueado el logro \"%1$s\"!</string>
 
     <!-- Shared actions -->
     <string name="common_edit">Editar</string>

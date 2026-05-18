@@ -200,6 +200,21 @@ class TouristPointRepositoryImpl @Inject constructor(
         return result
     }
 
+    override fun publishDraft(id: String): Result<Unit> {
+        val current = findById(id) ?: return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
+        if (!current.isDraft) return Result.failure(IllegalStateException("El punto no es un borrador"))
+        val updated = current.copy(
+            isDraft = false,
+            isVerified = false,
+            isRejected = false,
+            rejectionReason = null,
+            createdAt = System.currentTimeMillis()
+        )
+        val result = update(updated)
+        if (result.isSuccess) Log.d(TAG, "Borrador '$id' publicado para revision.")
+        return result
+    }
+
     private fun currentReviewerName(): String {
         return userRepository.currentUser.value?.name?.takeIf { it.isNotBlank() } ?: "Moderador"
     }

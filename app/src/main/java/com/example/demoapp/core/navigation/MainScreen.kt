@@ -179,10 +179,13 @@ fun MainScreen(
                                 success
                             },
                             onSaveDraft = {
-                                selectedTab = BottomNavTab.HOME
-                                pointToEdit = null
-                                currentPublishStep = 1
-                                createViewModel.reset()
+                                val success = createViewModel.submitAsDraft()
+                                if (success) {
+                                    selectedTab = BottomNavTab.HOME
+                                    pointToEdit = null
+                                    currentPublishStep = 1
+                                    createViewModel.reset()
+                                }
                             }
                         )
                     }

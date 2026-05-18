@@ -16,7 +16,9 @@ import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -385,11 +387,52 @@ private fun AiAssistSection(
                 }
             }
             is CreatePointViewModel.AiSuggestionState.Error -> {
-                Text(
-                    text     = "IA: ${state.message}",
-                    fontSize = 12.sp,
-                    color    = Color(0xFFB00020)
-                )
+                val errorRed   = Color(0xFFB00020)
+                val errorBg    = Color(0xFFFFF3F3)
+                val errorBorder = Color(0xFFFFC9C9)
+                Card(
+                    modifier  = Modifier.fillMaxWidth(),
+                    shape     = RoundedCornerShape(10.dp),
+                    colors    = CardDefaults.cardColors(containerColor = errorBg),
+                    border    = androidx.compose.foundation.BorderStroke(1.dp, errorBorder),
+                    elevation = CardDefaults.cardElevation(0.dp)
+                ) {
+                    Row(
+                        modifier              = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Default.ErrorOutline,
+                            contentDescription = null,
+                            tint               = errorRed,
+                            modifier           = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text     = friendlyAiError(state.message),
+                            fontSize = 12.sp,
+                            color    = errorRed,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(
+                            onClick = onAssist,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Default.Refresh,
+                                contentDescription = null,
+                                tint               = errorRed,
+                                modifier           = Modifier.size(14.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text     = "Reintentar",
+                                fontSize = 12.sp,
+                                color    = errorRed
+                            )
+                        }
+                    }
+                }
             }
             is CreatePointViewModel.AiSuggestionState.Ready -> {
                 Column(
@@ -474,5 +517,27 @@ private fun FlowRowTags(
                 Text(tag, fontSize = 12.sp, color = fg)
             }
         }
+    }
+}
+
+private fun friendlyAiError(raw: String): String {
+    val r = raw.lowercase()
+    return when {
+        "503" in r || "service unavailable" in r ->
+            "El servicio de IA esta temporalmente fuera de servicio. Intentalo de nuevo en unos minutos."
+        "500" in r || "internal server" in r ->
+            "Error interno del servicio de IA. Intentalo de nuevo."
+        "504" in r || "gateway timeout" in r ->
+            "El servicio tardo demasiado en responder. Intentalo de nuevo."
+        "429" in r || "too many" in r || "rate limit" in r ->
+            "Has hecho demasiadas solicitudes. Espera un momento antes de reintentar."
+        "401" in r || "403" in r || "api key" in r || "permission" in r ->
+            "La clave de IA no es valida o ya no tiene acceso."
+        "timeout" in r || "timed out" in r ->
+            "Tiempo de conexion agotado. Verifica tu red e intentalo de nuevo."
+        "unable to resolve" in r || "no internet" in r || "network" in r || "unreachable" in r ->
+            "Sin conexion a internet. Conectate y vuelve a intentar."
+        "selecciona" in r || "escribe" in r -> raw
+        else -> "No se pudo conectar con la IA. Intentalo de nuevo."
     }
 }

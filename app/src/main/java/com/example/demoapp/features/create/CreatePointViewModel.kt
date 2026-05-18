@@ -245,7 +245,11 @@ class CreatePointViewModel @Inject constructor(
     var createResult by mutableStateOf<RequestResult<TouristPoint>?>(null)
         private set
 
-    fun submitPoint(): Boolean {
+    fun submitPoint(): Boolean = persist(asDraft = false)
+
+    fun submitAsDraft(): Boolean = persist(asDraft = true)
+
+    private fun persist(asDraft: Boolean): Boolean {
         if (!isStep1Valid || !isGalleryValid || !isStep2Valid) {
             createResult = RequestResult.Error("Completa los datos requeridos antes de publicar")
             return false
@@ -268,7 +272,8 @@ class CreatePointViewModel @Inject constructor(
                 priceRange = selectedPriceRange ?: PriceRange.FREE,
                 photoUrls = selectedPhotoUrls.toList(),
                 aiTags = if (finalTags.isNotEmpty()) finalTags else basePoint.aiTags,
-                embedding = if (finalEmbedding.isNotEmpty()) finalEmbedding else basePoint.embedding
+                embedding = if (finalEmbedding.isNotEmpty()) finalEmbedding else basePoint.embedding,
+                isDraft = asDraft
             )
         } else {
             val authorId = userRepository.currentUser.value?.id
@@ -289,6 +294,7 @@ class CreatePointViewModel @Inject constructor(
                 priceRange = selectedPriceRange ?: PriceRange.FREE,
                 photoUrls = selectedPhotoUrls.toList(),
                 isVerified = false,
+                isDraft = asDraft,
                 aiTags = finalTags,
                 embedding = finalEmbedding
             )
@@ -303,7 +309,7 @@ class CreatePointViewModel @Inject constructor(
 
             persistResult.fold(
                 onSuccess = {
-                    Log.d("CreatePoint", "Punto persistido en el repo: ${pointToPersist.title}")
+                    Log.d("CreatePoint", "Punto persistido (draft=$asDraft): ${pointToPersist.title}")
                     createResult = RequestResult.Success(pointToPersist)
                 },
                 onFailure = { error ->

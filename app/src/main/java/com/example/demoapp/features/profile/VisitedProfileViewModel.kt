@@ -2,9 +2,13 @@ package com.example.demoapp.features.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.demoapp.core.notifications.FcmTopicManager
+import com.example.demoapp.domain.model.Notification
+import com.example.demoapp.domain.model.NotificationType
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.User
 import com.example.demoapp.domain.repository.FollowRepository
+import com.example.demoapp.domain.repository.NotificationRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +22,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -25,7 +32,8 @@ import javax.inject.Inject
 class VisitedProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val followRepository: FollowRepository,
-    private val touristPointRepository: TouristPointRepository
+    private val touristPointRepository: TouristPointRepository,
+    private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
     private val _userId = MutableStateFlow<String?>(null)
@@ -82,12 +90,29 @@ class VisitedProfileViewModel @Inject constructor(
 
     fun toggleFollow() {
         val viewedId = _userId.value ?: return
-        val currentId = userRepository.currentUser.value?.id ?: return
-        if (viewedId == currentId) return
-        if (followRepository.isFollowing(currentId, viewedId)) {
-            followRepository.unfollow(currentId, viewedId)
+        val currentUser = userRepository.currentUser.value ?: return
+        if (viewedId == currentUser.id) return
+        if (followRepository.isFollowing(currentUser.id, viewedId)) {
+            followRepository.unfollow(currentUser.id, viewedId)
+            FcmTopicManager.unsubscribeFromUserPublications(viewedId)
         } else {
-            followRepository.follow(currentId, viewedId)
+            followRepository.follow(currentUser.id, viewedId)
+            FcmTopicManager.subscribeToUserPublications(viewedId)
+            notifyAuthorOfNewFollower(currentUser)
         }
+    }
+
+    private fun notifyAuthorOfNewFollower(follower: User) {
+        val notification = Notification(
+            id              = "",
+            type            = NotificationType.FOLLOWER,
+            userName        = follower.name,
+            userAvatarUrl   = follower.profilePictureUrl.takeIf { it.isNotBlank() },
+            date            = SimpleDateFormat("dd MMM, HH:mm", Locale("es")).format(Date()),
+            createdAt       = System.currentTimeMillis(),
+            isRead          = false,
+            relatedEntityId = follower.id
+        )
+        notificationRepository.add(notification)
     }
 }

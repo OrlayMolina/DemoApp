@@ -23,4 +23,6 @@ interface TouristPointRepository {
     fun approvePoint(id: String): Result<Unit>
     fun rejectPoint(id: String, reason: String): Result<Unit>
 
+    // Borradores: pasa un draft a "pendiente de revisión" (visible para moderadores)
+    fun publishDraft(id: String): Result<Unit>
 }

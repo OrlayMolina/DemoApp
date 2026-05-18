@@ -33,7 +33,7 @@ class ReviewQueueViewModel @Inject constructor(
         selectedDateFilter
     ) { allPoints, filter ->
             allPoints
-                .filter { !it.isVerified && !it.isRejected }
+                .filter { !it.isVerified && !it.isRejected && !it.isDraft }
                 .applyDateFilter(filter)
         }
         .stateIn(

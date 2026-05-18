@@ -75,7 +75,7 @@ class DashboardViewModel @Inject constructor(
 
         DashboardUiState(
             allPoints = points,
-            pendingCount = points.count { !it.isVerified && !it.isRejected },
+            pendingCount = points.count { !it.isVerified && !it.isRejected && !it.isDraft },
             approvedToday = approvedToday,
             rejectedToday = rejectedToday,
             activeUsers = users.count { it.role != UserRole.ADMIN },

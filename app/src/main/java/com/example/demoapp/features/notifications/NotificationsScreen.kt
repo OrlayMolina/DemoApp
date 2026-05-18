@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ModeComment
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -407,6 +408,7 @@ private fun notifTypeLabel(type: NotificationType) = when (type) {
     NotificationType.NEW_PUBLICATION   -> stringResource(R.string.notifications_type_new_publication)
     NotificationType.REJECTED          -> stringResource(R.string.notifications_type_rejected)
     NotificationType.REVIEW_REMINDER   -> stringResource(R.string.notifications_type_review_reminder)
+    NotificationType.ACHIEVEMENT       -> stringResource(R.string.notifications_type_achievement)
 }
 
 @Composable
@@ -425,6 +427,8 @@ private fun notifBody(n: Notification) = when (n.type) {
         stringResource(R.string.notifications_body_rejected, n.publicationTitle.orEmpty())
     NotificationType.REVIEW_REMINDER ->
         stringResource(R.string.notifications_body_review_reminder)
+    NotificationType.ACHIEVEMENT ->
+        stringResource(R.string.notifications_body_achievement, n.publicationTitle.orEmpty())
 }
 
 private fun notifTypeColor(type: NotificationType) = when (type) {
@@ -435,6 +439,7 @@ private fun notifTypeColor(type: NotificationType) = when (type) {
     NotificationType.NEW_PUBLICATION   -> Color(0xFF00897B)
     NotificationType.REJECTED          -> Color(0xFFD32F2F)
     NotificationType.REVIEW_REMINDER   -> Color(0xFFF57C00)
+    NotificationType.ACHIEVEMENT       -> Color(0xFFFFB300)
 }
 
 private fun notifTypeIcon(type: NotificationType): ImageVector = when (type) {
@@ -445,4 +450,5 @@ private fun notifTypeIcon(type: NotificationType): ImageVector = when (type) {
     NotificationType.NEW_PUBLICATION   -> Icons.Default.PostAdd
     NotificationType.REJECTED          -> Icons.Default.Cancel
     NotificationType.REVIEW_REMINDER   -> Icons.Default.NotificationsActive
+    NotificationType.ACHIEVEMENT       -> Icons.Default.EmojiEvents
 }
