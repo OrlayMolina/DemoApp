@@ -82,63 +82,44 @@ class UserRepositoryImpl @Inject constructor(
         return try {
             val authResult = Tasks.await(firebaseAuth.signInWithEmailAndPassword(email, password))
             val uid = authResult.user?.uid ?: return null
-            
-            // Buscar el usuario en caché o en Firestore
+
+            // Firebase Auth valida la password. Firestore solo guarda el perfil.
             val userInCache = _users.value.firstOrNull { it.id == uid }
             val finalUser = if (userInCache != null) {
                 userInCache
             } else {
                 val doc = Tasks.await(firestore.collection(COLLECTION).document(uid).get())
-                doc.toObject(UserDto::class.java)?.copy(id = uid)?.toDomain()
+                val userByUid = doc.toObject(UserDto::class.java)?.copy(id = uid)?.toDomain()
+                userByUid ?: findProfileByEmailAndMoveToAuthUid(email, uid)
             }
-            
-            if (finalUser != null) {
-                // Si la contraseña en el documento de Firestore es diferente a la contraseña con la que se inició sesión
-                // (por ejemplo, porque la restableció por correo), actualizamos el documento de Firestore para sincronizarlo.
-                if (finalUser.password != password) {
-                    val updatedUser = finalUser.copy(password = password)
-                    scope.launch {
-                        try {
-                            firestore.collection(COLLECTION).document(uid).set(UserDto.fromDomain(updatedUser)).await()
-                        } catch (ex: Exception) {
-                            Log.e(TAG, "Error al sincronizar contraseña en Firestore: ${ex.message}")
-                        }
-                    }
-                    _currentUser.value = updatedUser
-                    updatedUser
-                } else {
-                    _currentUser.value = finalUser
-                    finalUser
-                }
-            } else {
-                null
-            }
+
+            _currentUser.value = finalUser
+            finalUser
         } catch (e: Exception) {
             Log.e(TAG, "Error logging in with Firebase Auth: ${e.message}")
-            // Fallback: check if it's a seed user in Firestore who hasn't been created in Firebase Auth yet
-            val localUser = _users.value.firstOrNull { it.email == email && it.password == password }
-            if (localUser != null) {
-                try {
-                    val signupResult = Tasks.await(firebaseAuth.createUserWithEmailAndPassword(email, password))
-                    val uid = signupResult.user?.uid
-                    if (uid != null) {
-                        val updatedUser = localUser.copy(id = uid)
-                        scope.launch {
-                            firestore.collection(COLLECTION).document(uid).set(UserDto.fromDomain(updatedUser)).await()
-                            firestore.collection(COLLECTION).document(localUser.id).delete().await()
-                        }
-                        _currentUser.value = updatedUser
-                        return updatedUser
-                    }
-                } catch (signUpEx: Exception) {
-                    Log.e(TAG, "Error migrating seed user to FirebaseAuth: ${signUpEx.message}")
-                }
-                _currentUser.value = localUser
-                localUser
-            } else {
-                null
-            }
+            null
         }
+    }
+
+    private fun findProfileByEmailAndMoveToAuthUid(email: String, uid: String): User? {
+        val querySnapshot = Tasks.await(
+            firestore.collection(COLLECTION)
+                .whereEqualTo("email", email.trim().lowercase())
+                .limit(1)
+                .get()
+        )
+        val document = querySnapshot.documents.firstOrNull() ?: return null
+        val user = document.toObject(UserDto::class.java)
+            ?.copy(id = uid)
+            ?.toDomain()
+            ?: return null
+
+        Tasks.await(firestore.collection(COLLECTION).document(uid).set(UserDto.fromDomain(user)))
+        if (document.id != uid) {
+            Tasks.await(firestore.collection(COLLECTION).document(document.id).delete())
+        }
+
+        return user
     }
 
     override fun restoreCurrentUser(userId: String): Boolean {
@@ -162,18 +143,11 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updatePassword(email: String, newPassword: String): Result<Unit> {
-        val user = _users.value.firstOrNull { it.email == email }
-            ?: return Result.failure(Exception("Usuario no encontrado"))
-        
-        return try {
-            val currentUser = firebaseAuth.currentUser
-            if (currentUser != null && currentUser.email == email) {
-                currentUser.updatePassword(newPassword).await()
-            }
-            update(user.copy(password = newPassword))
-        } catch (e: Exception) {
-            update(user.copy(password = newPassword))
-        }
+        return Result.failure(
+            UnsupportedOperationException(
+                "La password se gestiona con Firebase Auth. Usa el enlace de recuperacion enviado por correo."
+            )
+        )
     }
 
     // -------------------------------------------------------------------------
