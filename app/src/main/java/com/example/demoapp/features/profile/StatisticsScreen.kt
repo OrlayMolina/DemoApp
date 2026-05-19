@@ -46,14 +46,14 @@ private val GreenPrimary   = Color(0xFF2E7D5E)
 // ─── Datos calculados desde SAMPLE_LIST ───────────────────────────────────────
 
 private fun computeStats(points: List<TouristPoint>): StatsSummary {
-    val totalLikes    = points.sumOf { it.importantVotes }
-    val totalComments = points.sumOf { it.commentCount }
-    val uniquePlaces  = points.size
+    // Solo publicaciones aprobadas por el moderador cuentan para las estadisticas.
+    val approved = points.filter { it.isVerified && !it.isRejected && !it.isDraft }
+    val totalLikes    = approved.sumOf { it.importantVotes }
+    val totalComments = approved.sumOf { it.commentCount }
+    val uniquePlaces  = approved.size
+    val totalViews    = approved.sumOf { it.visitedByUserIds.size }
 
-    // Simulamos visualizaciones como votos * factor
-    val totalViews = points.sumOf { (it.importantVotes * 6) + (it.commentCount * 3) + 100 }
-
-    val bestPublication = points.maxByOrNull { (it.importantVotes * 2) + (it.commentCount * 3) }
+    val bestPublication = approved.maxByOrNull { (it.importantVotes * 2) + (it.commentCount * 3) }
 
     return StatsSummary(
         totalLikes    = totalLikes,
@@ -95,7 +95,7 @@ private fun buildMonthlyLikesSeries(points: List<TouristPoint>): List<Pair<Strin
 
     val likes = FloatArray(12)
     points.forEach { point ->
-        likes[point.createdAt.monthIndex()] += point.importantVotes * 5f + point.commentCount * 2f + 20f
+        likes[point.createdAt.monthIndex()] += point.importantVotes.toFloat()
     }
 
     return monthLabels.mapIndexed { index, label -> label to likes[index] }
@@ -115,13 +115,16 @@ fun StatisticsScreen(
     onNavigateBack: () -> Unit         = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val stats = remember(publications) { computeStats(publications) }
-    val publicationsByMonth = remember(publications) { buildMonthlyPublicationSeries(publications) }
-    val likesByMonth = remember(publications) { buildMonthlyLikesSeries(publications) }
+    val approvedPublications = remember(publications) {
+        publications.filter { it.isVerified && !it.isRejected && !it.isDraft }
+    }
+    val stats = remember(approvedPublications) { computeStats(approvedPublications) }
+    val publicationsByMonth = remember(approvedPublications) { buildMonthlyPublicationSeries(approvedPublications) }
+    val likesByMonth = remember(approvedPublications) { buildMonthlyLikesSeries(approvedPublications) }
 
-    val categoryCount = remember(publications) {
+    val categoryCount = remember(approvedPublications) {
         TouristPointCategory.entries.map { cat ->
-            cat to publications.count { it.category == cat }
+            cat to approvedPublications.count { it.category == cat }
         }.filter { it.second > 0 }
             .sortedByDescending { it.second }
     }
@@ -295,7 +298,7 @@ fun StatisticsScreen(
                                         color    = Color.White.copy(alpha = 0.85f)
                                     )
                                     Text(
-                                        stringResource(R.string.stats_views_count, formatNumber(best.importantVotes * 6 + 100)),
+                                        stringResource(R.string.stats_views_count, formatNumber(best.visitedByUserIds.size)),
                                         fontSize = 12.sp,
                                         color    = Color.White.copy(alpha = 0.85f)
                                     )

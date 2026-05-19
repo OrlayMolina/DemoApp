@@ -185,7 +185,7 @@ fun DashboardScreen(
                     ) {
                         PerformanceStat("${uiState.reviewsToday}", stringResource(R.string.dashboard_reviews_today))
                         PerformanceStat("${uiState.precision}%", stringResource(R.string.dashboard_precision))
-                        PerformanceStat("${uiState.minPerReview}", stringResource(R.string.dashboard_min_per_review))
+                        PerformanceStat("%.1f".format(uiState.minPerReview), stringResource(R.string.dashboard_min_per_review))
                     }
                 }
             }

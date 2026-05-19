@@ -44,14 +44,9 @@ enum class DistanceFilter(val label: String) {
     KM_1("1 km"), KM_15("15 km"), KM_25("25 km"), ALL("Todos")
 }
 
-enum class VerificationFilter(val label: String) {
-    VERIFIED("Verificados"), PENDING("Pendientes")
-}
-
 data class FilterState(
     val selectedCategories   : Set<TouristPointCategory> = emptySet(),
-    val distanceFilter       : DistanceFilter            = DistanceFilter.ALL,
-    val verificationFilter   : VerificationFilter?       = null
+    val distanceFilter       : DistanceFilter            = DistanceFilter.ALL
 )
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -93,14 +88,7 @@ private fun List<TouristPoint>.applyFilters(
     val matchesCategory = filters.selectedCategories.isEmpty() ||
             point.category in filters.selectedCategories
 
-    // 3. Estado de verificación
-    val matchesVerification = when (filters.verificationFilter) {
-        VerificationFilter.VERIFIED -> point.isVerified
-        VerificationFilter.PENDING  -> !point.isVerified
-        null                        -> true
-    }
-
-    matchesQuery && matchesCategory && matchesVerification
+    matchesQuery && matchesCategory
 }
 
 // ─── Pantalla Explorar ────────────────────────────────────────────────────────
@@ -110,6 +98,7 @@ private fun List<TouristPoint>.applyFilters(
 fun ExploreScreen(
     points              : List<TouristPoint> = TouristPoint.SAMPLE_LIST,
     likedIds            : Set<String> = emptySet(),
+    currentUserId       : String = "",
     onOpenMap           : () -> Unit         = {},
     onOpenDetail        : (TouristPoint) -> Unit = {},
     onToggleLike        : (TouristPoint) -> Unit = {}
@@ -133,7 +122,6 @@ fun ExploreScreen(
     val activeFilterCount = buildList {
         if (appliedFilters.selectedCategories.isNotEmpty()) add(1)
         if (appliedFilters.distanceFilter != DistanceFilter.ALL) add(1)
-        if (appliedFilters.verificationFilter != null) add(1)
     }.size
 
     Scaffold(
@@ -290,9 +278,13 @@ fun ExploreScreen(
                 }
             } else {
                 items(filtered) { point ->
+                    val isOwnPost = currentUserId.isNotBlank() &&
+                        (point.authorId == currentUserId ||
+                            point.authorId.removePrefix("user_") == currentUserId)
                     TouristPointCard(
                         point    = point,
                         liked = point.id in likedIds,
+                        canReport = !isOwnPost,
                         onOpenDetail = { onOpenDetail(point) },
                         onToggleLike = { onToggleLike(point) },
                         onReport = { reportingPoint = point },
@@ -439,41 +431,6 @@ private fun FilterSheetContent(
             }
         }
 
-        HorizontalDivider(color = Color(0xFFEEEEEE))
-
-        // ── Estado de verificación ─────────────────────────────────────────
-        FilterSection(title = stringResource(R.string.explore_verification_status)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                VerificationFilter.entries.forEach { option ->
-                    val selected = draft.verificationFilter == option
-                    FilterChip(
-                        selected = selected,
-                        onClick  = {
-                            // Toggle: si ya está seleccionado, deselecciona
-                            onChange(
-                                draft.copy(
-                                    verificationFilter = if (selected) null else option
-                                )
-                            )
-                        },
-                        label  = { Text(option.label, fontSize = 13.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = GreenPrimary,
-                            selectedLabelColor     = Color.White,
-                            containerColor         = Color(0xFFF0F0F0),
-                            labelColor             = Color(0xFF1A1A1A)
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled             = true,
-                            selected            = selected,
-                            borderColor         = Color(0xFFDDDDDD),
-                            selectedBorderColor = GreenPrimary
-                        )
-                    )
-                }
-            }
-        }
-
         Spacer(Modifier.height(4.dp))
 
         // ── Botón aplicar ──────────────────────────────────────────────────
@@ -529,6 +486,7 @@ private fun navBarColors() = NavigationBarItemDefaults.colors(
 fun TouristPointCard(
     point    : TouristPoint,
     liked    : Boolean = false,
+    canReport: Boolean = true,
     onOpenDetail : () -> Unit = {},
     onToggleLike : () -> Unit = {},
     onReport : () -> Unit = {},
@@ -627,27 +585,28 @@ fun TouristPointCard(
                             Icon(Icons.Outlined.ModeComment, stringResource(R.string.profile_publication_comments, point.commentCount), tint = TextGray, modifier = Modifier.size(16.dp))
                             Text("${point.commentCount}", fontSize = 11.sp, color = TextGray)
                         }
-                        Icon(Icons.Outlined.Share, stringResource(R.string.common_share), tint = TextGray, modifier = Modifier.size(16.dp))
-                        Box {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = stringResource(R.string.report_more_options_desc),
-                                tint = TextGray,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .clickable { showMenu = true }
-                            )
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.report_post_action)) },
-                                    onClick = {
-                                        showMenu = false
-                                        onReport()
-                                    }
+                        if (canReport) {
+                            Box {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = stringResource(R.string.report_more_options_desc),
+                                    tint = TextGray,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clickable { showMenu = true }
                                 )
+                                DropdownMenu(
+                                    expanded = showMenu,
+                                    onDismissRequest = { showMenu = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.report_post_action)) },
+                                        onClick = {
+                                            showMenu = false
+                                            onReport()
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

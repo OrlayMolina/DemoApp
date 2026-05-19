@@ -25,4 +25,7 @@ interface TouristPointRepository {
 
     // Borradores: pasa un draft a "pendiente de revisión" (visible para moderadores)
     fun publishDraft(id: String): Result<Unit>
+
+    // Visualizaciones: registra que un usuario vio la publicacion (unico por usuario)
+    fun markVisit(pointId: String, userId: String): Result<Unit>
 }

@@ -13,7 +13,8 @@ data class NotificationDto(
     val date: String = "",
     val createdAt: Long = 0L,
     val isRead: Boolean = false,
-    val relatedEntityId: String? = null
+    val relatedEntityId: String? = null,
+    val recipientUserId: String? = null
 ) {
     fun toDomain(): Notification = Notification(
         id = id,
@@ -25,7 +26,8 @@ data class NotificationDto(
         date = date,
         createdAt = createdAt,
         isRead = isRead,
-        relatedEntityId = relatedEntityId
+        relatedEntityId = relatedEntityId,
+        recipientUserId = recipientUserId
     )
 
     companion object {
@@ -39,7 +41,8 @@ data class NotificationDto(
             date = domain.date,
             createdAt = domain.createdAt,
             isRead = domain.isRead,
-            relatedEntityId = domain.relatedEntityId
+            relatedEntityId = domain.relatedEntityId,
+            recipientUserId = domain.recipientUserId
         )
     }
 }

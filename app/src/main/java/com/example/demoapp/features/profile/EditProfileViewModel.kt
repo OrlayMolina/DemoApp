@@ -1,12 +1,17 @@
 package com.example.demoapp.features.profile
 
+import android.content.Context
+import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.demoapp.data.ImageRepository
 import com.example.demoapp.data.datastore.UiPreferencesDataStore
 import com.example.demoapp.domain.repository.ProfileRepository
+import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.collectLatest
@@ -15,8 +20,11 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
+    private val userRepository: UserRepository,
     private val uiPreferencesDataStore: UiPreferencesDataStore
 ) : ViewModel() {
+
+    private val imageRepository = ImageRepository()
 
     var name by mutableStateOf("")
         private set
@@ -31,6 +39,12 @@ class EditProfileViewModel @Inject constructor(
         private set
 
     var saveMessage by mutableStateOf<String?>(null)
+        private set
+
+    var isUploadingPhoto by mutableStateOf(false)
+        private set
+
+    var photoUploadError by mutableStateOf<String?>(null)
         private set
 
     init {
@@ -64,8 +78,26 @@ class EditProfileViewModel @Inject constructor(
         bio = value
     }
 
-    fun onProfilePictureChange(value: String) {
-        profilePictureUrl = value
+    fun uploadProfilePicture(context: Context, uri: Uri) {
+        val localPreview = uri.toString()
+        profilePictureUrl = localPreview
+        viewModelScope.launch {
+            isUploadingPhoto = true
+            photoUploadError = null
+            val remoteUrl = imageRepository.uploadImageFromUri(context, uri)
+            if (remoteUrl != null) {
+                profilePictureUrl = remoteUrl
+                val currentUserId = userRepository.currentUser.value?.id
+                if (currentUserId != null) {
+                    userRepository.updateProfilePicture(currentUserId, remoteUrl)
+                        .onFailure { Log.w("EditProfileViewModel", "No se pudo persistir la foto de perfil: ${it.message}") }
+                }
+            } else {
+                photoUploadError = "No se pudo subir la imagen"
+                Log.w("EditProfileViewModel", "Fallo la subida de la foto de perfil: $localPreview")
+            }
+            isUploadingPhoto = false
+        }
     }
 
     fun onDarkModeEnabledChange(enabled: Boolean) {

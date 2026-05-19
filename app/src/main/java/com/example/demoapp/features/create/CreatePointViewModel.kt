@@ -203,7 +203,29 @@ class CreatePointViewModel @Inject constructor(
 
     private var lastEmbedding: List<Double> = emptyList()
 
+    var aiCooldownSeconds by mutableStateOf(0)
+        private set
+
+    private var aiCooldownJob: kotlinx.coroutines.Job? = null
+
+    private fun startAiCooldown(seconds: Int) {
+        aiCooldownJob?.cancel()
+        aiCooldownJob = viewModelScope.launch {
+            aiCooldownSeconds = seconds
+            while (aiCooldownSeconds > 0) {
+                kotlinx.coroutines.delay(1_000)
+                aiCooldownSeconds -= 1
+            }
+        }
+    }
+
     fun runAiAssist() {
+        if (aiCooldownSeconds > 0) {
+            aiSuggestion = AiSuggestionState.Error(
+                "Espera ${aiCooldownSeconds}s antes de volver a pedirle ayuda al asistente."
+            )
+            return
+        }
         val cat = selectedCategory ?: run {
             aiSuggestion = AiSuggestionState.Error("Selecciona una categoria primero")
             return
@@ -213,6 +235,8 @@ class CreatePointViewModel @Inject constructor(
             return
         }
         aiSuggestion = AiSuggestionState.Loading
+        // Cooldown protector: aunque la respuesta sea rapida, evitamos el spam-click.
+        startAiCooldown(10)
         viewModelScope.launch {
             val labels = selectedPhotoUrls.firstOrNull()
                 ?.let { runCatching { imageLabeler.label(Uri.parse(it)) }.getOrDefault(emptyList()) }
@@ -230,6 +254,10 @@ class CreatePointViewModel @Inject constructor(
                 },
                 onFailure = { e ->
                     aiSuggestion = AiSuggestionState.Error(e.message ?: "Error de IA")
+                    if ((e.message ?: "").contains("429")) {
+                        // Si Gemini sigue diciendo rate limit, estiramos el cooldown.
+                        startAiCooldown(30)
+                    }
                 }
             )
         }
@@ -263,6 +291,11 @@ class CreatePointViewModel @Inject constructor(
     private fun persist(asDraft: Boolean): Boolean {
         if (!isStep1Valid || !isGalleryValid || !isStep2Valid) {
             createResult = RequestResult.Error("Completa los datos requeridos antes de publicar")
+            return false
+        }
+
+        if (userRepository.currentUser.value?.isBanned == true) {
+            createResult = RequestResult.Error("Tu cuenta esta restringida. No puedes crear nuevas publicaciones.")
             return false
         }
 

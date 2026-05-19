@@ -126,22 +126,38 @@ class AiRepositoryImpl @Inject constructor() : AiRepository {
         val body = json.encodeToString(GenerateRequest.serializer(), req).toRequestBody(mediaType)
         val url = "$baseUrl/models/$genModel:generateContent?key=$apiKey"
         Log.d(tag, "generateContent -> $genModel")
-        client.newCall(Request.Builder().url(url).post(body).build()).execute().use { resp ->
-            val raw = resp.body?.string().orEmpty()
-            if (!resp.isSuccessful) {
-                Log.e(tag, "generateContent ${resp.code}: $raw")
-                error("Gemini generate ${resp.code}: $raw")
-            }
-            val parsed = json.decodeFromString(GenerateResponse.serializer(), raw)
-            val text = parsed.candidates.firstOrNull()
-                ?.content?.parts?.firstOrNull()?.text
-                ?: run {
-                    Log.e(tag, "generateContent vacio: $raw")
-                    error("Respuesta vacia de Gemini")
+
+        repeat(2) { attempt ->
+            client.newCall(Request.Builder().url(url).post(body).build()).execute().use { resp ->
+                val raw = resp.body?.string().orEmpty()
+                if (resp.code == 429 && attempt == 0) {
+                    val waitMs = extractRetryAfterMs(raw) ?: 3000L
+                    Log.w(tag, "generateContent 429, reintentando en ${waitMs}ms")
+                    Thread.sleep(waitMs)
+                    return@use
                 }
-            Log.d(tag, "generateContent OK (${text.length} chars)")
-            return text
+                if (!resp.isSuccessful) {
+                    Log.e(tag, "generateContent ${resp.code}: $raw")
+                    error("Gemini generate ${resp.code}: $raw")
+                }
+                val parsed = json.decodeFromString(GenerateResponse.serializer(), raw)
+                val text = parsed.candidates.firstOrNull()
+                    ?.content?.parts?.firstOrNull()?.text
+                    ?: run {
+                        Log.e(tag, "generateContent vacio: $raw")
+                        error("Respuesta vacia de Gemini")
+                    }
+                Log.d(tag, "generateContent OK (${text.length} chars)")
+                return text
+            }
         }
+        error("Gemini generate 429: limite de solicitudes")
+    }
+
+    private fun extractRetryAfterMs(raw: String): Long? {
+        // Gemini devuelve un campo "retryDelay":"30s" dentro del error. Lo extraemos a mano.
+        val match = Regex("\"retryDelay\"\\s*:\\s*\"(\\d+(?:\\.\\d+)?)s\"").find(raw)
+        return match?.groupValues?.get(1)?.toDoubleOrNull()?.let { (it * 1000).toLong() }
     }
 
     private fun embed(text: String): List<Double> {

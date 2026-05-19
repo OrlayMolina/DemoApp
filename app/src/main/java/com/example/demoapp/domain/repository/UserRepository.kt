@@ -30,6 +30,11 @@ interface UserRepository {
     // --- Perfil ---
     fun updateProfilePicture(id: String, pictureUrl: String): Result<Unit>
 
+    // --- Moderacion ---
+    fun banUser(userId: String, reason: String): Result<Unit>
+    fun unbanUser(userId: String): Result<Unit>
+    fun submitBanAppeal(userId: String, appeal: String): Result<Unit>
+
     // --- Notificaciones push ---
     fun updateFcmToken(userId: String, token: String): Result<Unit>
 

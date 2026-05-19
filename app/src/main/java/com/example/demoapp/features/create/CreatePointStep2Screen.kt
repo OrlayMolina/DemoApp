@@ -22,10 +22,6 @@ import androidx.compose.ui.unit.sp
 import com.example.demoapp.core.component.MapBox
 import com.example.demoapp.core.component.rememberLocationPermissionState
 import com.mapbox.geojson.Point
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.stringResource
 import com.example.demoapp.R
 import java.util.Locale
@@ -40,7 +36,7 @@ fun CreatePointStep2Screen(
     onLongitude : (String) -> Unit,
     onAddress   : (String) -> Unit,
     onBack      : () -> Unit,
-    onPublish   : () -> Boolean,
+    onPublish   : () -> String?,
     onSaveDraft : () -> Unit
 ) {
     val context = LocalContext.current
@@ -53,26 +49,6 @@ fun CreatePointStep2Screen(
     // Punto seleccionado para pasarlo al mapa
     var selectedPoint by remember {
         mutableStateOf<Point?>(Point.fromLngLat(lng, lat))
-    }
-
-    val mapNestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource) = Offset.Zero
-        }
-    }
-
-    if (!isEditing) {
-        OutlinedButton(
-            onClick = {
-                onSaveDraft()
-                Toast.makeText(context, context.getString(R.string.create_saved_draft), Toast.LENGTH_SHORT).show()
-            },
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            shape    = RoundedCornerShape(12.dp),
-            colors   = ButtonDefaults.outlinedButtonColors(contentColor = TextDark)
-        ) {
-            Text(stringResource(R.string.create_save_draft), fontSize = 15.sp)
-        }
     }
 
     Scaffold(containerColor = BackgroundGray) { padding ->
@@ -119,6 +95,71 @@ fun CreatePointStep2Screen(
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
             )
 
+            if (!locationPermissionState.hasPermission) {
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF4EE)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Lightbulb,
+                            contentDescription = null,
+                            tint = Color(0xFF2E7D5E),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Activa el permiso de ubicación para usar tu posición en el mapa",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextDark
+                            )
+                            Text(
+                                text = "Pulsa el botón para abrir el permiso del sistema.",
+                                fontSize = 12.sp,
+                                color = TextGray
+                            )
+                        }
+                        TextButton(onClick = { locationPermissionState.requestPermission() }) {
+                            Text("Dar permiso", fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+
+            // ── Mapa (fuera del scroll para que los gestos vayan al mapa) ──
+            Card(
+                shape    = RoundedCornerShape(14.dp),
+                colors   = CardDefaults.cardColors(containerColor = CardWhite),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+            ) {
+                MapBox(
+                    modifier             = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp),
+                    activateClick        = true,
+                    clickedPoint         = selectedPoint,
+                    showMyLocationButton = true,
+                    locationPermissionState = locationPermissionState,
+                    onMapClickListener   = { point ->
+                        selectedPoint = point
+                        onLatitude(String.format(Locale.US, "%.6f", point.latitude()))
+                        onLongitude(String.format(Locale.US, "%.6f", point.longitude()))
+                    }
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -126,66 +167,6 @@ fun CreatePointStep2Screen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-
-                if (!locationPermissionState.hasPermission) {
-                    Card(
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF4EE))
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Lightbulb,
-                                contentDescription = null,
-                                tint = Color(0xFF2E7D5E),
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Activa el permiso de ubicación para usar tu posición en el mapa",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextDark
-                                )
-                                Text(
-                                    text = "Pulsa el botón para abrir el permiso del sistema.",
-                                    fontSize = 12.sp,
-                                    color = TextGray
-                                )
-                            }
-                            TextButton(onClick = { locationPermissionState.requestPermission() }) {
-                                Text("Dar permiso", fontSize = 12.sp)
-                            }
-                        }
-                    }
-                }
-
-                // ── Mapa ───────────────────────────────────────────────────
-                Card(
-                    shape    = RoundedCornerShape(14.dp),
-                    colors   = CardDefaults.cardColors(containerColor = CardWhite),
-                    modifier = Modifier.nestedScroll(mapNestedScrollConnection)
-                ) {
-                    MapBox(
-                        modifier             = Modifier
-                            .fillMaxWidth()
-                            .height(240.dp),
-                        activateClick        = true,
-                        clickedPoint         = selectedPoint,
-                        showMyLocationButton = true,
-                                locationPermissionState = locationPermissionState,
-                        onMapClickListener   = { point ->
-                            selectedPoint = point
-                            onLatitude(String.format(Locale.US, "%.6f", point.latitude()))
-                            onLongitude(String.format(Locale.US, "%.6f", point.longitude()))
-                        }
-                    )
-                }
 
                 // ── Coordenadas y dirección ────────────────────────────────
                 Card(
@@ -291,23 +272,16 @@ fun CreatePointStep2Screen(
             ) {
                 Button(
                     onClick  = {
-                        val success = onPublish()
+                        val error = onPublish()
                         val coordinatesValid = latitude.replace(',', '.').toDoubleOrNull() != null &&
                             longitude.replace(',', '.').toDoubleOrNull() != null
-                        Toast.makeText(
-                            context,
-                            if (success) {
-                                if (isEditing) context.getString(R.string.create_update_success)
-                                else context.getString(R.string.create_publish_success)
-                            } else {
-                                if (!coordinatesValid) {
-                                    context.getString(R.string.create_invalid_coordinates)
-                                } else {
-                                    "Revisa fotos, coordenadas y campos obligatorios"
-                                }
-                            },
-                            Toast.LENGTH_LONG
-                        ).show()
+                        val message = when {
+                            error == null -> if (isEditing) context.getString(R.string.create_update_success)
+                                             else context.getString(R.string.create_publish_success)
+                            !coordinatesValid -> context.getString(R.string.create_invalid_coordinates)
+                            else -> error
+                        }
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                     },
                     modifier = Modifier
                         .fillMaxWidth()

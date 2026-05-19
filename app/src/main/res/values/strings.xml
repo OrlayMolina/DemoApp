@@ -30,6 +30,7 @@
     <string name="fcm_channel_default_name">General notifications</string>
     <string name="fcm_channel_default_description">Alerts about activity, moderation and community updates</string>
     <string name="fcm_default_title">DemoApp</string>
+    <string name="fcm_default_body">You have new activity in DemoApp</string>
 
     <!-- Common -->
     <string name="common_back">Back</string>
@@ -153,6 +154,47 @@
     <string name="notifications_body_review_reminder">You have publications pending review</string>
     <string name="notifications_type_achievement">Achievement unlocked</string>
     <string name="notifications_body_achievement">You unlocked the achievement \"%1$s\"!</string>
+    <string name="notifications_type_ban">Account restricted</string>
+    <string name="notifications_body_ban">You have been restricted from publishing. Reason: %1$s</string>
+    <string name="notifications_type_ban_appeal">Restriction appeal</string>
+    <string name="notifications_body_ban_appeal">%1$s appealed their restriction</string>
+    <string name="notifications_type_ban_lifted">Account re-enabled</string>
+    <string name="notifications_body_ban_lifted">Your account has been re-enabled. You can publish again.</string>
+
+    <!-- Moderator ban -->
+    <string name="moderator_ban_user">Restrict user</string>
+    <string name="moderator_unban_user">Lift restriction</string>
+    <string name="moderator_ban_dialog_title">Restrict %1$s</string>
+    <string name="moderator_ban_dialog_message">Explain why this user will no longer be able to create publications. The user will receive a notification with your message.</string>
+    <string name="moderator_ban_reason_label">Reason</string>
+    <string name="moderator_ban_reason_placeholder">Describe the offense or rule that was broken</string>
+    <string name="moderator_ban_confirm">Restrict</string>
+    <string name="moderator_user_status_banned">Restricted</string>
+    <string name="moderator_user_status_active">Active</string>
+    <string name="moderator_ban_no_reason">No reason recorded</string>
+    <string name="moderator_appeal_pending">Pending appeal</string>
+    <string name="moderator_appeal_section_title">User appeal</string>
+    <string name="moderator_appeal_empty">The user has not submitted an appeal yet.</string>
+    <string name="moderator_appeal_keep">Keep restricted</string>
+    <string name="moderator_appeal_accept">Accept appeal (unblock)</string>
+    <string name="moderator_back_to_users">Back to users</string>
+    <string name="moderator_user_detail_title">User detail</string>
+    <string name="moderator_ban_history_title">Restriction history</string>
+    <string name="moderator_ban_history_reason">Reason: %1$s</string>
+
+    <!-- User ban -->
+    <string name="ban_appeal_dialog_title">Restriction details</string>
+    <string name="ban_appeal_reason_label">Moderator reason</string>
+    <string name="ban_appeal_response_label">Your response</string>
+    <string name="ban_appeal_response_placeholder">Explain your side to the moderator</string>
+    <string name="ban_appeal_send">Send response</string>
+    <string name="ban_appeal_sent">Response sent</string>
+    <string name="ban_appeal_already_sent">You already sent an appeal. The moderator is reviewing it.</string>
+    <string name="ban_blocked_publish">Your account is restricted. You cannot create new publications.</string>
+
+    <!-- Follow lists -->
+    <string name="follow_list_no_followers">No followers yet</string>
+    <string name="follow_list_no_following">Not following anyone yet</string>
 
     <!-- Shared actions -->
     <string name="common_edit">Edit</string>

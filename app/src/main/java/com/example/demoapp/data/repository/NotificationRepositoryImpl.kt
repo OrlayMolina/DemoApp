@@ -46,16 +46,15 @@ class NotificationRepositoryImpl @Inject constructor(
                     val list = snapshot.documents.mapNotNull { doc ->
                         runCatching {
                             val dto = doc.toObject(NotificationDto::class.java)
-                            dto?.copy(id = doc.id)?.toDomain()
+                            // Firestore reflexion borra el prefijo "is" en booleans de Kotlin
+                            // (la doc puede tener "read" en vez de "isRead"). Releemos a mano.
+                            val isRead = doc.getBoolean("isRead") ?: doc.getBoolean("read") ?: false
+                            dto?.copy(id = doc.id, isRead = isRead)?.toDomain()
                         }.getOrNull()
                     }.sortedByDescending { it.createdAt }
-                    
+
                     _notifications.value = list
                     _unreadCount.value = list.count { !it.isRead }
-
-                    if (list.isEmpty()) {
-                        scope.launch { seedInitialData() }
-                    }
                 }
             }
     }
@@ -129,17 +128,4 @@ class NotificationRepositoryImpl @Inject constructor(
 
     override fun getUnread(): List<Notification> =
         _notifications.value.filter { !it.isRead }
-
-    private suspend fun seedInitialData() {
-        Log.d(TAG, "Collection empty. Seeding initial notifications...")
-        val seed = Notification.SAMPLE_LIST
-        val batch = firestore.batch()
-        seed.forEach { n ->
-            val idToUse = if (n.id.toLongOrNull() != null) "notif_${n.id}" else n.id
-            val ref = firestore.collection(COLLECTION).document(idToUse)
-            batch.set(ref, NotificationDto.fromDomain(n.copy(id = idToUse)))
-        }
-        runCatching { batch.commit().await() }
-            .onFailure { Log.e(TAG, "Error seeding notifications: ${it.message}", it) }
-    }
 }

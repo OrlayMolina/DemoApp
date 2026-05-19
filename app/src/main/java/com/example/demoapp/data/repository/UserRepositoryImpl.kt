@@ -3,9 +3,12 @@ package com.example.demoapp.data.repository
 import android.util.Log
 import com.example.demoapp.data.model.UserDto
 import com.example.demoapp.domain.model.Badge
+import com.example.demoapp.domain.model.Notification
+import com.example.demoapp.domain.model.NotificationType
 import com.example.demoapp.domain.model.User
 import com.example.demoapp.domain.model.UserLevel
 import com.example.demoapp.domain.model.UserRole
+import com.example.demoapp.domain.repository.NotificationRepository
 import com.example.demoapp.domain.repository.UserRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
@@ -18,6 +21,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,7 +33,8 @@ private const val COLLECTION = "users"
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val notificationRepository: NotificationRepository
 ) : UserRepository {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -57,7 +64,18 @@ class UserRepositoryImpl @Inject constructor(
                     val list = snapshot.documents.mapNotNull { doc ->
                         runCatching {
                             val dto = doc.toObject(UserDto::class.java)
-                            dto?.copy(id = doc.id)?.toDomain()
+                            // Firestore deja caer el prefijo "is" en propiedades booleanas de
+                            // Kotlin (lee "banned" en vez de "isBanned"). Releemos a mano para
+                            // mantener el estado de bloqueo confiable.
+                            val isBanned = doc.getBoolean("isBanned") ?: doc.getBoolean("banned") ?: false
+                            val banReason = doc.getString("banReason") ?: ""
+                            val banAppeal = doc.getString("banAppeal") ?: ""
+                            dto?.copy(
+                                id = doc.id,
+                                isBanned = isBanned,
+                                banReason = banReason,
+                                banAppeal = banAppeal
+                            )?.toDomain()
                         }.getOrNull()
                     }
                     _users.value = list
@@ -251,6 +269,82 @@ class UserRepositoryImpl @Inject constructor(
     override fun updateProfilePicture(id: String, pictureUrl: String): Result<Unit> {
         val user = findById(id) ?: return Result.failure(Exception("Usuario no encontrado"))
         return update(user.copy(profilePictureUrl = pictureUrl))
+    }
+
+    // -------------------------------------------------------------------------
+    // Moderacion: bloqueo, desbloqueo y apelaciones
+    // -------------------------------------------------------------------------
+    override fun banUser(userId: String, reason: String): Result<Unit> {
+        val user = findById(userId) ?: return Result.failure(Exception("Usuario no encontrado"))
+        val cleanReason = reason.trim()
+        if (cleanReason.isBlank()) return Result.failure(IllegalArgumentException("El motivo es obligatorio"))
+
+        val result = update(user.copy(isBanned = true, banReason = cleanReason, banAppeal = ""))
+        if (result.isSuccess) {
+            val now = System.currentTimeMillis()
+            notificationRepository.add(
+                Notification(
+                    id              = "",
+                    type            = NotificationType.BAN,
+                    userName        = currentUser.value?.name.orEmpty(),
+                    publicationTitle = cleanReason,
+                    date            = SimpleDateFormat("dd MMM, HH:mm", Locale("es")).format(Date(now)),
+                    createdAt       = now,
+                    isRead          = false,
+                    relatedEntityId = userId,
+                    recipientUserId = userId
+                )
+            )
+        }
+        return result
+    }
+
+    override fun unbanUser(userId: String): Result<Unit> {
+        val user = findById(userId) ?: return Result.failure(Exception("Usuario no encontrado"))
+        val result = update(user.copy(isBanned = false, banReason = "", banAppeal = ""))
+        if (result.isSuccess) {
+            val now = System.currentTimeMillis()
+            notificationRepository.add(
+                Notification(
+                    id              = "",
+                    type            = NotificationType.BAN_LIFTED,
+                    userName        = currentUser.value?.name.orEmpty(),
+                    date            = SimpleDateFormat("dd MMM, HH:mm", Locale("es")).format(Date(now)),
+                    createdAt       = now,
+                    isRead          = false,
+                    relatedEntityId = userId,
+                    recipientUserId = userId
+                )
+            )
+        }
+        return result
+    }
+
+    override fun submitBanAppeal(userId: String, appeal: String): Result<Unit> {
+        val user = findById(userId) ?: return Result.failure(Exception("Usuario no encontrado"))
+        if (!user.isBanned) return Result.failure(IllegalStateException("El usuario no esta bloqueado"))
+        val cleanAppeal = appeal.trim()
+        if (cleanAppeal.isBlank()) return Result.failure(IllegalArgumentException("La apelacion es obligatoria"))
+
+        val result = update(user.copy(banAppeal = cleanAppeal))
+        if (result.isSuccess) {
+            val now = System.currentTimeMillis()
+            notificationRepository.add(
+                Notification(
+                    id              = "",
+                    type            = NotificationType.BAN_APPEAL,
+                    userName        = user.name,
+                    userAvatarUrl   = user.profilePictureUrl.takeIf { it.isNotBlank() },
+                    publicationTitle = cleanAppeal,
+                    date            = SimpleDateFormat("dd MMM, HH:mm", Locale("es")).format(Date(now)),
+                    createdAt       = now,
+                    isRead          = false,
+                    relatedEntityId = userId,
+                    recipientUserId = Notification.RECIPIENT_MODERATORS
+                )
+            )
+        }
+        return result
     }
 
     override fun updateFcmToken(userId: String, token: String): Result<Unit> {

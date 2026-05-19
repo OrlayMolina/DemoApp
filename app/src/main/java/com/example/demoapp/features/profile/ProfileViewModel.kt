@@ -41,8 +41,11 @@ class ProfileViewModel @Inject constructor(
     private val _updateResult = MutableStateFlow<RequestResult<String>?>(null)
     val updateResult: StateFlow<RequestResult<String>?> = _updateResult.asStateFlow()
 
-    private val _user = MutableStateFlow<User?>(null)
-    val user: StateFlow<User?> = _user.asStateFlow()
+    val user: StateFlow<User?> = repository.currentUser.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = repository.currentUser.value
+    )
 
     private val _isEditMode = MutableStateFlow(false)
     val isEditMode: StateFlow<Boolean> = _isEditMode.asStateFlow()
@@ -78,22 +81,14 @@ class ProfileViewModel @Inject constructor(
         get() = name.isValid && city.isValid && address.isValid && phone.isValid
 
     init {
-        loadCurrentUser()
-    }
-
-    private fun loadCurrentUser() {
         viewModelScope.launch {
-            val session = sessionDataStore.sessionFlow.first()
-            if (session != null) {
-                loadUser(session.userId)
-            } else {
-                clearLoadedUser()
+            user.collect { current ->
+                if (current != null) syncFormFromUser(current) else clearLoadedForm()
             }
         }
     }
 
-    private fun clearLoadedUser() {
-        _user.value = null
+    private fun clearLoadedForm() {
         name.reset()
         city.reset()
         address.reset()
@@ -110,19 +105,13 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun loadUser(userId: String) {
-        val foundUser = repository.findById(userId)
-        _user.value = foundUser
-        if (foundUser != null) {
-            syncFormFromUser(foundUser)
-        } else {
-            clearLoadedUser()
-        }
+        // No-op: el usuario actual se observa reactivamente desde repository.currentUser.
     }
 
     fun toggleEditMode() {
         _isEditMode.value = !_isEditMode.value
         if (_isEditMode.value) {
-            _user.value?.let { syncFormFromUser(it) }
+            user.value?.let { syncFormFromUser(it) }
         }
     }
 
@@ -136,7 +125,7 @@ class ProfileViewModel @Inject constructor(
             return false
         }
 
-        val currentUser = _user.value
+        val currentUser = user.value
             ?: run {
                 _updateResult.value = RequestResult.Error(resources.getString(R.string.profile_update_no_user))
                 return false
@@ -152,7 +141,6 @@ class ProfileViewModel @Inject constructor(
 
         return repository.update(updatedUser).fold(
             onSuccess = {
-                _user.value = updatedUser
                 _updateResult.value = RequestResult.Success(resources.getString(R.string.profile_updated_successfully))
                 _isEditMode.value = false
                 true
@@ -165,7 +153,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun cancelEdit() {
-        _user.value?.let { syncFormFromUser(it) }
+        user.value?.let { syncFormFromUser(it) }
         _isEditMode.value = false
     }
 

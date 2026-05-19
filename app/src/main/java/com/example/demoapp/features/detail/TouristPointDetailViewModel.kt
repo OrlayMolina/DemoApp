@@ -31,7 +31,8 @@ data class AuthorUiState(
     val name: String = "Autor",
     val email: String = "",
     val initials: String = "AU",
-    val publicationsCount: Int = 0
+    val publicationsCount: Int = 0,
+    val profilePictureUrl: String = ""
 )
 
 @HiltViewModel
@@ -48,6 +49,9 @@ class TouristPointDetailViewModel @Inject constructor(
         private set
 
     var isFollowing by mutableStateOf(false)
+        private set
+
+    var isOwnPublication by mutableStateOf(false)
         private set
 
     var isLiked by mutableStateOf(false)
@@ -69,15 +73,22 @@ class TouristPointDetailViewModel @Inject constructor(
     private var followJob: Job? = null
     private var likeJob: Job? = null
     private var pointJob: Job? = null
+    private var authorJob: Job? = null
     private var currentPointId: String? = null
 
     fun loadPoint(touristPoint: TouristPoint) {
         point = touristPoint
         observeComments(touristPoint.id)
         observePoint(touristPoint.id)
-        resolveAuthor(touristPoint)
+        observeAuthor(touristPoint)
         observeFollowState(touristPoint)
         observeLikeState(touristPoint)
+        registerVisit(touristPoint)
+    }
+
+    private fun registerVisit(touristPoint: TouristPoint) {
+        val viewerId = userRepository.currentUser.value?.id ?: return
+        touristPointRepository.markVisit(touristPoint.id, viewerId)
     }
 
     private fun observePoint(pointId: String) {
@@ -106,7 +117,8 @@ class TouristPointDetailViewModel @Inject constructor(
         followJob?.cancel()
         val authorId = normalizeUserId(touristPoint.authorId)
         val currentUserId = userRepository.currentUser.value?.id
-        if (currentUserId == null || currentUserId == authorId) {
+        isOwnPublication = currentUserId != null && currentUserId == authorId
+        if (currentUserId == null || isOwnPublication) {
             isFollowing = false
             return
         }
@@ -117,32 +129,38 @@ class TouristPointDetailViewModel @Inject constructor(
         }
     }
 
-    private fun resolveAuthor(touristPoint: TouristPoint) {
-        val author = userRepository.findById(touristPoint.authorId)
-            ?: userRepository.findById(touristPoint.authorId.removePrefix("user_"))
+    private fun observeAuthor(touristPoint: TouristPoint) {
+        authorJob?.cancel()
+        authorJob = viewModelScope.launch {
+            userRepository.users.collectLatest { users ->
+                val author = users.firstOrNull { it.id == touristPoint.authorId }
+                    ?: users.firstOrNull { it.id == touristPoint.authorId.removePrefix("user_") }
 
-        val authorName = author?.name?.takeIf { it.isNotBlank() } ?: "Autor"
-        val initials = authorName
-            .trim()
-            .split(" ")
-            .filter { it.isNotBlank() }
-            .take(2)
-            .mapNotNull { it.firstOrNull()?.uppercaseChar()?.toString() }
-            .joinToString("")
-            .ifBlank { "AU" }
+                val authorName = author?.name?.takeIf { it.isNotBlank() } ?: "Autor"
+                val initials = authorName
+                    .trim()
+                    .split(" ")
+                    .filter { it.isNotBlank() }
+                    .take(2)
+                    .mapNotNull { it.firstOrNull()?.uppercaseChar()?.toString() }
+                    .joinToString("")
+                    .ifBlank { "AU" }
 
-        val publicationsCount = touristPointRepository.touristPoints.value.count { pointItem ->
-            pointItem.authorId == touristPoint.authorId ||
-                pointItem.authorId.removePrefix("user_") == touristPoint.authorId.removePrefix("user_")
+                val publicationsCount = touristPointRepository.touristPoints.value.count { pointItem ->
+                    pointItem.authorId == touristPoint.authorId ||
+                        pointItem.authorId.removePrefix("user_") == touristPoint.authorId.removePrefix("user_")
+                }
+
+                authorUiState = AuthorUiState(
+                    id = author?.id ?: normalizeUserId(touristPoint.authorId),
+                    name = authorName,
+                    email = author?.email.orEmpty(),
+                    initials = initials,
+                    publicationsCount = publicationsCount,
+                    profilePictureUrl = author?.profilePictureUrl.orEmpty()
+                )
+            }
         }
-
-        authorUiState = AuthorUiState(
-            id = author?.id ?: normalizeUserId(touristPoint.authorId),
-            name = authorName,
-            email = author?.email.orEmpty(),
-            initials = initials,
-            publicationsCount = publicationsCount
-        )
     }
 
     private fun observeComments(pointId: String) {
@@ -171,11 +189,11 @@ class TouristPointDetailViewModel @Inject constructor(
         } else {
             followRepository.follow(currentUserId, authorId)
             FcmTopicManager.subscribeToUserPublications(authorId)
-            notifyAuthorOfNewFollower(currentUser)
+            notifyAuthorOfNewFollower(currentUser, authorId)
         }
     }
 
-    private fun notifyAuthorOfNewFollower(follower: User) {
+    private fun notifyAuthorOfNewFollower(follower: User, recipientUserId: String) {
         val notification = Notification(
             id              = "",
             type            = NotificationType.FOLLOWER,
@@ -184,7 +202,8 @@ class TouristPointDetailViewModel @Inject constructor(
             date            = SimpleDateFormat("dd MMM, HH:mm", Locale("es")).format(Date()),
             createdAt       = System.currentTimeMillis(),
             isRead          = false,
-            relatedEntityId = follower.id
+            relatedEntityId = follower.id,
+            recipientUserId = recipientUserId
         )
         notificationRepository.add(notification)
     }

@@ -7,6 +7,8 @@ interface CommentRepository {
 
     fun observeByPoint(pointId: String): Flow<List<Comment>>
 
+    fun observeCommentCounts(): Flow<Map<String, Int>>
+
     fun addComment(
         pointId: String,
         authorId: String,

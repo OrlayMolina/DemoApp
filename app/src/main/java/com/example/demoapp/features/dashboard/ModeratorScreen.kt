@@ -1,6 +1,7 @@
 package com.example.demoapp.features.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +19,7 @@ import com.example.demoapp.R
 import com.example.demoapp.core.navigation.ModeratorBottomNavBar
 import com.example.demoapp.core.navigation.ModeratorTab
 import com.example.demoapp.domain.model.TouristPoint
+import com.example.demoapp.domain.model.User
 import com.example.demoapp.features.detail.TouristPointDetailScreen
 import com.example.demoapp.features.history.HistoryScreen
 import com.example.demoapp.features.review.ReviewQueueScreen
@@ -37,17 +39,7 @@ fun ModeratorScreen(
 ) {
     var selectedTab by remember { mutableStateOf(ModeratorTab.DASHBOARD) }
     var selectedPoint  by remember { mutableStateOf<TouristPoint?>(null) }
-
-    if (selectedPoint != null) {
-        TouristPointDetailScreen(
-            point          = selectedPoint!!,
-            isModerator    = true,
-            onNavigateBack = { selectedPoint = null },
-            onApproved     = { selectedPoint = null },
-            onRejected     = { selectedPoint = null }
-        )
-        return
-    }
+    var selectedUserId by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         bottomBar = {
@@ -56,6 +48,7 @@ fun ModeratorScreen(
                 onTabSelected = {
                     selectedTab = it
                     selectedPoint = null
+                    selectedUserId = null
                 }
             )
         }
@@ -65,14 +58,35 @@ fun ModeratorScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (selectedTab) {
-                ModeratorTab.DASHBOARD -> DashboardScreen(onLogout = onLogout)
-                ModeratorTab.REVIEW    -> ReviewQueueScreen(
-                    onNavigateToDetail = { selectedPoint = it }
+            when {
+                selectedUserId != null -> ModeratorUserDetailScreen(
+                    userId         = selectedUserId!!,
+                    onNavigateBack = { selectedUserId = null }
                 )
-                ModeratorTab.HISTORY   -> HistoryScreen()
-                ModeratorTab.REPORTS   -> ReportsScreen()
-                ModeratorTab.USERS     -> UsersScreen()
+                selectedPoint != null -> TouristPointDetailScreen(
+                    point          = selectedPoint!!,
+                    isModerator    = true,
+                    onNavigateBack = { selectedPoint = null },
+                    onApproved     = { selectedPoint = null },
+                    onRejected     = { selectedPoint = null },
+                    onOpenAuthor   = { authorId ->
+                        selectedPoint = null
+                        selectedUserId = authorId
+                    }
+                )
+                else -> when (selectedTab) {
+                    ModeratorTab.DASHBOARD -> DashboardScreen(onLogout = onLogout)
+                    ModeratorTab.REVIEW    -> ReviewQueueScreen(
+                        onNavigateToDetail = { selectedPoint = it }
+                    )
+                    ModeratorTab.HISTORY   -> HistoryScreen()
+                    ModeratorTab.REPORTS   -> ReportsScreen(
+                        onNavigateToDetail = { selectedPoint = it }
+                    )
+                    ModeratorTab.USERS     -> UsersScreen(
+                        onNavigateToUser = { selectedUserId = it }
+                    )
+                }
             }
         }
     }
@@ -82,7 +96,8 @@ fun ModeratorScreen(
 
 @Composable
 fun ReportsScreen(
-    viewModel: DashboardViewModel = hiltViewModel()
+    viewModel: DashboardViewModel = hiltViewModel(),
+    onNavigateToDetail: (TouristPoint) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -139,7 +154,9 @@ fun ReportsScreen(
             ) {
                 items(reportedPoints) { point ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateToDetail(point) },
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
@@ -159,7 +176,7 @@ fun ReportsScreen(
                             Spacer(Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Button(
-                                    onClick = { },
+                                    onClick = { onNavigateToDetail(point) },
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(36.dp),
@@ -171,7 +188,7 @@ fun ReportsScreen(
                                     Text(stringResource(R.string.moderator_review), fontSize = 11.sp)
                                 }
                                 OutlinedButton(
-                                    onClick = { },
+                                    onClick = { onNavigateToDetail(point) },
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(36.dp),
@@ -192,7 +209,8 @@ fun ReportsScreen(
 
 @Composable
 fun UsersScreen(
-    viewModel: UserListViewModel = hiltViewModel()
+    viewModel: UserListViewModel = hiltViewModel(),
+    onNavigateToUser: (String) -> Unit = {}
 ) {
     val seedEmails = remember {
         setOf(
@@ -203,10 +221,12 @@ fun UsersScreen(
         )
     }
     val users by viewModel.users.collectAsStateWithLifecycle()
+    val relations by viewModel.relations.collectAsStateWithLifecycle()
     val createdUsers = users.filter { user ->
         user.role != com.example.demoapp.domain.model.UserRole.ADMIN &&
             user.email.trim().lowercase() !in seedEmails
     }
+    var banDialogUser by remember { mutableStateOf<User?>(null) }
 
     Column(
         modifier = Modifier
@@ -256,8 +276,12 @@ fun UsersScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(createdUsers, key = { it.id }) { user ->
+                    val followersCount = relations.count { it.followingId == user.id }
+                    val followingCount = relations.count { it.followerId == user.id }
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateToUser(user.id) },
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
@@ -269,12 +293,51 @@ fun UsersScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    user.name,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1A1A1A)
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        user.name,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF1A1A1A)
+                                    )
+                                    if (user.isBanned) {
+                                        Box(
+                                            modifier = Modifier
+                                                .background(
+                                                    color = Color(0xFFD32F2F).copy(alpha = 0.15f),
+                                                    shape = RoundedCornerShape(8.dp)
+                                                )
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.moderator_user_status_banned),
+                                                fontSize = 10.sp,
+                                                color = Color(0xFFD32F2F),
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
+                                    if (user.isBanned && user.banAppeal.isNotBlank()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .background(
+                                                    color = Color(0xFFF57C00).copy(alpha = 0.15f),
+                                                    shape = RoundedCornerShape(8.dp)
+                                                )
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.moderator_appeal_pending),
+                                                fontSize = 10.sp,
+                                                color = Color(0xFFF57C00),
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
+                                }
                                 Text(
                                     user.email,
                                     fontSize = 12.sp,
@@ -286,25 +349,28 @@ fun UsersScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        stringResource(R.string.moderator_followers_count, user.followers),
+                                        stringResource(R.string.moderator_followers_count, followersCount),
                                         fontSize = 11.sp,
                                         color = Color(0xFF00897B)
                                     )
                                     Text(
-                                        stringResource(R.string.moderator_following_count, user.following),
+                                        stringResource(R.string.moderator_following_count, followingCount),
                                         fontSize = 11.sp,
                                         color = Color(0xFF2E7D5E)
                                     )
                                 }
                             }
                             IconButton(
-                                onClick = { },
+                                onClick = {
+                                    if (user.isBanned) onNavigateToUser(user.id)
+                                    else banDialogUser = user
+                                },
                                 modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
                                     Icons.Default.Block,
                                     contentDescription = stringResource(R.string.moderator_block_user_desc),
-                                    tint = Color(0xFFD32F2F)
+                                    tint = if (user.isBanned) Color(0xFF9E9E9E) else Color(0xFFD32F2F)
                                 )
                             }
                         }
@@ -313,4 +379,61 @@ fun UsersScreen(
             }
         }
     }
+
+    banDialogUser?.let { target ->
+        BanReasonDialog(
+            user      = target,
+            onDismiss = { banDialogUser = null },
+            onConfirm = { reason ->
+                viewModel.banUser(target.id, reason)
+                banDialogUser = null
+            }
+        )
+    }
+}
+
+@Composable
+private fun BanReasonDialog(
+    user: User,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var reason by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.moderator_ban_dialog_title, user.name)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.moderator_ban_dialog_message),
+                    fontSize = 13.sp,
+                    color = Color(0xFF6B6B6B)
+                )
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = { reason = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.moderator_ban_reason_label)) },
+                    placeholder = { Text(stringResource(R.string.moderator_ban_reason_placeholder)) },
+                    minLines = 3
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(reason) },
+                enabled = reason.isNotBlank()
+            ) {
+                Text(
+                    text = stringResource(R.string.moderator_ban_confirm),
+                    color = Color(0xFFD32F2F)
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        }
+    )
 }

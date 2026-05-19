@@ -28,7 +28,10 @@ data class UserDto(
     val followers: Int = 0,
     val following: Int = 0,
     val savedPublications: List<String> = emptyList(),
-    val fcmToken: String = ""
+    val fcmToken: String = "",
+    val isBanned: Boolean = false,
+    val banReason: String = "",
+    val banAppeal: String = ""
 ) {
     /** Convierte el DTO al modelo de dominio. */
     fun toDomain(): User = User(
@@ -59,7 +62,10 @@ data class UserDto(
         followers = followers,
         following = following,
         savedPublications = savedPublications,
-        fcmToken = fcmToken
+        fcmToken = fcmToken,
+        isBanned = isBanned,
+        banReason = banReason,
+        banAppeal = banAppeal
     )
 
     companion object {
@@ -89,7 +95,10 @@ data class UserDto(
             "followers" to user.followers,
             "following" to user.following,
             "savedPublications" to user.savedPublications,
-            "fcmToken" to user.fcmToken
+            "fcmToken" to user.fcmToken,
+            "isBanned" to user.isBanned,
+            "banReason" to user.banReason,
+            "banAppeal" to user.banAppeal
         )
     }
 }

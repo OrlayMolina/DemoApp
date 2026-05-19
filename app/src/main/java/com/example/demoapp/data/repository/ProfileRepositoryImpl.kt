@@ -2,6 +2,7 @@ package com.example.demoapp.data.repository
 
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.User
+import com.example.demoapp.domain.repository.CommentRepository
 import com.example.demoapp.domain.repository.FollowRepository
 import com.example.demoapp.domain.repository.ProfileRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
@@ -18,7 +19,8 @@ import javax.inject.Singleton
 class ProfileRepositoryImpl @Inject constructor(
     private val userRepository: UserRepository,
     private val touristPointRepository: TouristPointRepository,
-    private val followRepository: FollowRepository
+    private val followRepository: FollowRepository,
+    private val commentRepository: CommentRepository
 ) : ProfileRepository {
 
     override fun observeCurrentUser(): Flow<User?> {
@@ -26,12 +28,18 @@ class ProfileRepositoryImpl @Inject constructor(
     }
 
     override fun observeMyPublications(): Flow<List<TouristPoint>> {
-        return combine(userRepository.currentUser, touristPointRepository.touristPoints) { user, points ->
+        return combine(
+            userRepository.currentUser,
+            touristPointRepository.touristPoints,
+            commentRepository.observeCommentCounts()
+        ) { user, points, counts ->
             val currentUserId = user?.id ?: return@combine emptyList()
-            points.filter { point ->
-                point.authorId == currentUserId ||
-                    point.authorId == "user_$currentUserId"
-            }
+            points
+                .filter { point ->
+                    point.authorId == currentUserId ||
+                        point.authorId == "user_$currentUserId"
+                }
+                .map { point -> point.copy(commentCount = counts[point.id] ?: point.commentCount) }
         }
     }
 

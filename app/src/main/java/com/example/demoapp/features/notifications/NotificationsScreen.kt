@@ -9,10 +9,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.ModeComment
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
@@ -56,15 +59,26 @@ fun NotificationsScreen(
     onNavigateToProfile     : ((String) -> Unit)? = null
 ) {
     val notifications by viewModel.notifications.collectAsStateWithLifecycle()
-    val unreadCount   by viewModel.unreadCount.collectAsStateWithLifecycle()
+    val currentUser   by viewModel.currentUser.collectAsStateWithLifecycle()
 
     var selectedFilter      by remember { mutableStateOf(0) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
+    var showAppealDialog    by remember { mutableStateOf(false) }
+
+    // Espera un poco antes de marcar como leidas para que el usuario perciba la
+    // transicion visual de "no leida" -> "leida".
+    LaunchedEffect(notifications) {
+        if (notifications.any { !it.isRead }) {
+            kotlinx.coroutines.delay(1800)
+            viewModel.markAllAsRead()
+        }
+    }
 
     val displayed = when (selectedFilter) {
         1    -> notifications.filter { !it.isRead }
         else -> notifications
     }.sortedByDescending { it.createdAt }
+    val pendingCount = notifications.count { !it.isRead }
 
     // ── Diálogo confirmar eliminar todo ────────────────────────────────────
     if (showDeleteAllDialog) {
@@ -84,6 +98,29 @@ fun NotificationsScreen(
                 TextButton(onClick = { showDeleteAllDialog = false }) {
                     Text(stringResource(R.string.common_cancel))
                 }
+            }
+        )
+    }
+
+    // ── Diálogo de apelación al moderador (usuario bloqueado) ──────────────
+    if (showAppealDialog) {
+        val ctx = androidx.compose.ui.platform.LocalContext.current
+        val user = currentUser
+        BanAppealDialog(
+            banReason = user?.banReason.orEmpty(),
+            existingAppeal = user?.banAppeal.orEmpty(),
+            onDismiss = { showAppealDialog = false },
+            onSubmit  = { appeal ->
+                val result = viewModel.submitBanAppeal(appeal)
+                result.fold(
+                    onSuccess = {
+                        android.widget.Toast.makeText(ctx, ctx.getString(R.string.ban_appeal_sent), android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    onFailure = {
+                        android.widget.Toast.makeText(ctx, it.message ?: "Error", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                )
+                showAppealDialog = false
             }
         )
     }
@@ -135,8 +172,8 @@ fun NotificationsScreen(
                     onClick  = { selectedFilter = 0 }
                 )
                 FilterPill(
-                    label    = if (unreadCount > 0) {
-                        stringResource(R.string.notifications_filter_unread_count, unreadCount)
+                    label    = if (pendingCount > 0) {
+                        stringResource(R.string.notifications_filter_unread_count, pendingCount)
                     } else {
                         stringResource(R.string.notifications_filter_unread)
                     },
@@ -144,18 +181,6 @@ fun NotificationsScreen(
                     onClick  = { selectedFilter = 1 }
                 )
                 Spacer(Modifier.weight(1f))
-                if (unreadCount > 0) {
-                    TextButton(
-                        onClick        = { viewModel.markAllAsRead() },
-                        contentPadding = PaddingValues(horizontal = 4.dp)
-                    ) {
-                        Text(
-                            text     = stringResource(R.string.notifications_mark_all_read),
-                            fontSize = 11.sp,
-                            color    = GreenPrimary
-                        )
-                    }
-                }
             }
 
             Spacer(Modifier.height(8.dp))
@@ -185,13 +210,20 @@ fun NotificationsScreen(
                             notification = notif,
                             onDismiss    = { viewModel.delete(notif.id) },
                             onClick      = {
-                                viewModel.markAsRead(notif.id)
-                                notif.relatedEntityId?.let { entityId ->
-                                    when (notif.type) {
-                                        NotificationType.FOLLOWER ->
-                                            onNavigateToProfile?.invoke(entityId)
-                                        else ->
-                                            onNavigateToPublication?.invoke(entityId)
+                                when (notif.type) {
+                                    NotificationType.BAN -> {
+                                        if (currentUser?.id == notif.relatedEntityId) {
+                                            showAppealDialog = true
+                                        }
+                                    }
+                                    NotificationType.BAN_APPEAL -> {
+                                        notif.relatedEntityId?.let { onNavigateToProfile?.invoke(it) }
+                                    }
+                                    NotificationType.FOLLOWER -> {
+                                        notif.relatedEntityId?.let { onNavigateToProfile?.invoke(it) }
+                                    }
+                                    else -> {
+                                        notif.relatedEntityId?.let { onNavigateToPublication?.invoke(it) }
                                     }
                                 }
                             }
@@ -261,7 +293,11 @@ private fun NotificationItem(
     notification : Notification,
     onClick      : () -> Unit
 ) {
-    val bgColor = if (notification.isRead) CardWhite else UnreadBg
+    val bgColor by animateColorAsState(
+        targetValue = if (notification.isRead) CardWhite else UnreadBg,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 600),
+        label = "notification_bg"
+    )
 
     Card(
         modifier  = Modifier
@@ -360,8 +396,8 @@ private fun NotificationItem(
                 )
             }
 
-            // ── Punto no leído ─────────────────────────────────────────────
-            if (!notification.isRead) {
+            // ── Punto no leido ─────────────────────────────────────────────
+            androidx.compose.animation.AnimatedVisibility(visible = !notification.isRead) {
                 Box(
                     modifier = Modifier
                         .size(8.dp)
@@ -409,6 +445,9 @@ private fun notifTypeLabel(type: NotificationType) = when (type) {
     NotificationType.REJECTED          -> stringResource(R.string.notifications_type_rejected)
     NotificationType.REVIEW_REMINDER   -> stringResource(R.string.notifications_type_review_reminder)
     NotificationType.ACHIEVEMENT       -> stringResource(R.string.notifications_type_achievement)
+    NotificationType.BAN               -> stringResource(R.string.notifications_type_ban)
+    NotificationType.BAN_APPEAL        -> stringResource(R.string.notifications_type_ban_appeal)
+    NotificationType.BAN_LIFTED        -> stringResource(R.string.notifications_type_ban_lifted)
 }
 
 @Composable
@@ -429,6 +468,12 @@ private fun notifBody(n: Notification) = when (n.type) {
         stringResource(R.string.notifications_body_review_reminder)
     NotificationType.ACHIEVEMENT ->
         stringResource(R.string.notifications_body_achievement, n.publicationTitle.orEmpty())
+    NotificationType.BAN ->
+        stringResource(R.string.notifications_body_ban, n.publicationTitle.orEmpty())
+    NotificationType.BAN_APPEAL ->
+        stringResource(R.string.notifications_body_ban_appeal, n.userName)
+    NotificationType.BAN_LIFTED ->
+        stringResource(R.string.notifications_body_ban_lifted)
 }
 
 private fun notifTypeColor(type: NotificationType) = when (type) {
@@ -440,6 +485,9 @@ private fun notifTypeColor(type: NotificationType) = when (type) {
     NotificationType.REJECTED          -> Color(0xFFD32F2F)
     NotificationType.REVIEW_REMINDER   -> Color(0xFFF57C00)
     NotificationType.ACHIEVEMENT       -> Color(0xFFFFB300)
+    NotificationType.BAN               -> Color(0xFFD32F2F)
+    NotificationType.BAN_APPEAL        -> Color(0xFF6A1B9A)
+    NotificationType.BAN_LIFTED        -> Color(0xFF2E7D5E)
 }
 
 private fun notifTypeIcon(type: NotificationType): ImageVector = when (type) {
@@ -451,4 +499,64 @@ private fun notifTypeIcon(type: NotificationType): ImageVector = when (type) {
     NotificationType.REJECTED          -> Icons.Default.Cancel
     NotificationType.REVIEW_REMINDER   -> Icons.Default.NotificationsActive
     NotificationType.ACHIEVEMENT       -> Icons.Default.EmojiEvents
+    NotificationType.BAN               -> Icons.Default.Block
+    NotificationType.BAN_APPEAL        -> Icons.Default.Forum
+    NotificationType.BAN_LIFTED        -> Icons.Default.LockOpen
+}
+
+@Composable
+private fun BanAppealDialog(
+    banReason     : String,
+    existingAppeal: String,
+    onDismiss     : () -> Unit,
+    onSubmit      : (String) -> Unit
+) {
+    var appeal by remember { mutableStateOf(existingAppeal) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.ban_appeal_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    stringResource(R.string.ban_appeal_reason_label),
+                    fontSize = 12.sp,
+                    color = TextGray,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = banReason.ifBlank { stringResource(R.string.moderator_ban_no_reason) },
+                    fontSize = 13.sp,
+                    color = Color(0xFFD32F2F)
+                )
+                if (existingAppeal.isNotBlank()) {
+                    Text(
+                        stringResource(R.string.ban_appeal_already_sent),
+                        fontSize = 12.sp,
+                        color = Color(0xFFF57C00)
+                    )
+                }
+                OutlinedTextField(
+                    value = appeal,
+                    onValueChange = { appeal = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.ban_appeal_response_label)) },
+                    placeholder = { Text(stringResource(R.string.ban_appeal_response_placeholder)) },
+                    minLines = 3
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSubmit(appeal) },
+                enabled = appeal.isNotBlank()
+            ) {
+                Text(stringResource(R.string.ban_appeal_send), color = GreenPrimary)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        }
+    )
 }
