@@ -18,5 +18,6 @@ data class User (
 
     val followers: Int = 0,
     val following: Int = 0,
-    val savedPublications: List<String> = emptyList()
+    val savedPublications: List<String> = emptyList(),
+    val fcmToken: String = ""
 )

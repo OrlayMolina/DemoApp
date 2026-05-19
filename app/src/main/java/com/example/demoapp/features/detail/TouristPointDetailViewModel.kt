@@ -5,17 +5,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.demoapp.core.notifications.FcmTopicManager
 import com.example.demoapp.domain.model.Comment
+import com.example.demoapp.domain.model.Notification
+import com.example.demoapp.domain.model.NotificationType
 import com.example.demoapp.domain.model.TouristPoint
+import com.example.demoapp.domain.model.User
 import com.example.demoapp.domain.repository.CommentRepository
 import com.example.demoapp.domain.repository.FollowRepository
 import com.example.demoapp.domain.repository.LikeRepository
+import com.example.demoapp.domain.repository.NotificationRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 data class AuthorUiState(
@@ -32,7 +40,8 @@ class TouristPointDetailViewModel @Inject constructor(
     private val commentRepository: CommentRepository,
     private val userRepository: UserRepository,
     private val followRepository: FollowRepository,
-    private val likeRepository: LikeRepository
+    private val likeRepository: LikeRepository,
+    private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
     var point by mutableStateOf<TouristPoint?>(null)
@@ -158,9 +167,26 @@ class TouristPointDetailViewModel @Inject constructor(
 
         if (followRepository.isFollowing(currentUserId, authorId)) {
             followRepository.unfollow(currentUserId, authorId)
+            FcmTopicManager.unsubscribeFromUserPublications(authorId)
         } else {
             followRepository.follow(currentUserId, authorId)
+            FcmTopicManager.subscribeToUserPublications(authorId)
+            notifyAuthorOfNewFollower(currentUser)
         }
+    }
+
+    private fun notifyAuthorOfNewFollower(follower: User) {
+        val notification = Notification(
+            id              = "",
+            type            = NotificationType.FOLLOWER,
+            userName        = follower.name,
+            userAvatarUrl   = follower.profilePictureUrl.takeIf { it.isNotBlank() },
+            date            = SimpleDateFormat("dd MMM, HH:mm", Locale("es")).format(Date()),
+            createdAt       = System.currentTimeMillis(),
+            isRead          = false,
+            relatedEntityId = follower.id
+        )
+        notificationRepository.add(notification)
     }
 
     private fun normalizeUserId(rawId: String): String {

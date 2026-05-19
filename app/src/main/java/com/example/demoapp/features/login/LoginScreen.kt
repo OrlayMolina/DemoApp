@@ -1,6 +1,7 @@
 package com.example.demoapp.features.login
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,10 +16,14 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -80,6 +85,11 @@ fun LoginScreen(
     val loadingMessage = stringResource(R.string.login_snackbar_loading)
     val roleUserLabel = stringResource(R.string.role_user)
     val roleModeratorLabel = stringResource(R.string.role_moderator)
+
+    // En modo moderador, intercepta back para volver al modo usuario en vez de salir al carrusel
+    BackHandler(enabled = selectedRole == UserRole.ADMIN) {
+        selectedRole = UserRole.USER
+    }
 
     LaunchedEffect(loginResult) {
         when (val result = loginResult) {
@@ -153,13 +163,25 @@ fun LoginScreen(
                             onRoleSelected = { selectedRole = it }
                         )
                     } else {
-                        Text(
-                            text       = stringResource(R.string.login_moderator_access),
-                            fontSize   = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color      = Color(0xFF1A1A1A),
-                            modifier   = Modifier.align(Alignment.CenterHorizontally)
-                        )
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            IconButton(
+                                onClick  = { selectedRole = UserRole.USER },
+                                modifier = Modifier.align(Alignment.CenterStart)
+                            ) {
+                                Icon(
+                                    imageVector        = Icons.Default.ArrowBack,
+                                    contentDescription = stringResource(R.string.common_back),
+                                    tint               = Color(0xFF1A1A1A)
+                                )
+                            }
+                            Text(
+                                text       = stringResource(R.string.login_moderator_access),
+                                fontSize   = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color      = Color(0xFF1A1A1A),
+                                modifier   = Modifier.align(Alignment.Center)
+                            )
+                        }
                     }
 
                     // ── Campos ─────────────────────────────────────────────

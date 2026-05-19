@@ -32,7 +32,8 @@ data class TouristPointDto(
     var createdAt: Long = 0L,
     var embedding: List<Double> = emptyList(),
     var aiTags: List<String> = emptyList(),
-    @get:PropertyName("isSaved") @set:PropertyName("isSaved") var isSaved: Boolean = false
+    @get:PropertyName("isSaved") @set:PropertyName("isSaved") var isSaved: Boolean = false,
+    @get:PropertyName("isDraft") @set:PropertyName("isDraft") var isDraft: Boolean = false
 ) {
     fun toDomain(): TouristPoint = TouristPoint(
         id = id,
@@ -58,7 +59,8 @@ data class TouristPointDto(
         createdAt = createdAt,
         embedding = embedding,
         aiTags = aiTags,
-        isSaved = isSaved
+        isSaved = isSaved,
+        isDraft = isDraft
     )
 
     companion object {
@@ -86,7 +88,8 @@ data class TouristPointDto(
             createdAt = domain.createdAt,
             embedding = domain.embedding,
             aiTags = domain.aiTags,
-            isSaved = domain.isSaved
+            isSaved = domain.isSaved,
+            isDraft = domain.isDraft
         )
     }
 }

@@ -26,6 +26,11 @@
     <string name="login_success">Login successful</string>
     <string name="login_failure">Invalid credentials</string>
 
+    <!-- Push Notifications (FCM) -->
+    <string name="fcm_channel_default_name">General notifications</string>
+    <string name="fcm_channel_default_description">Alerts about activity, moderation and community updates</string>
+    <string name="fcm_default_title">DemoApp</string>
+
     <!-- Common -->
     <string name="common_back">Back</string>
     <string name="common_middle_dot">·</string>
@@ -38,16 +43,30 @@
     <string name="register_password_placeholder">At least 8 characters</string>
     <string name="register_confirm_password_label">Confirm password</string>
     <string name="register_confirm_password_placeholder">Repeat your password</string>
-    <string name="register_terms_text">I accept terms and conditions and privacy policy</string>
+    <string name="register_terms_prefix">I accept </string>
+    <string name="register_terms_link">the terms and conditions and the privacy policy</string>
+    <string name="register_terms_dialog_title">Terms and Conditions</string>
+    <string name="register_terms_dialog_accept">Accept</string>
+    <string name="register_terms_dialog_close">Close</string>
+    <string name="register_terms_dialog_body">Welcome to DemoApp. These terms and conditions govern your use of our application. Please read them carefully before continuing with your registration.\n\n1. Acceptance of terms\nBy registering you agree to comply with these terms and conditions in full. If you do not agree with any part, you may not use the service.\n\n2. Use of the service\nDemoApp is an educational demonstration platform. Content posted is the sole responsibility of the user who generates it.\n\n3. User account\nYou must provide truthful information when creating your account. You are responsible for keeping your password confidential and for all activity under your account.\n\n4. Privacy of your data\nThe data you provide will be used only for the purposes of the service. We will not share your personal information with third parties without your consent, except when required by law.\n\n5. User content\nBy posting content you grant DemoApp a non-exclusive license to display it within the platform. You warrant that you hold the rights to whatever you post.\n\n6. Prohibited conduct\nIt is not allowed to post offensive, illegal, defamatory content or content that infringes third-party rights. We reserve the right to remove content or suspend accounts that violate these rules.\n\n7. Intellectual property\nAll rights to the software, design and official content of DemoApp belong to its developers. Reproduction without prior authorization is prohibited.\n\n8. Limitation of liability\nDemoApp is provided \"as is\", without warranties of any kind. We are not liable for damages arising from the use of the application or for temporary unavailability of the service.\n\n9. Modifications\nWe reserve the right to modify these terms at any time. Modifications will take effect from their publication in the application.\n\n10. Contact\nFor any questions you can reach us at support@demoapp.com.\n\nLast updated: May 18, 2026.</string>
     <string name="register_snackbar_loading">Registering user...</string>
     <string name="register_button">Sign up</string>
     <string name="register_have_account">Already have an account? </string>
     <string name="register_login_action">Sign in</string>
     <string name="error_name_required">Name is required</string>
+    <string name="error_name_length">Name must be 30 characters or less</string>
+    <string name="error_city_required">City is required</string>
+    <string name="error_address_required">Address is required</string>
+    <string name="error_phone_required">Phone number is required</string>
+    <string name="error_phone_invalid">Phone number must have 10 digits</string>
     <string name="error_confirm_password_required">Please confirm your password</string>
     <string name="error_passwords_do_not_match">Passwords do not match</string>
     <string name="error_email_already_registered">This email is already registered</string>
     <string name="register_success_welcome">Registration successful. Welcome %1$s</string>
+    <string name="profile_updated_successfully">Profile updated successfully</string>
+    <string name="profile_update_invalid_form">Please complete the required fields</string>
+    <string name="profile_update_no_user">No current user found</string>
+    <string name="profile_update_failed">Could not save profile changes</string>
 
     <!-- Recovery Screen + ViewModel -->
     <string name="recovery_title">Recover password</string>
@@ -102,8 +121,26 @@
     <string name="profile_tab_saved">Saved</string>
     <string name="profile_empty_publications">You do not have publications yet</string>
     <string name="profile_empty_saved">You do not have saved items yet</string>
+    <string name="profile_drafts_title">Drafts (%1$d)</string>
+    <string name="profile_drafts_badge">Draft</string>
+    <string name="profile_drafts_publish">Publish</string>
     <string name="profile_publication_likes">%1$d likes</string>
     <string name="profile_publication_comments">%1$d comments</string>
+
+    <!-- Profile Screen actions -->
+    <string name="txt_name">Name</string>
+    <string name="txt_bio">Biography</string>
+    <string name="txt_city">City</string>
+    <string name="txt_address">Address</string>
+    <string name="txt_phone">Phone</string>
+    <string name="txt_edit">Edit</string>
+    <string name="txt_save">Save</string>
+    <string name="txt_cancel">Cancel</string>
+    <string name="txt_back">Back</string>
+    <string name="profile_edit_photo">Edit photo</string>
+    <string name="profile_take_photo">Take photo</string>
+    <string name="profile_choose_from_gallery">Choose from gallery</string>
+    <string name="permission_camera_denied">Camera permission denied</string>
 
     <!-- Notifications -->
     <string name="notifications_title">Notifications</string>
@@ -123,6 +160,14 @@
     <string name="notifications_body_comment">%1$s commented on your publication \"%2$s\"</string>
     <string name="notifications_body_follower">%1$s started following you</string>
     <string name="notifications_body_verified">Your publication \"%1$s\" has been verified</string>
+    <string name="notifications_type_new_publication">New publication</string>
+    <string name="notifications_type_rejected">Publication rejected</string>
+    <string name="notifications_type_review_reminder">Review reminder</string>
+    <string name="notifications_body_new_publication">%1$s shared: %2$s</string>
+    <string name="notifications_body_rejected">Your publication \"%1$s\" was rejected</string>
+    <string name="notifications_body_review_reminder">You have publications pending review</string>
+    <string name="notifications_type_achievement">Achievement unlocked</string>
+    <string name="notifications_body_achievement">You unlocked the achievement \"%1$s\"!</string>
 
     <!-- Shared actions -->
     <string name="common_edit">Edit</string>

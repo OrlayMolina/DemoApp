@@ -39,7 +39,8 @@ private val DividerColor   = Color(0xFFE0E0E0)
 fun PasswordRecoveryScreen(
     viewModel: PasswordRecoveryViewModel = hiltViewModel(),
     onNavigateBack: (() -> Unit)? = null,
-    onNavigateToLogin: (() -> Unit)? = null
+    onNavigateToLogin: (() -> Unit)? = null,
+    onNavigateToReset: ((String) -> Unit)? = null
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -132,11 +133,18 @@ fun PasswordRecoveryScreen(
                             color    = MaterialTheme.colorScheme.error,
                             fontSize = 13.sp
                         )
-                        is RequestResult.Success -> Text(
-                            result.data,
-                            color    = GreenPrimary,
-                            fontSize = 13.sp
-                        )
+                        is RequestResult.Success -> {
+                            Text(
+                                result.data,
+                                color    = GreenPrimary,
+                                fontSize = 13.sp
+                            )
+                            LaunchedEffect(Unit) {
+                                kotlinx.coroutines.delay(2000)
+                                onNavigateToLogin?.invoke()
+                                viewModel.resetResult()
+                            }
+                        }
                         null -> {}
                     }
 

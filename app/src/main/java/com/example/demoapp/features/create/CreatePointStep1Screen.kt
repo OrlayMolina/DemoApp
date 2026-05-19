@@ -1,11 +1,15 @@
 package com.example.demoapp.features.publish
 
+import android.Manifest
+import android.content.Context
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -16,7 +20,9 @@ import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,14 +30,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import androidx.core.content.FileProvider
 import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPointCategory
 import com.example.demoapp.features.create.CreatePointViewModel
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 // ─── Paleta compartida (internal para el paquete publish) ────────────────────
 
@@ -48,6 +60,13 @@ internal fun categoryLabel(cat: TouristPointCategory) = when (cat) {
     TouristPointCategory.CULTURE       -> "Cultura"
     TouristPointCategory.ENTERTAINMENT -> "Arte Urbano"
     else                               -> "Otro"
+}
+
+private fun createTempImageUri(context: Context): android.net.Uri {
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+    val storageDir = context.cacheDir
+    val image = File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", image)
 }
 
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
@@ -74,7 +93,10 @@ fun CreatePointStep1Screen(
     onNext        : () -> Unit,
     onCancel      : () -> Unit
 ) {
+    val context = LocalContext.current
     var showCategoryMenu by remember { mutableStateOf(false) }
+    var showPhotoSourceDialog by remember { mutableStateOf(false) }
+    var tempCameraUri by remember { mutableStateOf<String?>(null) }
 
     // Permite seleccionar varias fotos de una vez
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -82,6 +104,26 @@ fun CreatePointStep1Screen(
     ) { uris ->
         uris.forEach { uri ->
             onAddPhoto(uri.toString())
+        }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            onAddPhoto(tempCameraUri!!)
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            val uri = createTempImageUri(context)
+            tempCameraUri = uri.toString()
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, context.getString(R.string.permission_camera_denied), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -164,7 +206,7 @@ fun CreatePointStep1Screen(
                                         .clip(RoundedCornerShape(10.dp))
                                         .background(Color(0xFFF0F0F0))
                                         .border(1.dp, DividerColor, RoundedCornerShape(10.dp))
-                                        .clickable { galleryLauncher.launch("image/*") },
+                                        .clickable { showPhotoSourceDialog = true },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Column(
@@ -210,6 +252,41 @@ fun CreatePointStep1Screen(
                                 }
                             }
                         }
+
+                        if (showPhotoSourceDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showPhotoSourceDialog = false },
+                                title = { Text(stringResource(R.string.create_photos_label)) },
+                                text = {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(
+                                            text = "Elige cómo quieres agregar la imagen.",
+                                            fontSize = 13.sp,
+                                            color = TextGray
+                                        )
+                                        TextButton(onClick = {
+                                            showPhotoSourceDialog = false
+                                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                        }) {
+                                            Text("Tomar foto")
+                                        }
+                                        TextButton(onClick = {
+                                            showPhotoSourceDialog = false
+                                            galleryLauncher.launch("image/*")
+                                        }) {
+                                            Text("Elegir de galería")
+                                        }
+                                    }
+                                },
+                                confirmButton = {},
+                                dismissButton = {
+                                    TextButton(onClick = { showPhotoSourceDialog = false }) {
+                                        Text(stringResource(R.string.common_cancel))
+                                    }
+                                }
+                            )
+                        }
+
                         Text(
                             stringResource(R.string.create_max_photos_hint),
                             fontSize = 12.sp,
@@ -385,11 +462,52 @@ private fun AiAssistSection(
                 }
             }
             is CreatePointViewModel.AiSuggestionState.Error -> {
-                Text(
-                    text     = "IA: ${state.message}",
-                    fontSize = 12.sp,
-                    color    = Color(0xFFB00020)
-                )
+                val errorRed   = Color(0xFFB00020)
+                val errorBg    = Color(0xFFFFF3F3)
+                val errorBorder = Color(0xFFFFC9C9)
+                Card(
+                    modifier  = Modifier.fillMaxWidth(),
+                    shape     = RoundedCornerShape(10.dp),
+                    colors    = CardDefaults.cardColors(containerColor = errorBg),
+                    border    = androidx.compose.foundation.BorderStroke(1.dp, errorBorder),
+                    elevation = CardDefaults.cardElevation(0.dp)
+                ) {
+                    Row(
+                        modifier              = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Default.ErrorOutline,
+                            contentDescription = null,
+                            tint               = errorRed,
+                            modifier           = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text     = friendlyAiError(state.message),
+                            fontSize = 12.sp,
+                            color    = errorRed,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(
+                            onClick = onAssist,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Default.Refresh,
+                                contentDescription = null,
+                                tint               = errorRed,
+                                modifier           = Modifier.size(14.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text     = "Reintentar",
+                                fontSize = 12.sp,
+                                color    = errorRed
+                            )
+                        }
+                    }
+                }
             }
             is CreatePointViewModel.AiSuggestionState.Ready -> {
                 Column(
@@ -444,7 +562,7 @@ private fun AiAssistSection(
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FlowRowTags(
     tags         : List<String>,
@@ -474,5 +592,27 @@ private fun FlowRowTags(
                 Text(tag, fontSize = 12.sp, color = fg)
             }
         }
+    }
+}
+
+private fun friendlyAiError(raw: String): String {
+    val r = raw.lowercase()
+    return when {
+        "503" in r || "service unavailable" in r ->
+            "El servicio de IA esta temporalmente fuera de servicio. Intentalo de nuevo en unos minutos."
+        "500" in r || "internal server" in r ->
+            "Error interno del servicio de IA. Intentalo de nuevo."
+        "504" in r || "gateway timeout" in r ->
+            "El servicio tardo demasiado en responder. Intentalo de nuevo."
+        "429" in r || "too many" in r || "rate limit" in r ->
+            "Has hecho demasiadas solicitudes. Espera un momento antes de reintentar."
+        "401" in r || "403" in r || "api key" in r || "permission" in r ->
+            "La clave de IA no es valida o ya no tiene acceso."
+        "timeout" in r || "timed out" in r ->
+            "Tiempo de conexion agotado. Verifica tu red e intentalo de nuevo."
+        "unable to resolve" in r || "no internet" in r || "network" in r || "unreachable" in r ->
+            "Sin conexion a internet. Conectate y vuelve a intentar."
+        "selecciona" in r || "escribe" in r -> raw
+        else -> "No se pudo conectar con la IA. Intentalo de nuevo."
     }
 }

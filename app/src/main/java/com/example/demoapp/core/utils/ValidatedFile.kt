@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.example.demoapp.core.utils
 
 import androidx.compose.runtime.getValue
@@ -28,6 +30,12 @@ class ValidatedField<T>(
     fun onChange(newValue: T) {
         value = newValue
         showError = true
+    }
+
+    // Inicializa el valor sin mostrar error, útil para cargar datos existentes
+    fun initialize(newValue: T) {
+        value = newValue
+        showError = false
     }
 
     // Función para resetear el campo a su valor inicial

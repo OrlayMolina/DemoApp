@@ -1,5 +1,6 @@
 package com.example.demoapp.features.create
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -35,6 +36,16 @@ class CreatePointViewModel @Inject constructor(
     private val aiRepository: AiRepository,
     private val imageLabeler: ImageLabeler
 ) : ViewModel() {
+
+    // Repositorio simple para subir imágenes a ImgBB (se puede inyectar con Hilt si se desea)
+    private val imageRepository = com.example.demoapp.data.ImageRepository()
+
+    // Estados de subida de imagen
+    var isUploadingImage by mutableStateOf(false)
+        private set
+
+    var imageUploadError by mutableStateOf<String?>(null)
+        private set
 
     private var editingPoint: TouristPoint? = null
 
@@ -245,7 +256,11 @@ class CreatePointViewModel @Inject constructor(
     var createResult by mutableStateOf<RequestResult<TouristPoint>?>(null)
         private set
 
-    fun submitPoint(): Boolean {
+    fun submitPoint(): Boolean = persist(asDraft = false)
+
+    fun submitAsDraft(): Boolean = persist(asDraft = true)
+
+    private fun persist(asDraft: Boolean): Boolean {
         if (!isStep1Valid || !isGalleryValid || !isStep2Valid) {
             createResult = RequestResult.Error("Completa los datos requeridos antes de publicar")
             return false
@@ -268,7 +283,8 @@ class CreatePointViewModel @Inject constructor(
                 priceRange = selectedPriceRange ?: PriceRange.FREE,
                 photoUrls = selectedPhotoUrls.toList(),
                 aiTags = if (finalTags.isNotEmpty()) finalTags else basePoint.aiTags,
-                embedding = if (finalEmbedding.isNotEmpty()) finalEmbedding else basePoint.embedding
+                embedding = if (finalEmbedding.isNotEmpty()) finalEmbedding else basePoint.embedding,
+                isDraft = asDraft
             )
         } else {
             val authorId = userRepository.currentUser.value?.id
@@ -289,6 +305,7 @@ class CreatePointViewModel @Inject constructor(
                 priceRange = selectedPriceRange ?: PriceRange.FREE,
                 photoUrls = selectedPhotoUrls.toList(),
                 isVerified = false,
+                isDraft = asDraft,
                 aiTags = finalTags,
                 embedding = finalEmbedding
             )
@@ -303,7 +320,7 @@ class CreatePointViewModel @Inject constructor(
 
             persistResult.fold(
                 onSuccess = {
-                    Log.d("CreatePoint", "Punto persistido en el repo: ${pointToPersist.title}")
+                    Log.d("CreatePoint", "Punto persistido (draft=$asDraft): ${pointToPersist.title}")
                     createResult = RequestResult.Success(pointToPersist)
                 },
                 onFailure = { error ->
@@ -359,5 +376,38 @@ class CreatePointViewModel @Inject constructor(
         aiSuggestion = AiSuggestionState.Idle
         acceptedAiTags.clear()
         lastEmbedding = emptyList()
+    }
+
+    // Subir imagen desde un Uri (usado por la UI Compose al seleccionar/capturar una foto)
+    fun uploadImageFromUri(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            isUploadingImage = true
+            imageUploadError = null
+            val localPreviewUrl = uri.toString()
+
+            // Añadir preview local inmediatamente si no está presente
+            if (!selectedPhotoUrls.contains(localPreviewUrl)) {
+                addPhoto(localPreviewUrl)
+            }
+
+            // Intentar subir; si falla, mantener la preview local para que no desaparezca
+            val remoteUrl = imageRepository.uploadImageFromUri(context, uri)
+            if (remoteUrl != null) {
+                // Reemplazar la preview local por la URL remota en la misma posición
+                val idx = selectedPhotoUrls.indexOf(localPreviewUrl)
+                if (idx >= 0) {
+                    selectedPhotoUrls[idx] = remoteUrl
+                } else {
+                    // si por alguna razón no existe, añadir al final
+                    addPhoto(remoteUrl)
+                }
+            } else {
+                // Mantener el preview local y mostrar un error para poder reintentar
+                imageUploadError = "No se pudo subir la imagen"
+                Log.w("CreatePointViewModel", "Falló la subida de la imagen para: $localPreviewUrl")
+            }
+
+            isUploadingImage = false
+        }
     }
 }

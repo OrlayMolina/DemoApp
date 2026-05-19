@@ -27,6 +27,9 @@ sealed class MainRoutes {
     object PasswordRecovery : MainRoutes()
 
     @Serializable
+    data class PasswordReset(val email: String) : MainRoutes()
+
+    @Serializable
     object Profile : MainRoutes()
 
     @Serializable object Main : MainRoutes()

@@ -9,10 +9,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ModeComment
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -397,10 +401,14 @@ private fun FilterPill(
 
 @Composable
 private fun notifTypeLabel(type: NotificationType) = when (type) {
-    NotificationType.LIKE     -> stringResource(R.string.notifications_type_like)
-    NotificationType.COMMENT  -> stringResource(R.string.notifications_type_comment)
-    NotificationType.FOLLOWER -> stringResource(R.string.notifications_type_follower)
-    NotificationType.VERIFIED -> stringResource(R.string.notifications_type_verified)
+    NotificationType.LIKE              -> stringResource(R.string.notifications_type_like)
+    NotificationType.COMMENT           -> stringResource(R.string.notifications_type_comment)
+    NotificationType.FOLLOWER          -> stringResource(R.string.notifications_type_follower)
+    NotificationType.VERIFIED          -> stringResource(R.string.notifications_type_verified)
+    NotificationType.NEW_PUBLICATION   -> stringResource(R.string.notifications_type_new_publication)
+    NotificationType.REJECTED          -> stringResource(R.string.notifications_type_rejected)
+    NotificationType.REVIEW_REMINDER   -> stringResource(R.string.notifications_type_review_reminder)
+    NotificationType.ACHIEVEMENT       -> stringResource(R.string.notifications_type_achievement)
 }
 
 @Composable
@@ -413,18 +421,34 @@ private fun notifBody(n: Notification) = when (n.type) {
         stringResource(R.string.notifications_body_follower, n.userName)
     NotificationType.VERIFIED ->
         stringResource(R.string.notifications_body_verified, n.publicationTitle.orEmpty())
+    NotificationType.NEW_PUBLICATION ->
+        stringResource(R.string.notifications_body_new_publication, n.userName, n.publicationTitle.orEmpty())
+    NotificationType.REJECTED ->
+        stringResource(R.string.notifications_body_rejected, n.publicationTitle.orEmpty())
+    NotificationType.REVIEW_REMINDER ->
+        stringResource(R.string.notifications_body_review_reminder)
+    NotificationType.ACHIEVEMENT ->
+        stringResource(R.string.notifications_body_achievement, n.publicationTitle.orEmpty())
 }
 
 private fun notifTypeColor(type: NotificationType) = when (type) {
-    NotificationType.LIKE     -> Color(0xFFE91E63)
-    NotificationType.COMMENT  -> Color(0xFF1976D2)
-    NotificationType.FOLLOWER -> Color(0xFF2E7D5E)
-    NotificationType.VERIFIED -> Color(0xFF7B1FA2)
+    NotificationType.LIKE              -> Color(0xFFE91E63)
+    NotificationType.COMMENT           -> Color(0xFF1976D2)
+    NotificationType.FOLLOWER          -> Color(0xFF2E7D5E)
+    NotificationType.VERIFIED          -> Color(0xFF7B1FA2)
+    NotificationType.NEW_PUBLICATION   -> Color(0xFF00897B)
+    NotificationType.REJECTED          -> Color(0xFFD32F2F)
+    NotificationType.REVIEW_REMINDER   -> Color(0xFFF57C00)
+    NotificationType.ACHIEVEMENT       -> Color(0xFFFFB300)
 }
 
 private fun notifTypeIcon(type: NotificationType): ImageVector = when (type) {
-    NotificationType.LIKE     -> Icons.Default.Favorite
-    NotificationType.COMMENT  -> Icons.Default.ModeComment
-    NotificationType.FOLLOWER -> Icons.Default.Person
-    NotificationType.VERIFIED -> Icons.Default.Verified
+    NotificationType.LIKE              -> Icons.Default.Favorite
+    NotificationType.COMMENT           -> Icons.Default.ModeComment
+    NotificationType.FOLLOWER          -> Icons.Default.Person
+    NotificationType.VERIFIED          -> Icons.Default.Verified
+    NotificationType.NEW_PUBLICATION   -> Icons.Default.PostAdd
+    NotificationType.REJECTED          -> Icons.Default.Cancel
+    NotificationType.REVIEW_REMINDER   -> Icons.Default.NotificationsActive
+    NotificationType.ACHIEVEMENT       -> Icons.Default.EmojiEvents
 }

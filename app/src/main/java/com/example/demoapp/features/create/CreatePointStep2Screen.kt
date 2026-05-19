@@ -6,7 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.demoapp.core.component.MapBox
+import com.example.demoapp.core.component.rememberLocationPermissionState
 import com.mapbox.geojson.Point
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -43,6 +44,7 @@ fun CreatePointStep2Screen(
     onSaveDraft : () -> Unit
 ) {
     val context = LocalContext.current
+    val locationPermissionState = rememberLocationPermissionState()
     val latInputNormalized = latitude.replace(',', '.')
     val lngInputNormalized = longitude.replace(',', '.')
     val lat     = latInputNormalized.toDoubleOrNull()  ?: 4.4687891
@@ -88,7 +90,7 @@ fun CreatePointStep2Screen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, stringResource(R.string.common_back), tint = TextDark)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back), tint = TextDark)
                 }
                 Spacer(Modifier.weight(1f))
                 Text(
@@ -125,6 +127,44 @@ fun CreatePointStep2Screen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
 
+                if (!locationPermissionState.hasPermission) {
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF4EE))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Lightbulb,
+                                contentDescription = null,
+                                tint = Color(0xFF2E7D5E),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Activa el permiso de ubicación para usar tu posición en el mapa",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextDark
+                                )
+                                Text(
+                                    text = "Pulsa el botón para abrir el permiso del sistema.",
+                                    fontSize = 12.sp,
+                                    color = TextGray
+                                )
+                            }
+                            TextButton(onClick = { locationPermissionState.requestPermission() }) {
+                                Text("Dar permiso", fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+
                 // ── Mapa ───────────────────────────────────────────────────
                 Card(
                     shape    = RoundedCornerShape(14.dp),
@@ -138,6 +178,7 @@ fun CreatePointStep2Screen(
                         activateClick        = true,
                         clickedPoint         = selectedPoint,
                         showMyLocationButton = true,
+                                locationPermissionState = locationPermissionState,
                         onMapClickListener   = { point ->
                             selectedPoint = point
                             onLatitude(String.format(Locale.US, "%.6f", point.latitude()))
@@ -251,13 +292,19 @@ fun CreatePointStep2Screen(
                 Button(
                     onClick  = {
                         val success = onPublish()
+                        val coordinatesValid = latitude.replace(',', '.').toDoubleOrNull() != null &&
+                            longitude.replace(',', '.').toDoubleOrNull() != null
                         Toast.makeText(
                             context,
                             if (success) {
                                 if (isEditing) context.getString(R.string.create_update_success)
                                 else context.getString(R.string.create_publish_success)
                             } else {
-                                context.getString(R.string.create_invalid_coordinates)
+                                if (!coordinatesValid) {
+                                    context.getString(R.string.create_invalid_coordinates)
+                                } else {
+                                    "Revisa fotos, coordenadas y campos obligatorios"
+                                }
                             },
                             Toast.LENGTH_LONG
                         ).show()
