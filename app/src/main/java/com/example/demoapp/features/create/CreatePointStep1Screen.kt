@@ -80,6 +80,7 @@ fun CreatePointStep1Screen(
     description   : String,
     isEditing     : Boolean = false,
     aiSuggestion  : CreatePointViewModel.AiSuggestionState = CreatePointViewModel.AiSuggestionState.Idle,
+    aiCooldownSeconds: Int = 0,
     acceptedTags  : List<String> = emptyList(),
     onAddPhoto    : (String) -> Unit,
     onRemovePhoto : (String) -> Unit,
@@ -91,6 +92,7 @@ fun CreatePointStep1Screen(
     onApplyAiDescription: () -> Unit = {},
     onDismissAi   : () -> Unit = {},
     onNext        : () -> Unit,
+    onSave        : (() -> String?)? = null,
     onCancel      : () -> Unit
 ) {
     val context = LocalContext.current
@@ -378,6 +380,7 @@ fun CreatePointStep1Screen(
 
                             AiAssistSection(
                                 state               = aiSuggestion,
+                                cooldownSeconds     = aiCooldownSeconds,
                                 acceptedTags        = acceptedTags,
                                 onAssist            = onAiAssist,
                                 onToggleTag         = onToggleTag,
@@ -390,25 +393,52 @@ fun CreatePointStep1Screen(
                 Spacer(Modifier.height(4.dp))
             }
 
-            // ── Botón siguiente ────────────────────────────────────────────
-            Button(
-                onClick  = onNext,
-                enabled  = isFormValid,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .height(50.dp),
-                shape  = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor         = TextDark,
-                    disabledContainerColor = TextDark.copy(alpha = 0.3f)
-                )
+            // ── Botones inferiores ─────────────────────────────────────────
+            Column(
+                modifier            = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    stringResource(R.string.create_next_location),
-                    fontSize   = 15.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Button(
+                    onClick  = onNext,
+                    enabled  = isFormValid,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape  = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor         = TextDark,
+                        disabledContainerColor = TextDark.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Text(
+                        stringResource(R.string.create_next_location),
+                        fontSize   = 15.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                if (isEditing && onSave != null) {
+                    OutlinedButton(
+                        onClick  = {
+                            val error = onSave.invoke()
+                            val message = error
+                                ?: context.getString(R.string.create_update_success)
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                        },
+                        enabled  = isFormValid,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape  = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = TextDark)
+                    ) {
+                        Text(
+                            stringResource(R.string.common_save_changes),
+                            fontSize   = 15.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
             }
         }
     }
@@ -427,6 +457,7 @@ internal fun publishFieldColors() = OutlinedTextFieldDefaults.colors(
 @Composable
 private fun AiAssistSection(
     state              : CreatePointViewModel.AiSuggestionState,
+    cooldownSeconds    : Int = 0,
     acceptedTags       : List<String>,
     onAssist           : () -> Unit,
     onToggleTag        : (String) -> Unit,
@@ -434,16 +465,27 @@ private fun AiAssistSection(
     onDismiss          : () -> Unit
 ) {
     val accent = Color(0xFF2E7D5E)
+    val isLoading = state == CreatePointViewModel.AiSuggestionState.Loading
+    val isCoolingDown = cooldownSeconds > 0
+    val buttonEnabled = !isLoading && !isCoolingDown
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(
             onClick = onAssist,
+            enabled = buttonEnabled,
             shape   = RoundedCornerShape(10.dp),
             modifier = Modifier.fillMaxWidth(),
             colors  = ButtonDefaults.outlinedButtonColors(contentColor = accent)
         ) {
             Icon(Icons.Default.AutoAwesome, null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text("Mejorar con IA", fontSize = 13.sp)
+            Text(
+                text = when {
+                    isLoading      -> "Analizando..."
+                    isCoolingDown  -> "Disponible en ${cooldownSeconds}s"
+                    else           -> "Mejorar con IA"
+                },
+                fontSize = 13.sp
+            )
         }
 
         when (state) {

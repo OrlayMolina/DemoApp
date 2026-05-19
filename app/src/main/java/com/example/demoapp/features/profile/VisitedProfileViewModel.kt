@@ -7,6 +7,7 @@ import com.example.demoapp.domain.model.Notification
 import com.example.demoapp.domain.model.NotificationType
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.domain.model.User
+import com.example.demoapp.domain.repository.CommentRepository
 import com.example.demoapp.domain.repository.FollowRepository
 import com.example.demoapp.domain.repository.NotificationRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
@@ -33,7 +34,8 @@ class VisitedProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val followRepository: FollowRepository,
     private val touristPointRepository: TouristPointRepository,
-    private val notificationRepository: NotificationRepository
+    private val notificationRepository: NotificationRepository,
+    private val commentRepository: CommentRepository
 ) : ViewModel() {
 
     private val _userId = MutableStateFlow<String?>(null)
@@ -75,13 +77,16 @@ class VisitedProfileViewModel @Inject constructor(
 
     val publications: StateFlow<List<TouristPoint>> = combine(
         _userId,
-        touristPointRepository.touristPoints
-    ) { id, points ->
+        touristPointRepository.touristPoints,
+        commentRepository.observeCommentCounts()
+    ) { id, points, counts ->
         if (id == null) emptyList()
-        else points.filter { point ->
-            (point.authorId == id || point.authorId.removePrefix("user_") == id) &&
-                point.isVerified && !point.isRejected
-        }
+        else points
+            .filter { point ->
+                (point.authorId == id || point.authorId.removePrefix("user_") == id) &&
+                    point.isVerified && !point.isRejected
+            }
+            .map { point -> point.copy(commentCount = counts[point.id] ?: point.commentCount) }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     fun load(userId: String) {
@@ -98,11 +103,11 @@ class VisitedProfileViewModel @Inject constructor(
         } else {
             followRepository.follow(currentUser.id, viewedId)
             FcmTopicManager.subscribeToUserPublications(viewedId)
-            notifyAuthorOfNewFollower(currentUser)
+            notifyAuthorOfNewFollower(currentUser, viewedId)
         }
     }
 
-    private fun notifyAuthorOfNewFollower(follower: User) {
+    private fun notifyAuthorOfNewFollower(follower: User, recipientUserId: String) {
         val notification = Notification(
             id              = "",
             type            = NotificationType.FOLLOWER,
@@ -111,7 +116,8 @@ class VisitedProfileViewModel @Inject constructor(
             date            = SimpleDateFormat("dd MMM, HH:mm", Locale("es")).format(Date()),
             createdAt       = System.currentTimeMillis(),
             isRead          = false,
-            relatedEntityId = follower.id
+            relatedEntityId = follower.id,
+            recipientUserId = recipientUserId
         )
         notificationRepository.add(notification)
     }

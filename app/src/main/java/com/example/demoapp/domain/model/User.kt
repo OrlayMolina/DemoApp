@@ -19,5 +19,9 @@ data class User (
     val followers: Int = 0,
     val following: Int = 0,
     val savedPublications: List<String> = emptyList(),
-    val fcmToken: String = ""
+    val fcmToken: String = "",
+
+    val isBanned: Boolean = false,
+    val banReason: String = "",
+    val banAppeal: String = ""
 )

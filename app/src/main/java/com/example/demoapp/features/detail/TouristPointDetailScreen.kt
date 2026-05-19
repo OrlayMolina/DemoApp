@@ -340,14 +340,26 @@ fun TouristPointDetailScreen(
                             .clickable(enabled = author.id.isNotBlank()) { onOpenAuthor(author.id) }
                             .padding(vertical = 4.dp, horizontal = 4.dp)
                     ) {
-                        Box(
-                            modifier         = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(GreenPrimary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(author.initials, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        if (author.profilePictureUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = author.profilePictureUrl,
+                                contentDescription = author.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(GreenPrimary)
+                            )
+                        } else {
+                            Box(
+                                modifier         = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(GreenPrimary),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(author.initials, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                         Column {
                             Text(author.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
@@ -355,7 +367,7 @@ fun TouristPointDetailScreen(
                         }
                     }
 
-                    if (!isModerator) {
+                    if (!isModerator && !viewModel.isOwnPublication) {
                         Button(
                             onClick  = { viewModel.toggleFollow() },
                             shape    = RoundedCornerShape(20.dp),
@@ -412,7 +424,7 @@ fun TouristPointDetailScreen(
                         modifier = Modifier.clickable { showCommentsScreen = true }
                     ) {
                         Icon(Icons.Outlined.ModeComment, null, tint = TextGray, modifier = Modifier.size(20.dp))
-                        Text("${point.commentCount}", fontSize = 14.sp, color = TextGray)
+                        Text("${viewModel.comments.size}", fontSize = 14.sp, color = TextGray)
                     }
                 }
             }
@@ -455,14 +467,26 @@ fun TouristPointDetailScreen(
                                     .clickable(enabled = author.id.isNotBlank()) { onOpenAuthor(author.id) }
                                     .padding(vertical = 4.dp)
                             ) {
-                                Box(
-                                    modifier         = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                        .background(GreenPrimary),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(author.initials, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                if (author.profilePictureUrl.isNotBlank()) {
+                                    AsyncImage(
+                                        model = author.profilePictureUrl,
+                                        contentDescription = author.name,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(GreenPrimary)
+                                    )
+                                } else {
+                                    Box(
+                                        modifier         = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(GreenPrimary),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(author.initials, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                                 Column {
                                     Text(author.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextDark)

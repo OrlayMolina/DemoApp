@@ -30,6 +30,7 @@
     <string name="fcm_channel_default_name">Notificaciones generales</string>
     <string name="fcm_channel_default_description">Avisos de actividad, moderación y novedades de la comunidad</string>
     <string name="fcm_default_title">DemoApp</string>
+    <string name="fcm_default_body">Tienes nueva actividad en DemoApp</string>
 
     <!-- Common -->
     <string name="common_back">Volver</string>
@@ -159,6 +160,47 @@
     <string name="notifications_body_review_reminder">Tienes publicaciones pendientes de revisión</string>
     <string name="notifications_type_achievement">Logro desbloqueado</string>
     <string name="notifications_body_achievement">¡Has desbloqueado el logro \"%1$s\"!</string>
+    <string name="notifications_type_ban">Cuenta restringida</string>
+    <string name="notifications_body_ban">Has sido restringido para publicar. Motivo: %1$s</string>
+    <string name="notifications_type_ban_appeal">Apelación de restricción</string>
+    <string name="notifications_body_ban_appeal">%1$s envió una apelación a su restricción</string>
+    <string name="notifications_type_ban_lifted">Cuenta habilitada</string>
+    <string name="notifications_body_ban_lifted">Tu cuenta ha sido habilitada nuevamente. Ya puedes hacer publicaciones otra vez.</string>
+
+    <!-- Moderador: bloqueo -->
+    <string name="moderator_ban_user">Restringir usuario</string>
+    <string name="moderator_unban_user">Quitar restricción</string>
+    <string name="moderator_ban_dialog_title">Restringir a %1$s</string>
+    <string name="moderator_ban_dialog_message">Indica por qué este usuario ya no podrá crear publicaciones. El usuario recibirá una notificación con tu mensaje.</string>
+    <string name="moderator_ban_reason_label">Motivo</string>
+    <string name="moderator_ban_reason_placeholder">Describe la falta o lineamiento incumplido</string>
+    <string name="moderator_ban_confirm">Restringir</string>
+    <string name="moderator_user_status_banned">Restringido</string>
+    <string name="moderator_user_status_active">Activo</string>
+    <string name="moderator_ban_no_reason">Sin motivo registrado</string>
+    <string name="moderator_appeal_pending">Apelación pendiente</string>
+    <string name="moderator_appeal_section_title">Apelación del usuario</string>
+    <string name="moderator_appeal_empty">El usuario aún no ha enviado una apelación.</string>
+    <string name="moderator_appeal_keep">Mantener restricción</string>
+    <string name="moderator_appeal_accept">Aceptar apelación (desbloquear)</string>
+    <string name="moderator_back_to_users">Volver a usuarios</string>
+    <string name="moderator_user_detail_title">Detalle del usuario</string>
+    <string name="moderator_ban_history_title">Historial de restricción</string>
+    <string name="moderator_ban_history_reason">Motivo: %1$s</string>
+
+    <!-- Usuario: bloqueo -->
+    <string name="ban_appeal_dialog_title">Detalle de la restricción</string>
+    <string name="ban_appeal_reason_label">Motivo del moderador</string>
+    <string name="ban_appeal_response_label">Tu respuesta</string>
+    <string name="ban_appeal_response_placeholder">Explica tu versión al moderador</string>
+    <string name="ban_appeal_send">Enviar respuesta</string>
+    <string name="ban_appeal_sent">Respuesta enviada</string>
+    <string name="ban_appeal_already_sent">Ya enviaste una apelación. El moderador la está revisando.</string>
+    <string name="ban_blocked_publish">Tu cuenta está restringida. No puedes crear nuevas publicaciones.</string>
+
+    <!-- Listas de seguidores -->
+    <string name="follow_list_no_followers">Aún no tienes seguidores</string>
+    <string name="follow_list_no_following">Aún no sigues a nadie</string>
 
     <!-- Shared actions -->
     <string name="common_edit">Editar</string>

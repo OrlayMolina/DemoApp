@@ -34,12 +34,10 @@ class FcmService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
         val data = message.data
-        val title = data["title"]
-            ?: message.notification?.title
-            ?: getString(R.string.fcm_default_title)
-        val body = data["body"]
-            ?: message.notification?.body
-            .orEmpty()
+        val rawTitle = data["title"] ?: message.notification?.title
+        val rawBody  = data["body"]  ?: message.notification?.body
+        val title = rawTitle?.takeIf { it.isNotBlank() } ?: getString(R.string.fcm_default_title)
+        val body  = rawBody?.takeIf  { it.isNotBlank() } ?: getString(R.string.fcm_default_body)
 
         showSystemNotification(title, body)
         saveToInAppList(data)
@@ -81,7 +79,8 @@ class FcmService : FirebaseMessagingService() {
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .build()
 
         getSystemService(NotificationManager::class.java)

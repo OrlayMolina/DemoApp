@@ -18,7 +18,10 @@ import com.example.demoapp.features.map.MapPointsScreen
 import com.example.demoapp.features.notifications.NotificationsScreen
 import com.example.demoapp.features.profile.AchievementScreen
 import com.example.demoapp.features.profile.EditProfileScreen
+import com.example.demoapp.features.profile.FollowListMode
+import com.example.demoapp.features.profile.FollowListScreen
 import com.example.demoapp.features.profile.ProfileScreen
+import com.example.demoapp.features.profile.ProfileViewModel
 import com.example.demoapp.features.profile.StatisticsScreen
 import com.example.demoapp.features.publish.CreatePointStep1Screen
 import com.example.demoapp.features.publish.CreatePointStep2Screen
@@ -38,6 +41,7 @@ fun MainScreen(
     var selectedPoint by remember { mutableStateOf<TouristPoint?>(null) }
     var pointToEdit  by remember { mutableStateOf<TouristPoint?>(null) }
     var selectedUserId by remember { mutableStateOf<String?>(null) }
+    var followListMode by remember { mutableStateOf<FollowListMode?>(null) }
 
     // --- NUEVAS VARIABLES PARA EL FLUJO DE PASOS ---
     var currentPublishStep by remember { mutableStateOf(1) }
@@ -48,12 +52,31 @@ fun MainScreen(
     // El feed solo muestra publicaciones verificadas de usuarios que sigues (o tuyas).
     val verifiedFeedPoints by feedViewModel.feed.collectAsState()
     val likedPostIds by feedViewModel.likedIds.collectAsState()
+    val profileViewModel: ProfileViewModel = hiltViewModel()
+    val myPublications by profileViewModel.myPublications.collectAsState()
+    val currentUser by profileViewModel.user.collectAsState()
     // -----------------------------------------------
 
     LaunchedEffect(pointToEdit?.id) {
         pointToEdit?.let { point ->
             createViewModel.startEditing(point)
             currentPublishStep = 1
+        }
+    }
+
+    followListMode?.let { mode ->
+        val viewerId = currentUser?.id
+        if (viewerId != null) {
+            FollowListScreen(
+                userId = viewerId,
+                mode = mode,
+                onNavigateBack = { followListMode = null },
+                onOpenUser = { userId ->
+                    followListMode = null
+                    selectedUserId = userId
+                }
+            )
+            return
         }
     }
 
@@ -120,6 +143,7 @@ fun MainScreen(
                         ExploreScreen(
                             points = verifiedFeedPoints,
                             likedIds = likedPostIds,
+                            currentUserId = currentUser?.id.orEmpty(),
                             onOpenMap = { showMap = true },
                             onOpenDetail = { point -> selectedPoint = point },
                             onToggleLike = { point -> feedViewModel.toggleLike(point.id) }
@@ -137,6 +161,7 @@ fun MainScreen(
                             description = createViewModel.description.value,
                             isEditing = pointToEdit != null,
                             aiSuggestion = createViewModel.aiSuggestion,
+                            aiCooldownSeconds = createViewModel.aiCooldownSeconds,
                             acceptedTags = createViewModel.acceptedAiTags,
                             onAddPhoto = { strUri -> createViewModel.uploadImageFromUri(context, Uri.parse(strUri)) },
                             onRemovePhoto = { url -> createViewModel.removePhoto(url) },
@@ -154,6 +179,21 @@ fun MainScreen(
                                     currentPublishStep = 2
                                 }
                             },
+                            onSave = if (pointToEdit != null) {
+                                {
+                                    val success = createViewModel.submitPoint()
+                                    if (success) {
+                                        selectedTab = BottomNavTab.HOME
+                                        pointToEdit = null
+                                        currentPublishStep = 1
+                                        createViewModel.reset()
+                                        null
+                                    } else {
+                                        (createViewModel.createResult as? com.example.demoapp.core.utils.RequestResult.Error)?.message
+                                            ?: "No se pudo guardar los cambios"
+                                    }
+                                }
+                            } else null,
                             onCancel = {
                                 selectedTab = BottomNavTab.HOME
                                 pointToEdit = null
@@ -178,8 +218,11 @@ fun MainScreen(
                                     pointToEdit = null
                                     currentPublishStep = 1
                                     createViewModel.reset()
+                                    null
+                                } else {
+                                    (createViewModel.createResult as? com.example.demoapp.core.utils.RequestResult.Error)?.message
+                                        ?: "No se pudo publicar"
                                 }
-                                success
                             },
                             onSaveDraft = {
                                 val success = createViewModel.submitAsDraft()
@@ -201,7 +244,7 @@ fun MainScreen(
                             onNavigateBack = { showAchievements = false }
                         )
                         showStatistics -> StatisticsScreen(
-                            publications   = publishedPoints,
+                            publications   = myPublications,
                             onNavigateBack = { showStatistics = false }
                         )
                         showEditProfile -> EditProfileScreen(
@@ -229,6 +272,8 @@ fun MainScreen(
                                 pointToEdit  = point
                                 selectedTab  = BottomNavTab.PUBLISH
                             },
+                            onShowFollowers          = { followListMode = FollowListMode.FOLLOWERS },
+                            onShowFollowing          = { followListMode = FollowListMode.FOLLOWING },
                             onLogout = onLogout
                         )
                     }

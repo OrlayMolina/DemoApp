@@ -21,6 +21,9 @@ class LocalNotifier @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
     fun show(title: String, body: String) {
+        val safeTitle = title.takeIf { it.isNotBlank() } ?: context.getString(R.string.app_name)
+        val safeBody  = body.takeIf { it.isNotBlank() } ?: context.getString(R.string.fcm_default_body)
+
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -33,12 +36,13 @@ class LocalNotifier @Inject constructor(
 
         val notification = NotificationCompat.Builder(context, NotificationChannelIds.DEFAULT)
             .setSmallIcon(R.mipmap.logo_red_explora)
-            .setContentTitle(title)
-            .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setContentTitle(safeTitle)
+            .setContentText(safeBody)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(safeBody))
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .build()
 
         context.getSystemService(NotificationManager::class.java)

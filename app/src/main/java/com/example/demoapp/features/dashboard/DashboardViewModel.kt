@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.demoapp.domain.model.User
 import com.example.demoapp.domain.model.UserRole
 import com.example.demoapp.domain.model.TouristPoint
+import com.example.demoapp.domain.repository.ReviewHistoryRepository
 import com.example.demoapp.domain.repository.TouristPointRepository
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,14 +39,16 @@ data class DashboardUiState(
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     touristPointRepository: TouristPointRepository,
-    userRepository: UserRepository
+    userRepository: UserRepository,
+    reviewHistoryRepository: ReviewHistoryRepository
 ) : ViewModel() {
 
 
     val uiState: StateFlow<DashboardUiState> = combine(
         touristPointRepository.touristPoints,
-        userRepository.users
-    ) { points, users ->
+        userRepository.users,
+        reviewHistoryRepository.history
+    ) { points, users, reviews ->
         val now = System.currentTimeMillis()
         val dayMs = 86_400_000L
 
@@ -82,14 +85,22 @@ class DashboardViewModel @Inject constructor(
             recentActivity = recentItems,
             reviewsToday = reviewsToday,
             precision = precision,
-            // Metrica derivada para evitar valor fijo.
-            minPerReview = if (reviewsToday == 0) 0f else 2.5f
+            minPerReview = computeMinPerReview(reviews.map { it.reviewedAt }, now, dayMs)
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = DashboardUiState()
     )
+
+    private fun computeMinPerReview(reviewTimestamps: List<Long>, now: Long, dayMs: Long): Float {
+        val todayReviews = reviewTimestamps
+            .filter { now - it <= dayMs }
+            .sorted()
+        if (todayReviews.size < 2) return 0f
+        val spanMs = todayReviews.last() - todayReviews.first()
+        return (spanMs / 60_000f) / (todayReviews.size - 1)
+    }
 
 
     private fun toTimeSlot(deltaMs: Long): ActivityTimeSlot {

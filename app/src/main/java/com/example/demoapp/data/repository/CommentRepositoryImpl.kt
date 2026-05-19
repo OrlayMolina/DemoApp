@@ -60,6 +60,12 @@ class CommentRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun observeCommentCounts(): Flow<Map<String, Int>> {
+        return _comments.map { list ->
+            list.groupingBy { it.pointId }.eachCount()
+        }
+    }
+
     override fun addComment(
         pointId: String,
         authorId: String,

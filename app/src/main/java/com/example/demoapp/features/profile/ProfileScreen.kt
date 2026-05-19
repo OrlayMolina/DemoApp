@@ -76,6 +76,8 @@ fun ProfileScreen(
     onNavigateToStatistics: (() -> Unit)? = null,
     onOpenPublication: ((TouristPoint) -> Unit)? = null,
     onEditPublication: ((TouristPoint) -> Unit)? = null,
+    onShowFollowers: (() -> Unit)? = null,
+    onShowFollowing: (() -> Unit)? = null,
     onLogout: (() -> Unit)? = null,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -209,11 +211,13 @@ fun ProfileScreen(
                         )
                         StatItem(
                             value = followers.toString(),
-                            label = stringResource(R.string.profile_stat_followers)
+                            label = stringResource(R.string.profile_stat_followers),
+                            onClick = onShowFollowers
                         )
                         StatItem(
                             value = following.toString(),
-                            label = stringResource(R.string.profile_stat_following)
+                            label = stringResource(R.string.profile_stat_following),
+                            onClick = onShowFollowing
                         )
                     }
 
@@ -370,8 +374,19 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun StatItem(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun StatItem(value: String, label: String, onClick: (() -> Unit)? = null) {
+    val modifier = if (onClick != null) {
+        Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    } else {
+        Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
         Text(
             text = value,
             fontSize = 18.sp,

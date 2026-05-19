@@ -127,6 +127,9 @@ class TouristPointRepositoryImpl @Inject constructor(
     }
 
     override suspend fun save(point: TouristPoint): Result<Unit> {
+        if (userRepository.currentUser.value?.isBanned == true) {
+            return Result.failure(IllegalStateException("Tu cuenta esta restringida. No puedes crear nuevas publicaciones."))
+        }
         return runCatching {
             // Aseguramos que el createdAt sea el actual al momento de guardar
             val pointWithDate = point.copy(createdAt = System.currentTimeMillis())
@@ -221,14 +224,27 @@ class TouristPointRepositoryImpl @Inject constructor(
             date            = SimpleDateFormat("dd MMM, HH:mm", Locale("es")).format(Date(now)),
             createdAt       = now,
             isRead          = false,
-            relatedEntityId = point.id
+            relatedEntityId = point.id,
+            recipientUserId = point.authorId.removePrefix("user_")
         )
         notificationRepository.add(notification)
+    }
+
+    override fun markVisit(pointId: String, userId: String): Result<Unit> {
+        if (userId.isBlank()) return Result.failure(IllegalArgumentException("userId vacio"))
+        val current = findById(pointId) ?: return Result.failure(NoSuchElementException("Punto no encontrado: $pointId"))
+        // No contamos visitas del propio autor ni duplicados
+        if (current.authorId == userId || current.authorId.removePrefix("user_") == userId) return Result.success(Unit)
+        if (current.visitedByUserIds.contains(userId)) return Result.success(Unit)
+        return update(current.copy(visitedByUserIds = current.visitedByUserIds + userId))
     }
 
     override fun publishDraft(id: String): Result<Unit> {
         val current = findById(id) ?: return Result.failure(NoSuchElementException("Punto no encontrado: $id"))
         if (!current.isDraft) return Result.failure(IllegalStateException("El punto no es un borrador"))
+        if (userRepository.currentUser.value?.isBanned == true) {
+            return Result.failure(IllegalStateException("Tu cuenta esta restringida. No puedes publicar borradores."))
+        }
         val updated = current.copy(
             isDraft = false,
             isVerified = false,

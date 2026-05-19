@@ -95,7 +95,7 @@ class AchievementRepositoryImpl @Inject constructor(
                             firestore.collection(COLLECTION).document(key).set(dto).await()
                         }.onFailure { Log.e(TAG, "Error saving achievement: ${it.message}", it) }
                     }
-                    notifyAchievementUnlocked(type, now)
+                    notifyAchievementUnlocked(type, now, userId)
                 } else if (!isUnlocked && dates[key] != null) {
                     // Logro ya no cumple criterios: limpia el doc obsoleto en Firestore.
                     // Asi cuando vuelva a cumplirse, dispara el unlock + notificacion de nuevo.
@@ -131,7 +131,7 @@ class AchievementRepositoryImpl @Inject constructor(
         return computeProgress(type, authoredPoints).coerceAtMost(type.goal)
     }
 
-    private fun notifyAchievementUnlocked(type: AchievementType, timestamp: Long) {
+    private fun notifyAchievementUnlocked(type: AchievementType, timestamp: Long, userId: String) {
         val title = resourceProvider.getString(achievementTitleResId(type))
         val notification = Notification(
             id              = "",
@@ -141,16 +141,12 @@ class AchievementRepositoryImpl @Inject constructor(
             date            = SimpleDateFormat("dd MMM, HH:mm", Locale("es")).format(Date(timestamp)),
             createdAt       = timestamp,
             isRead          = false,
-            relatedEntityId = type.id
+            relatedEntityId = type.id,
+            recipientUserId = userId
         )
         notificationRepository.add(notification)
-
-        // System tray (mismo device): el unlock ocurre en el device del usuario afectado,
-        // asi que podemos mostrar la notif del sistema sin pasar por FCM
-        localNotifier.show(
-            title = resourceProvider.getString(R.string.notifications_type_achievement),
-            body  = resourceProvider.getString(R.string.notifications_body_achievement, title)
-        )
+        // El push del sistema lo dispara NotificationPushObserver al detectar la nueva
+        // notificacion dirigida a este usuario.
     }
 
     private fun achievementTitleResId(type: AchievementType): Int = when (type) {

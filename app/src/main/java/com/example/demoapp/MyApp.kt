@@ -25,7 +25,7 @@ class MyApp : Application() {
         val channel = NotificationChannel(
             NotificationChannelIds.DEFAULT,
             getString(R.string.fcm_channel_default_name),
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = getString(R.string.fcm_channel_default_description)
         }

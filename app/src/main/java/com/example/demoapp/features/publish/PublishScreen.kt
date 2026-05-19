@@ -62,7 +62,7 @@ fun PublishScreen(
             onLongitude = { longitude = it },
             onAddress   = { address   = it },
             onBack      = { step = 1 },
-            onPublish   = { resetAll(); onCancel(); true },
+            onPublish   = { resetAll(); onCancel(); null },
             onSaveDraft = { resetAll(); onCancel() }
         )
     }

@@ -1,23 +1,37 @@
 package com.example.demoapp.features.users.list
 
 import androidx.lifecycle.ViewModel
+import com.example.demoapp.domain.model.FollowRelation
 import com.example.demoapp.domain.model.User
-import com.example.demoapp.domain.model.UserRole
+import com.example.demoapp.domain.repository.FollowRepository
 import com.example.demoapp.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 
-@HiltViewModel // Anotamos el ViewModel con @HiltViewModel para que Hilt pueda inyectarlo
+@HiltViewModel
 class UserListViewModel @Inject constructor(
-    private val repository: UserRepository
+    private val repository: UserRepository,
+    private val followRepository: FollowRepository
 ) : ViewModel() {
 
-    // Exponemos la lista de usuarios desde el repositorio como un StateFlow para que la UI pueda observar los cambios
     val users: StateFlow<List<User>> = repository.users
+    val relations: StateFlow<List<FollowRelation>> = followRepository.relations
 
+    fun followersCount(userId: String): Int =
+        relations.value.count { it.followingId == userId }
+
+    fun followingCount(userId: String): Int =
+        relations.value.count { it.followerId == userId }
+
+    fun banUser(userId: String, reason: String) {
+        repository.banUser(userId, reason)
+    }
+
+    fun unbanUser(userId: String) {
+        repository.unbanUser(userId)
+    }
 }
 
 

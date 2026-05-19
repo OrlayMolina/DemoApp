@@ -85,6 +85,14 @@ fun EditProfileScreen(
     val bio = viewModel.bio
     val profilePictureUrl = viewModel.profilePictureUrl
     val darkModeEnabled = viewModel.darkModeEnabled
+    val isUploadingPhoto = viewModel.isUploadingPhoto
+    val photoUploadError = viewModel.photoUploadError
+
+    LaunchedEffect(photoUploadError) {
+        photoUploadError?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     var showPhotoDialog by remember { mutableStateOf(false) }
     var tempCameraUri by remember { mutableStateOf<String?>(null) }
@@ -92,14 +100,14 @@ fun EditProfileScreen(
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        if (uri != null) viewModel.onProfilePictureChange(uri.toString())
+        if (uri != null) viewModel.uploadProfilePicture(context, uri)
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success && tempCameraUri != null) {
-            viewModel.onProfilePictureChange(tempCameraUri!!)
+            viewModel.uploadProfilePicture(context, android.net.Uri.parse(tempCameraUri!!))
         }
     }
 
@@ -220,6 +228,21 @@ fun EditProfileScreen(
                             )
                         }
                     }
+                    if (isUploadingPhoto) {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.35f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
                     // Badge editar foto
                     Box(
                         modifier         = Modifier
@@ -227,7 +250,7 @@ fun EditProfileScreen(
                             .clip(CircleShape)
                             .background(BluePrimary)
                             .border(2.dp, CardWhite, CircleShape)
-                                            .clickable { showPhotoDialog = true },
+                                            .clickable(enabled = !isUploadingPhoto) { showPhotoDialog = true },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Default.CameraAlt, null, tint = Color.White, modifier = Modifier.size(14.dp))
