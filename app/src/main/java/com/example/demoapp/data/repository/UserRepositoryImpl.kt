@@ -90,7 +90,9 @@ class UserRepositoryImpl @Inject constructor(
             } else {
                 val doc = Tasks.await(firestore.collection(COLLECTION).document(uid).get())
                 val userByUid = doc.toObject(UserDto::class.java)?.copy(id = uid)?.toDomain()
-                userByUid ?: findProfileByEmailAndMoveToAuthUid(email, uid)
+                userByUid
+                    ?: findProfileByEmailAndMoveToAuthUid(email, uid)
+                    ?: createProfileForAuthUser(uid, email)
             }
 
             _currentUser.value = finalUser
@@ -99,6 +101,37 @@ class UserRepositoryImpl @Inject constructor(
             Log.e(TAG, "Error logging in with Firebase Auth: ${e.message}")
             null
         }
+    }
+
+    /**
+     * Crea un perfil minimo en Firestore para un usuario que existe en Firebase Auth
+     * pero aun no tiene doc en Firestore (ej. lo creaste manualmente en la consola).
+     * Detecta el rol por el patron del email: admin@... -> ADMIN, resto -> USER.
+     */
+    private fun createProfileForAuthUser(uid: String, email: String): User {
+        val normalizedEmail = email.trim().lowercase()
+        val isAdmin = normalizedEmail.startsWith("admin@")
+        val displayName = normalizedEmail
+            .substringBefore("@")
+            .replaceFirstChar { it.titlecase() }
+
+        val newUser = User(
+            id       = uid,
+            name     = displayName,
+            city     = "",
+            address  = "",
+            email    = normalizedEmail,
+            password = "",
+            role     = if (isAdmin) UserRole.ADMIN else UserRole.USER
+        )
+
+        Tasks.await(
+            firestore.collection(COLLECTION)
+                .document(uid)
+                .set(UserDto.fromDomain(newUser))
+        )
+        Log.d(TAG, "Auto-created Firestore profile for Auth user $email ($uid), role=${newUser.role}")
+        return newUser
     }
 
     private fun findProfileByEmailAndMoveToAuthUid(email: String, uid: String): User? {
