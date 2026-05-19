@@ -24,6 +24,20 @@ val geminiApiKey: String = run {
     fromProp ?: fromEnv ?: fromLocal ?: ""
 }
 
+val imgbbApiKey: String = run {
+    val fromProp = project.findProperty("IMGBB_API_KEY") as String?
+    val fromEnv = System.getenv("IMGBB_API_KEY")
+    val fromLocal = run {
+        val f = rootProject.file("local.properties")
+        if (f.exists()) {
+            val props = Properties()
+            f.inputStream().use { props.load(it) }
+            props.getProperty("IMGBB_API_KEY")
+        } else null
+    }
+    fromProp ?: fromEnv ?: fromLocal ?: ""
+}
+
 android {
     namespace = "com.example.demoapp"
     compileSdk = 36
@@ -38,6 +52,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+        buildConfigField("String", "IMGBB_API_KEY", "\"$imgbbApiKey\"")
     }
 
     buildTypes {
@@ -108,5 +123,9 @@ dependencies {
 
     implementation(libs.mlkit.image.labeling)
     implementation(libs.okhttp)
+
+    // Retrofit para las peticiones de red
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
 }

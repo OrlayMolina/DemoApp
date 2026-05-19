@@ -292,13 +292,19 @@ fun CreatePointStep2Screen(
                 Button(
                     onClick  = {
                         val success = onPublish()
+                        val coordinatesValid = latitude.replace(',', '.').toDoubleOrNull() != null &&
+                            longitude.replace(',', '.').toDoubleOrNull() != null
                         Toast.makeText(
                             context,
                             if (success) {
                                 if (isEditing) context.getString(R.string.create_update_success)
                                 else context.getString(R.string.create_publish_success)
                             } else {
-                                context.getString(R.string.create_invalid_coordinates)
+                                if (!coordinatesValid) {
+                                    context.getString(R.string.create_invalid_coordinates)
+                                } else {
+                                    "Revisa fotos, coordenadas y campos obligatorios"
+                                }
                             },
                             Toast.LENGTH_LONG
                         ).show()
