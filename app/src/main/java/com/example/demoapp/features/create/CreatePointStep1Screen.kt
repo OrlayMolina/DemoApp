@@ -1,11 +1,15 @@
 package com.example.demoapp.features.publish
 
+import android.Manifest
+import android.content.Context
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -26,14 +30,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import androidx.core.content.FileProvider
 import com.example.demoapp.R
 import com.example.demoapp.domain.model.TouristPointCategory
 import com.example.demoapp.features.create.CreatePointViewModel
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 // ─── Paleta compartida (internal para el paquete publish) ────────────────────
 
@@ -50,6 +60,13 @@ internal fun categoryLabel(cat: TouristPointCategory) = when (cat) {
     TouristPointCategory.CULTURE       -> "Cultura"
     TouristPointCategory.ENTERTAINMENT -> "Arte Urbano"
     else                               -> "Otro"
+}
+
+private fun createTempImageUri(context: Context): android.net.Uri {
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+    val storageDir = context.cacheDir
+    val image = File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", image)
 }
 
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
@@ -76,7 +93,10 @@ fun CreatePointStep1Screen(
     onNext        : () -> Unit,
     onCancel      : () -> Unit
 ) {
+    val context = LocalContext.current
     var showCategoryMenu by remember { mutableStateOf(false) }
+    var showPhotoSourceDialog by remember { mutableStateOf(false) }
+    var tempCameraUri by remember { mutableStateOf<String?>(null) }
 
     // Permite seleccionar varias fotos de una vez
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -84,6 +104,26 @@ fun CreatePointStep1Screen(
     ) { uris ->
         uris.forEach { uri ->
             onAddPhoto(uri.toString())
+        }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            onAddPhoto(tempCameraUri!!)
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            val uri = createTempImageUri(context)
+            tempCameraUri = uri.toString()
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, context.getString(R.string.permission_camera_denied), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -166,7 +206,7 @@ fun CreatePointStep1Screen(
                                         .clip(RoundedCornerShape(10.dp))
                                         .background(Color(0xFFF0F0F0))
                                         .border(1.dp, DividerColor, RoundedCornerShape(10.dp))
-                                        .clickable { galleryLauncher.launch("image/*") },
+                                        .clickable { showPhotoSourceDialog = true },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Column(
@@ -212,6 +252,41 @@ fun CreatePointStep1Screen(
                                 }
                             }
                         }
+
+                        if (showPhotoSourceDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showPhotoSourceDialog = false },
+                                title = { Text(stringResource(R.string.create_photos_label)) },
+                                text = {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(
+                                            text = "Elige cómo quieres agregar la imagen.",
+                                            fontSize = 13.sp,
+                                            color = TextGray
+                                        )
+                                        TextButton(onClick = {
+                                            showPhotoSourceDialog = false
+                                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                        }) {
+                                            Text("Tomar foto")
+                                        }
+                                        TextButton(onClick = {
+                                            showPhotoSourceDialog = false
+                                            galleryLauncher.launch("image/*")
+                                        }) {
+                                            Text("Elegir de galería")
+                                        }
+                                    }
+                                },
+                                confirmButton = {},
+                                dismissButton = {
+                                    TextButton(onClick = { showPhotoSourceDialog = false }) {
+                                        Text(stringResource(R.string.common_cancel))
+                                    }
+                                }
+                            )
+                        }
+
                         Text(
                             stringResource(R.string.create_max_photos_hint),
                             fontSize = 12.sp,
@@ -487,7 +562,7 @@ private fun AiAssistSection(
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FlowRowTags(
     tags         : List<String>,

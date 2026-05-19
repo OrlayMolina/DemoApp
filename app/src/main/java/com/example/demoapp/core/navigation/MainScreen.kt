@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.demoapp.domain.model.TouristPoint
 import com.example.demoapp.features.create.CreatePointViewModel
@@ -40,6 +42,7 @@ fun MainScreen(
     // --- NUEVAS VARIABLES PARA EL FLUJO DE PASOS ---
     var currentPublishStep by remember { mutableStateOf(1) }
     val createViewModel: CreatePointViewModel = hiltViewModel()
+    val context = LocalContext.current
     val publishedPoints by createViewModel.touristPoints.collectAsState()
     val feedViewModel: FeedViewModel = hiltViewModel()
     // El feed solo muestra publicaciones verificadas de usuarios que sigues (o tuyas).
@@ -135,7 +138,7 @@ fun MainScreen(
                             isEditing = pointToEdit != null,
                             aiSuggestion = createViewModel.aiSuggestion,
                             acceptedTags = createViewModel.acceptedAiTags,
-                            onAddPhoto = { url -> createViewModel.addPhoto(url) },
+                            onAddPhoto = { strUri -> createViewModel.uploadImageFromUri(context, Uri.parse(strUri)) },
                             onRemovePhoto = { url -> createViewModel.removePhoto(url) },
                             onTitle = { createViewModel.title.onChange(it) },
                             onCategory = { categoryEnum ->

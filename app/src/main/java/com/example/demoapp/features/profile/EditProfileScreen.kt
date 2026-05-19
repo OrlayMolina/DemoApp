@@ -1,8 +1,15 @@
 package com.example.demoapp.features.profile
 
 import android.widget.Toast
+import android.Manifest
+import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -53,6 +60,13 @@ private fun safeInitials(value: String): String {
     return initials.ifBlank { "?" }
 }
 
+private fun createTempImageUri(context: Context): android.net.Uri {
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+    val storageDir = context.cacheDir
+    val image = File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", image)
+}
+
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 
 @Composable
@@ -72,10 +86,33 @@ fun EditProfileScreen(
     val profilePictureUrl = viewModel.profilePictureUrl
     val darkModeEnabled = viewModel.darkModeEnabled
 
+    var showPhotoDialog by remember { mutableStateOf(false) }
+    var tempCameraUri by remember { mutableStateOf<String?>(null) }
+
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) viewModel.onProfilePictureChange(uri.toString())
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            viewModel.onProfilePictureChange(tempCameraUri!!)
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            val uri = createTempImageUri(context)
+            tempCameraUri = uri.toString()
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, context.getString(R.string.permission_camera_denied), Toast.LENGTH_SHORT).show()
+        }
     }
 
     val maxBio = 150
@@ -190,11 +227,32 @@ fun EditProfileScreen(
                             .clip(CircleShape)
                             .background(BluePrimary)
                             .border(2.dp, CardWhite, CircleShape)
-                            .clickable { photoPicker.launch("image/*") },
+                                            .clickable { showPhotoDialog = true },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Default.CameraAlt, null, tint = Color.White, modifier = Modifier.size(14.dp))
                     }
+                                    // Dialog para elegir cámara o galería
+                                    if (showPhotoDialog) {
+                                        AlertDialog(
+                                            onDismissRequest = { showPhotoDialog = false },
+                                            title = { Text(stringResource(R.string.profile_edit_change_photo_hint)) },
+                                            text = {
+                                                Column {
+                                                    TextButton(onClick = {
+                                                        showPhotoDialog = false
+                                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                                    }) { Text(stringResource(R.string.profile_take_photo)) }
+                                                    TextButton(onClick = {
+                                                        showPhotoDialog = false
+                                                        photoPicker.launch("image/*")
+                                                    }) { Text(stringResource(R.string.profile_choose_from_gallery)) }
+                                                }
+                                            },
+                                            confirmButton = {},
+                                            dismissButton = {}
+                                        )
+                                    }
                 }
 
                 Text(

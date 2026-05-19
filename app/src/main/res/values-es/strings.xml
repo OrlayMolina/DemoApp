@@ -9,7 +9,7 @@
     <string name="login_email_placeholder">tu@email.com</string>
     <string name="login_password_label">Contraseña</string>
     <string name="login_forgot_password">¿Olvidaste tu contraseña?</string>
-    <string name="login_snackbar_loading">Iniciando sesión...</string>
+    <string name="login_snackbar_loading">Iniciando sesión…</string>
     <string name="login_button">Iniciar sesión</string>
     <string name="login_moderator_button">Acceso moderador</string>
     <string name="login_no_account">¿No tienes cuenta? </string>
@@ -72,7 +72,7 @@
     <string name="reset_title">Restablecer contraseña</string>
     <string name="reset_subtitle">Ingresa el código de 5 dígitos que recibiste.</string>
     <string name="reset_new_password_label">Nueva contraseña</string>
-    <string name="reset_snackbar_loading">Procesando restablecimiento...</string>
+    <string name="reset_snackbar_loading">Procesando restablecimiento…</string>
     <string name="reset_button">Restablecer contraseña</string>
     <string name="reset_error_code_invalid">Código inválido o expirado</string>
     <string name="reset_success">Contraseña restablecida correctamente</string>
@@ -89,7 +89,7 @@
     <string name="users_default_avatar_desc">Avatar por defecto</string>
     <string name="users_tap_for_details">Tap para ver detalles</string>
     <string name="users_go_to_detail_desc">Ir al detalle</string>
-    <string name="users_loading">Cargando usuario...</string>
+    <string name="users_loading">Cargando usuario…</string>
     <string name="profile_photo_desc">Foto de perfil</string>
     <string name="users_info_title">Información del usuario</string>
     <string name="users_info_id">ID: %1$s</string>
@@ -117,6 +117,21 @@
     <string name="profile_drafts_publish">Publicar</string>
     <string name="profile_publication_likes">%1$d likes</string>
     <string name="profile_publication_comments">%1$d comentarios</string>
+
+    <!-- Profile Screen actions -->
+    <string name="txt_name">Nombre</string>
+    <string name="txt_bio">Biografía</string>
+    <string name="txt_city">Ciudad</string>
+    <string name="txt_address">Dirección</string>
+    <string name="txt_phone">Teléfono</string>
+    <string name="txt_edit">Editar</string>
+    <string name="txt_save">Guardar</string>
+    <string name="txt_cancel">Cancelar</string>
+    <string name="txt_back">Volver</string>
+    <string name="profile_edit_photo">Editar foto</string>
+    <string name="profile_take_photo">Tomar foto</string>
+    <string name="profile_choose_from_gallery">Elegir de la galería</string>
+    <string name="permission_camera_denied">Permiso de cámara denegado</string>
 
     <!-- Notifications -->
     <string name="notifications_title">Notificaciones</string>
@@ -233,9 +248,9 @@
     <string name="home_feature_4_desc">Desbloquea badges y sube de nivel mientras exploras</string>
 
     <!-- Comments -->
-    <string name="comments_loading">Cargando comentarios...</string>
+    <string name="comments_loading">Cargando comentarios…</string>
     <string name="comments_empty">Aún no hay comentarios. Sé el primero en comentar.</string>
-    <string name="comments_input_placeholder">Escribe un comentario...</string>
+    <string name="comments_input_placeholder">Escribe un comentario…</string>
     <string name="comments_send_desc">Publicar comentario</string>
     <string name="comments_photo_of">Foto de %1$s</string>
     <string name="comments_time_now">ahora</string>
@@ -252,7 +267,7 @@
     <string name="history_tab_all_count">Todas (%1$d)</string>
     <string name="history_tab_approved_count">Aprobadas (%1$d)</string>
     <string name="history_tab_rejected_count">Rechazadas (%1$d)</string>
-    <string name="history_search_placeholder">Buscar en historial...</string>
+    <string name="history_search_placeholder">Buscar en historial…</string>
     <string name="history_no_results">Sin resultados</string>
     <string name="history_summary_total">Total</string>
     <string name="history_rejection_reason">Razón: %1$s</string>
@@ -293,7 +308,7 @@
     <!-- Explore -->
     <string name="explore_title">Explorar</string>
     <string name="explore_open_map_desc">Ver mapa</string>
-    <string name="explore_search_placeholder">Buscar lugares ...</string>
+    <string name="explore_search_placeholder">Buscar lugares …</string>
     <string name="explore_filters_desc">Filtros</string>
     <string name="explore_results_count">%1$d resultados</string>
     <string name="explore_clear_filters">Limpiar filtros</string>
@@ -345,7 +360,7 @@
     <string name="detail_reject_reason_title">Motivo del rechazo</string>
     <string name="detail_reject_reason_message">Por favor indica por qué se rechaza esta publicación. El usuario recibirá esta información.</string>
     <string name="detail_reason_required">Motivo *</string>
-    <string name="detail_reason_placeholder">Ej: La imagen no es clara, la ubicación es incorrecta, contenido inapropiado...</string>
+    <string name="detail_reason_placeholder">Ej: La imagen no es clara, la ubicación es incorrecta, contenido inapropiado…</string>
     <string name="detail_common_reasons">Razones comunes:</string>
     <string name="detail_confirm_rejection">Confirmar rechazo</string>
     <string name="detail_category_history">Historia</string>
@@ -359,7 +374,7 @@
     <string name="create_latitude">Latitud</string>
     <string name="create_longitude">Longitud</string>
     <string name="create_address_optional">Dirección (opcional)</string>
-    <string name="create_address_placeholder">Calle, colonia, ciudad ...</string>
+    <string name="create_address_placeholder">Calle, colonia, ciudad …</string>
     <string name="create_location_tip">Arrastra el mapa o ingresa las coordenadas manualmente para marcar la ubicación exacta del lugar</string>
     <string name="create_update_success">¡Publicación actualizada con éxito!</string>
     <string name="create_publish_success">¡Publicación realizada con éxito!</string>

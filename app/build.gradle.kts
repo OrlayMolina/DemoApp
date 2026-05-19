@@ -24,6 +24,20 @@ val geminiApiKey: String = run {
     fromProp ?: fromEnv ?: fromLocal ?: ""
 }
 
+val imgbbApiKey: String = run {
+    val fromProp = project.findProperty("IMGBB_API_KEY") as String?
+    val fromEnv = System.getenv("IMGBB_API_KEY")
+    val fromLocal = run {
+        val f = rootProject.file("local.properties")
+        if (f.exists()) {
+            val props = Properties()
+            f.inputStream().use { props.load(it) }
+            props.getProperty("IMGBB_API_KEY")
+        } else null
+    }
+    fromProp ?: fromEnv ?: fromLocal ?: ""
+}
+
 android {
     namespace = "com.example.demoapp"
     compileSdk = 36
@@ -38,6 +52,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+        buildConfigField("String", "IMGBB_API_KEY", "\"$imgbbApiKey\"")
     }
 
     buildTypes {
@@ -81,12 +96,11 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
-    implementation(libs.navigation.compose)
+    implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.foundation.layout)
-    implementation(libs.androidx.ui)
+    implementation("androidx.compose.material:material-icons-extended")
     testImplementation(libs.junit)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
@@ -96,20 +110,13 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.material.icons.extended)
     implementation(libs.maps.android)
     implementation(libs.maps.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
-
-    implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
-
     implementation(libs.data.store)
-
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.messaging)
@@ -117,5 +124,9 @@ dependencies {
 
     implementation(libs.mlkit.image.labeling)
     implementation(libs.okhttp)
+
+    // Retrofit para las peticiones de red
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
 }
