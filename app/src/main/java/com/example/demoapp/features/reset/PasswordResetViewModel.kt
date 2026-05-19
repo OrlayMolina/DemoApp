@@ -14,10 +14,19 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.example.demoapp.domain.repository.UserRepository
+
 @HiltViewModel
 class PasswordResetViewModel @Inject constructor(
-    private val resourceProvider: ResourceProvider
+    private val resourceProvider: ResourceProvider,
+    private val userRepository: UserRepository
 ) : ViewModel() {
+
+    private var email: String = ""
+
+    fun setEmail(newEmail: String) {
+        email = newEmail
+    }
 
     // 5 campos separados, cada uno valida un solo dígito
     val codeDigits = List(5) { index ->
@@ -60,11 +69,16 @@ class PasswordResetViewModel @Inject constructor(
         viewModelScope.launch {
             resetResult = RequestResult.Loading
             delay(1500)
-            resetResult = if (code == "00000") {
-                RequestResult.Error(resourceProvider.getString(R.string.reset_error_code_invalid))
+            if (code == "00000") {
+                resetResult = RequestResult.Error(resourceProvider.getString(R.string.reset_error_code_invalid))
             } else {
-                RequestResult.Success(resourceProvider.getString(R.string.reset_success))
+                val result = userRepository.updatePassword(email, newPassword.value)
+                if (result.isSuccess) {
+                    resetResult = RequestResult.Success(resourceProvider.getString(R.string.reset_success))
+                } else {
+                    resetResult = RequestResult.Error(result.exceptionOrNull()?.message ?: "Error al actualizar")
+                }
             }
         }
     }
-}
+}
